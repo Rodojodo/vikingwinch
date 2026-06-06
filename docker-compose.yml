@@ -1,0 +1,19 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: vgs_mysql_mock
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-localdev_root}
+      MYSQL_DATABASE: ${DB_NAME:-vgs_management}
+      MYSQL_USER: ${DB_USER:-vgs_api}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-localdev_api}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # Automates DDL execution on first initialization
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+volumes:
+  mysql_data:
