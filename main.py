@@ -30,14 +30,14 @@ def health_check():
     conn = get_db_connection()
     if conn and conn.is_connected():
         conn.close()
-        return {"status": "healthy", "database": "connected"}
-    return {"status": "degraded", "database": "disconnected"}
+        return {"status": "connected"}
+    return {"status": "disconnected"}
 
 
 
 # Test token: Bloggs, Joe OCdt (RAFAC-2FTS-VGS-123)
 @app.get("/api/v1/winches")
-def get_squadron_winches(x_mock_token_name: str = Header(..., description="Simulated Microsoft Display Name claim")):
+def get_squadron_winches(x_mock_token_name: str = Header(..., description="Simulated BADER Display Name claim")):
     """
     Reads the mock token name from the headers, extracts the VGS squadron number,
     and queries the local containerized MySQL instance securely.
@@ -50,7 +50,7 @@ def get_squadron_winches(x_mock_token_name: str = Header(..., description="Simul
             detail="Access Denied: Your profile name layout is missing a valid VGS squadron identifier."
         )
     
-    squadron_id = match.group(0) # Isolates 'VGS-661'
+    squadron_id = match.group(0) # Isolates 'VGS-123'
 
     # 2. Connect to the real local MySQL container and run the query
     try:
