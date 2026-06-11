@@ -10,7 +10,7 @@ from models.winch import Winch
 async def test_get_winch_from_id_success(db_session):
     # Arrange: Seed test database
     mock_winch = Winch(
-        id="17",
+        id=17,
         registration="AB 12 CD",
         squadron_id="123 VGS"
     )
@@ -18,7 +18,7 @@ async def test_get_winch_from_id_success(db_session):
     await db_session.commit()
 
     # Act
-    result = await get_winch_from_id(db_session, id="17")
+    result = await get_winch_from_id(db_session, id=17)
 
     # Assert
     assert result is not None
@@ -27,19 +27,19 @@ async def test_get_winch_from_id_success(db_session):
 @pytest.mark.asyncio
 async def test_get_winch_from_id_miss(db_session):
     with pytest.raises(ValueError):
-        await get_winch_from_id(db_session, id="17")
+        await get_winch_from_id(db_session, id=17)
 
 
 
 @pytest.mark.asyncio
 async def test_get_winches_from_sqn_pass(db_session):
     mock_winch_1 = Winch(
-        id="17",
+        id=17,
         registration="AB 12 CD",
         squadron_id="123 VGS"
     )
     mock_winch_2 = Winch(
-        id="22",
+        id=22,
         registration="EF 34 GH",
         squadron_id="123 VGS"
     )
@@ -50,13 +50,13 @@ async def test_get_winches_from_sqn_pass(db_session):
     result = await get_winches_from_sqn(db_session, squadron="123 VGS")
 
     assert len(result) == 2
-    assert any(op.id == "17" for op in result)
-    assert any(op.id == "22" for op in result)
+    assert any(op.id == 17 for op in result)
+    assert any(op.id == 22 for op in result)
 
 @pytest.mark.asyncio
 async def test_get_winches_from_sqn_no_squadron(db_session):
     mock_winch_1 = Winch(
-        id="17",
+        id=17,
         registration="AB 12 CD",
         squadron_id="123 VGS"
     )
