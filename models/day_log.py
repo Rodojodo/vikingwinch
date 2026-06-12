@@ -16,4 +16,4 @@ class Day_Log(Base):
     operator_id: Mapped[str] = mapped_column(String(20), nullable=False)
     trainee: Mapped[str | None] = mapped_column(String(20), nullable=True)
     cable_check: Mapped[str] = mapped_column(String(20), nullable=False)
-    hours: Mapped[float] = mapped_column(Float, nullable=False),
+    hours: Mapped[float] = mapped_column(Float, nullable=False)

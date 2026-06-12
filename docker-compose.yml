@@ -4,7 +4,7 @@ services:
     container_name: vgs_mysql_mock
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-localdev_root}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-localdev_root}
       MYSQL_DATABASE: ${DB_NAME:-vgs_management}
       MYSQL_USER: ${DB_USER:-vgs_api}
       MYSQL_PASSWORD: ${DB_PASSWORD:-localdev_api}

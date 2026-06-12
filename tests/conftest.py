@@ -1,7 +1,7 @@
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from core.database import get_db_session
+from database.session import get_db
 from models.base import Base
 from main import app
 
@@ -30,4 +30,4 @@ async def db_session() -> AsyncSession:
 # 4. FastAPI Dependency Override
 @pytest.fixture(autouse=True)
 def override_dependency(db_session):
-    app.dependency_overrides[get_db_session] = lambda: db_session
+    app.dependency_overrides[get_db] = lambda: db_session
