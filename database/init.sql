@@ -24,7 +24,7 @@ CREATE TABLE operators (
 CREATE TABLE launches (
   launch_number INT NOT NULL AUTO_INCREMENT,
   winch_id INT NOT NULL,
-  drum VARCHAR(255) NOT NULL,
+  drum ENUM('left', 'right') NOT NULL,
   `timestamp` TIMESTAMP NOT NULL,
   squadron_id VARCHAR(50) NOT NULL,
   remarks TEXT NULL,
