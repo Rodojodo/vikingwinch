@@ -9,5 +9,6 @@ Digital solution to physical winch paperwork.
 3. `docker compose up -d` 
 
 ##### Visual uvicorn overview can be found using:
-1. `uvicorn main:app` _If you receive an error Code 503, wait 10 seconds then try again._
-2. Go to http://127.0.0.1:8000/docs#/
+1. `cd backend/`
+2`uvicorn main:app` _If you receive an error Code 503, wait 10 seconds then try again._
+3. Go to http://127.0.0.1:8000/docs#/
