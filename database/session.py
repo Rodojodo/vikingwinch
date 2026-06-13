@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 DB_USER = os.getenv("DB_USER", "vgs_api")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "localdev_api")
 DB_NAME = os.getenv("DB_NAME", "vgs_management")
-DB_HOST = os.getenv("DB_HOST", "db")  # "db" = docker-compose service name
+DB_HOST = os.getenv("DB_HOST", "127.0.0.1")
 DB_PORT = os.getenv("DB_PORT", "3306")
 
 # MySQL async dialect: asyncmy (faster) or aiomysql (more stable)
