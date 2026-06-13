@@ -28,6 +28,7 @@ pytest-asyncio==1.4.0
 pytest-mock==3.15.1
 python-dotenv==1.0.1
 requests==2.31.0
+ruff==0.15.17
 SQLAlchemy==2.0.50
 starlette==0.36.3
 typing-inspection==0.4.2
