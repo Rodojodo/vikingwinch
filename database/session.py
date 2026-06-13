@@ -16,7 +16,8 @@ DATABASE_URL = f"mysql+asyncmy://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB
 engine = create_async_engine(
     DATABASE_URL,
     pool_pre_ping=True,
-    echo=False,  # set True to debug SQL
+    echo=False,
+    pool_recycle=240,
 )
 
 SessionLocal = async_sessionmaker(
