@@ -1,13 +1,14 @@
 name: Backend Tests
 
 on:
-  push:
-    branches: ["main"]
   pull_request:
     branches: ["main"]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
 
 jobs:
-  test:
+  backend-test:
     runs-on: ubuntu-latest
     defaults:
       run:
