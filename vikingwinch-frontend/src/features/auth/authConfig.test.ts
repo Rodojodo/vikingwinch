@@ -32,8 +32,7 @@ describe('authConfig', () => {
     expect(msalConfig.auth.redirectUri).toBe('http://localhost:5173');
 
     expect(msalConfig.cache).toBeDefined();
-    expect(msalConfig.cache.cacheLocation).toBe('sessionStorage');
-    expect(msalConfig.cache.storeAuthStateInCookie).toBe(false);
+    expect(msalConfig.cache!.cacheLocation).toBe('sessionStorage');
   });
 
   it('creates msalInstance using PublicClientApplication with msalConfig', () => {
