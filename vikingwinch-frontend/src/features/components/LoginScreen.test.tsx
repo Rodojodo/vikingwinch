@@ -32,15 +32,19 @@ describe('LoginScreen', () => {
     const logoutRedirectMock = vi.fn().mockResolvedValue(undefined);
 
     beforeEach(() => {
-        vi.resetAllMocks();
+        vi.clearAllMocks();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('shows login prompt and calls loginRedirect when unauthenticated', () => {
-        (msalReact.useMsal as any).mockReturnValue({
+        vi.mocked(msalReact.useMsal).mockReturnValue({
             instance: { loginRedirect: loginRedirectMock } as any,
             accounts: [],
             inProgress: 'none',
-        });
+        } as any);
 
         render(<LoginScreen />);
 
@@ -53,13 +57,13 @@ describe('LoginScreen', () => {
     it('fetches and displays department when authenticated', async () => {
         // setup mocks
         acquireTokenMock.mockResolvedValue({ accessToken: 'token-123' });
-        (getUserDepartment as jest.Mock | any).mockResolvedValue({ department: 'Kirknewton' });
+        vi.mocked(getUserDepartment).mockResolvedValue({ department: 'Kirknewton' });
 
-        (msalReact.useMsal as any).mockReturnValue({
+        vi.mocked(msalReact.useMsal).mockReturnValue({
             instance: { acquireTokenSilent: acquireTokenMock, logoutRedirect: logoutRedirectMock, loginRedirect: loginRedirectMock } as any,
-            accounts: [{ name: 'Joe Bloggs', username: 'joe.bloggs100@example.com' }],
+            accounts: [{ name: 'Joe Bloggs', username: 'joe.bloggs100@example.com' } as any],
             inProgress: 'none',
-        });
+        } as any);
 
         render(<LoginScreen />);
 
@@ -74,19 +78,19 @@ describe('LoginScreen', () => {
 
         // verify token and API called
         expect(acquireTokenMock).toHaveBeenCalled();
-        expect((getUserDepartment as any)).toHaveBeenCalledWith('token-123');
+        expect(getUserDepartment).toHaveBeenCalledWith('token-123');
     });
 
     it('calls logoutRedirect when clicking Log Out and shows fallback when department fetch fails', async () => {
         // make acquireToken fail to simulate error path
         acquireTokenMock.mockRejectedValue(new Error('token failed'));
-        (getUserDepartment as any).mockRejectedValue(new Error('api failed'));
+        vi.mocked(getUserDepartment).mockRejectedValue(new Error('api failed'));
 
-        (msalReact.useMsal as any).mockReturnValue({
+        vi.mocked(msalReact.useMsal).mockReturnValue({
             instance: { acquireTokenSilent: acquireTokenMock, logoutRedirect: logoutRedirectMock } as any,
-            accounts: [{ name: 'Joe Bloggs' }],
+            accounts: [{ name: 'Joe Bloggs' } as any],
             inProgress: 'none',
-        });
+        } as any);
 
         render(<LoginScreen />);
 
@@ -99,9 +103,5 @@ describe('LoginScreen', () => {
         // clicking logout triggers logoutRedirect
         fireEvent.click(screen.getByText('Log Out'));
         expect(logoutRedirectMock).toHaveBeenCalledTimes(1);
-    });
-
-    afterEach(() => {
-        vi.restoreAllMocks();
     });
 });
