@@ -13,7 +13,7 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       # Automates DDL execution on first initialization
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./backend/database/init.sql:/docker-entrypoint-initdb.d/init.sql
 
 volumes:
   mysql_data:
