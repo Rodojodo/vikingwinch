@@ -1,21 +1,19 @@
 name: Frontend Tests
+
 on:
   pull_request:
     branches: ["main"]
     paths:
       - 'vikingwinch-frontend/**'
       - '.github/workflows/frontend-ci.yml'
-  push:
-    branches: [ "7-set-up-github-action-for-vitest-tests" ]
-    paths:
-      - 'vikingwinch-frontend/**'
-      - '.github/workflows/frontend-ci.yml'
+
 jobs:
   frontend-test:
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: vikingwinch-frontend
+
     steps:
       - uses: actions/checkout@v4
 
