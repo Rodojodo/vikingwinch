@@ -10,7 +10,7 @@ export interface LaunchButtonProps extends ButtonProps {
 }
 
 
-export const LaunchButton = ({onClick, isLoading, label}: LaunchButtonProps) => (
+export const LaunchButton = ({onClick, isLoading, label, ...rest}: LaunchButtonProps) => (
     <Button
         onClick={onClick}
         disabled={isLoading}
@@ -33,6 +33,7 @@ export const LaunchButton = ({onClick, isLoading, label}: LaunchButtonProps) => 
                 backgroundColor: 'rgba(255, 255, 255, 0.04)',
             },
         }}
+        {...rest}
     >
         {label}
 
