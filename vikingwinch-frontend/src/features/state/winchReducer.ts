@@ -10,7 +10,6 @@ export const initialState: WinchLogState = {
     lastDrum: null,
     squadron: '123 VGS',
     winchId: 1,
-    isLoading: false
 };
 
 
@@ -22,7 +21,6 @@ export const winchReducer = (state: WinchLogState, action: WinchAction): WinchLo
                 leftLaunches: state.leftLaunches + 1,
                 leftLast: action.payload.timestamp,
                 lastDrum: 'left',
-                isLoading: false,
             };
         case 'RECORD_RIGHT_LAUNCH':
             return {
@@ -30,7 +28,6 @@ export const winchReducer = (state: WinchLogState, action: WinchAction): WinchLo
                 rightLaunches: state.rightLaunches + 1,
                 rightLast: action.payload.timestamp,
                 lastDrum: 'right',
-                isLoading: false,
             };
         default:
             return state;

@@ -7,7 +7,6 @@ export interface WinchLogState {
     lastDrum: 'left' | 'right' | null;
     squadron: string;
     winchId: number;
-    isLoading: boolean;
 }
 
 export type WinchAction =
