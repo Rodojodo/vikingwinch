@@ -1,60 +1,74 @@
 import React from 'react';
-import { Button, type ButtonProps, CircularProgress } from '@mui/material';
+import { Button, type ButtonProps } from '@mui/material';
 
-// 1. Extend MUI's ButtonProps to inherit default attributes
+interface LaunchPayload {
+  squadron_id: string;
+  winch_id: number;
+  operator_id: string;
+  drum: string;
+}
+
+
 export interface LaunchButtonProps extends ButtonProps {
-  /** Toggles a loading spinner and disables the button */
-  isLoading?: boolean;
+  isLeft: boolean;
+}
+
+async function launch(isLeft: boolean): Promise<any> {
+    const data: LaunchPayload = {
+        squadron_id: "123 VGS",
+        winch_id: 1,
+        operator_id: "OFF-1001",
+        drum: isLeft ? "left" : "right"
+    };
+    const response = await fetch('http://127.0.0.1:8000/launches', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    });
+
+    if (!response.ok) {
+        throw new Error(`HTTP error: ${response.status}`);
+    }
+
+    return response.json();
 }
 
 export const LaunchButton: React.FC<LaunchButtonProps> = ({
-  isLoading = false,
-  children,
-  disabled,
-  ...rest
-}) => {
-  return (
-    <Button
-        variant="contained"
-        fullwidth
-        sx={{
-              py: 4,
-              px: 2,
-              fontSize: '20px',
-              fontWeight: 700,
-              borderColor: 'rgba(255, 255, 255, 0.1)',
-              borderRadius: '20px',
-              color: 'white',
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-              flexDirection: 'column',
-              gap: 1,
-              whiteSpace: 'nowrap',
-              '&:hover': {
-                borderColor: 'rgba(255, 255, 255, 0.3)',
-                backgroundColor: 'rgba(255, 255, 255, 0.04)',
-              },
+    state,
+    isLeft,
+    }) => {
+    return (
+        <Button
+            onClick={() => {
+                launch(isLeft);
             }}
-    >
-      Left Button
+            variant="contained"
+            fullWidth
+            sx={{
+                  py: 4,
+                  px: 2,
+                  fontSize: '20px',
+                  fontWeight: 700,
+                  borderColor: 'rgba(255, 255, 255, 0.1)',
+                  borderRadius: '20px',
+                  color: 'white',
+                  transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                  flexDirection: 'column',
+                  gap: 1,
+                  whiteSpace: 'nowrap',
+                  '&:hover': {
+                    borderColor: 'rgba(255, 255, 255, 0.3)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+                  },
+                }}
+        >
+          { isLeft ? 'Left' : 'Right' } Drum
 
-    </Button>
+        </Button>
   );
 };
 
 export default LaunchButton;
-
-//  width: 100%;
-//   padding: 32px 16px;
-//   font-size: 20px;
-//   font-weight: 700;
-//   border: 1px solid rgba(255, 255, 255, 0.1);
-//   border-radius: 20px;
-//   cursor: pointer;
-//   color: white;
-//   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-//   display: flex;
-//   flex-direction: column;
-//   align-items: center;
-//   gap: 8px;
-//   white-space: nowrap;
-// }
