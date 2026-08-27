@@ -1,4 +1,4 @@
-name: Backend Tests
+name: Backend Tests with Coverage
 
 on:
   pull_request:
@@ -27,8 +27,12 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run tests
-        run: pytest
+      - name: Run tests with coverage
+        run: coverage run -m pytest tests
+
+      - name: Generate coverage report
+        if: always()
+        run: coverage report -m --fail-under=80
 
       - name: Lint
         run: ruff check . --exclude tests
