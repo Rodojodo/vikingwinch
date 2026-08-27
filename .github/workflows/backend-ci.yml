@@ -1,6 +1,11 @@
-name: Backend Tests
+name: Backend Tests with Coverage
 
 on:
+  push:
+    branches: [ "11-no-code-coverage-check" ]
+    paths:
+      - 'vikingwinch-frontend/**'
+      - '.github/workflows/frontend-ci.yml'
   pull_request:
     branches: ["main"]
     paths:
