@@ -7,6 +7,7 @@ certifi==2026.5.20
 cffi==2.0.0
 charset-normalizer==3.4.7
 click==8.4.1
+coverage==7.15.4
 cryptography==48.0.0
 fastapi==0.110.0
 greenlet==3.5.1
@@ -25,6 +26,7 @@ Pygments==2.20.0
 PyJWT==2.8.0
 pytest==9.0.3
 pytest-asyncio==1.4.0
+pytest-cov==7.1.0
 pytest-mock==3.15.1
 python-dotenv==1.0.1
 requests==2.31.0
