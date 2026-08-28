@@ -19,4 +19,5 @@ export interface LaunchPayload {
   winch_id: number;
   operator_id: string;
   drum: string;
+  burn: boolean;
 }
