@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.exc import OperationalError, InterfaceError
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi.middleware.cors import CORSMiddleware
 
 from database.session import get_db
 from routers import day_log, launch, operator, squadron, winch
@@ -15,6 +16,21 @@ async def db_unavailable_handler(request: Request, exc: Exception):
         headers={"Retry-After": "5"},
     )
 app = FastAPI(title="Winch Log API")
+
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 app.add_exception_handler(OperationalError, db_unavailable_handler)
 app.add_exception_handler(InterfaceError, db_unavailable_handler)
