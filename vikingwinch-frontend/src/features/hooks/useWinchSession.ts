@@ -37,7 +37,5 @@ export const useWinchSession = () => {
         }
     };
 
-    console.log(state)
-
     return {state, isLoading, error, executeLaunch};
 };
