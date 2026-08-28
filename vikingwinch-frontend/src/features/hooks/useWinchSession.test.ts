@@ -29,7 +29,7 @@ describe('useWinchSession', () => {
         const { result } = renderHook(() => useWinchSession());
 
         await act(async () => {
-            await result.current.executeLaunch('left');
+            await result.current.executeLaunch('left', false);
         });
 
         expect(postLaunchToDb).toHaveBeenCalledTimes(1);
@@ -38,6 +38,7 @@ describe('useWinchSession', () => {
             winch_id: initialState.winchId,
             operator_id: initialState.operatorSn,
             drum: 'left',
+            burn: false,
         });
 
         expect(result.current.state.leftLaunches).toBe(1);
@@ -55,7 +56,7 @@ describe('useWinchSession', () => {
         const { result } = renderHook(() => useWinchSession());
 
         await act(async () => {
-            await result.current.executeLaunch('right');
+            await result.current.executeLaunch('right', false);
         });
 
         expect(postLaunchToDb).toHaveBeenCalledTimes(1);
@@ -64,11 +65,62 @@ describe('useWinchSession', () => {
             winch_id: initialState.winchId,
             operator_id: initialState.operatorSn,
             drum: 'right',
+            burn: false,
         });
 
         expect(result.current.state.rightLaunches).toBe(1);
         expect(result.current.state.rightLast).toBe(mockTimestamp);
         expect(result.current.state.lastDrum).toBe('right');
+        expect(result.current.isLoading).toBe(false);
+        expect(result.current.error).toBeNull();
+    });
+
+    it('executes a successful left burn and does not updates state', async () => {
+        const mockTimestamp = '2026-06-06 09:15:00';
+        const mockResponse = { timestamp: mockTimestamp };
+        vi.mocked(postLaunchToDb).mockResolvedValueOnce(mockResponse);
+
+        const { result } = renderHook(() => useWinchSession());
+
+        await act(async () => {
+            await result.current.executeLaunch('left', true);
+        });
+
+        expect(postLaunchToDb).toHaveBeenCalledTimes(1);
+        expect(postLaunchToDb).toHaveBeenCalledWith({
+            squadron_id: initialState.squadron,
+            winch_id: initialState.winchId,
+            operator_id: initialState.operatorSn,
+            drum: 'left',
+            burn: true,
+        });
+
+        expect(result.current.state).toEqual(initialState);
+        expect(result.current.isLoading).toBe(false);
+        expect(result.current.error).toBeNull();
+    });
+
+    it('executes a successful right burn and does not updates state', async () => {
+        const mockTimestamp = '2026-06-06 10:15:00';
+        const mockResponse = { timestamp: mockTimestamp };
+        vi.mocked(postLaunchToDb).mockResolvedValueOnce(mockResponse);
+
+        const { result } = renderHook(() => useWinchSession());
+
+        await act(async () => {
+            await result.current.executeLaunch('right', true);
+        });
+
+        expect(postLaunchToDb).toHaveBeenCalledTimes(1);
+        expect(postLaunchToDb).toHaveBeenCalledWith({
+            squadron_id: initialState.squadron,
+            winch_id: initialState.winchId,
+            operator_id: initialState.operatorSn,
+            drum: 'right',
+            burn: true,
+        });
+
+        expect(result.current.state).toEqual(initialState);
         expect(result.current.isLoading).toBe(false);
         expect(result.current.error).toBeNull();
     });
@@ -80,7 +132,7 @@ describe('useWinchSession', () => {
         const { result } = renderHook(() => useWinchSession());
 
         await act(async () => {
-            await result.current.executeLaunch('left');
+            await result.current.executeLaunch('left', false);
         });
 
         expect(postLaunchToDb).toHaveBeenCalledTimes(1);

@@ -9,7 +9,7 @@ export const useWinchSession = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const executeLaunch = async (drum: string) => {
+    const executeLaunch = async (drum: string, burn: boolean) => {
         setIsLoading(true);
         setError(null);
 
@@ -20,16 +20,20 @@ export const useWinchSession = () => {
                 winch_id: state.winchId,
                 operator_id: state.operatorSn,
                 drum: drum,
+                burn: burn
             };
 
             // 2. Send the payload
             const responseData = await postLaunchToDb(payload);
 
-            // Dispatch different actions to the reducer based on the button clicked
-            dispatch({
-                type: drum === 'left' ? 'RECORD_LEFT_LAUNCH' : 'RECORD_RIGHT_LAUNCH',
-                payload: responseData
-            });
+            if (!burn) {
+                // Dispatch different actions to the reducer based on the button clicked
+                dispatch({
+                    type: drum === 'left' ? 'RECORD_LEFT_LAUNCH' : 'RECORD_RIGHT_LAUNCH',
+                    payload: responseData
+                });
+            }
+
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Launch execution failed');
         } finally {
