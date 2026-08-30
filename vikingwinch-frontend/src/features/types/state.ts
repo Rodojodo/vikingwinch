@@ -1,5 +1,5 @@
-import type { DrumPosition } from './domain';
-import type { LaunchResponse } from './api';
+import type {DrumPosition} from './domain';
+import type {DayLogResponse, LaunchResponse} from './api';
 
 export interface LaunchRecord {
   id: number;
@@ -10,6 +10,7 @@ export interface WinchLogState {
   squadron: string;
   winchId: number;
   operatorSn: string;
+  traineeSn: string | null;
   leftHistory: LaunchRecord[];
   rightHistory: LaunchRecord[];
 }
@@ -17,4 +18,12 @@ export interface WinchLogState {
 
 export type WinchAction =
   | { type: 'RECORD_LAUNCH'; payload: LaunchResponse }
-  | { type: 'UNDO_LAUNCH'; payload: { drum: DrumPosition } };
+  | { type: 'UNDO_LAUNCH'; payload: { drum: DrumPosition } }
+  | { type: 'CHANGE_TRAINEE'; payload: DayLogResponse };
+
+
+
+export interface Trainee {
+    id: string;
+    name: string;
+}
