@@ -11,18 +11,20 @@ import {
     Typography
 } from '@mui/material';
 import type {Trainee} from "../types";
+import { useWinchSession } from '../hooks/useWinchSession'
 
+
+const { changeTrainee } = useWinchSession();
 const TRAINEES: Trainee[] = [
     {id: '1', name: 'Ben Ten'},
     {id: '2', name: 'Gwen Tennyson'},
 ];
 
 type TraineeAssignmentPanelProps = {
-  onChange: () => void;
   isLoading: boolean;
 };
 
-export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({onChange, isLoading}) => {
+export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({isLoading}) => {
     const [isExpanded, setIsExpanded] = useState<boolean>(false);
     const [focusedTraineeId, setFocusedTraineeId] = useState<string>('1');
 
@@ -33,14 +35,6 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({o
 
     if (!isExpanded) {
         return (
-            // <Button
-            //     variant="contained"
-            //     onClick={() => setIsExpanded(true)}
-            //     aria-expanded={false}
-            // >
-            //     Assign Trainee
-            // </Button>
-
             <ButtonBase
                 onClick={() => setIsExpanded(true)}
                 sx={{
@@ -124,7 +118,7 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({o
                 <Button
                     variant="contained"
                     fullWidth
-                    onClick={onChange}
+                    onClick={() => changeTrainee(focusedTraineeId)}
                     sx={{
                         backgroundColor: '#2970ff',
                         textTransform: 'none',

@@ -1,5 +1,5 @@
 import {useReducer, useState} from 'react';
-import type {DayLogPayload, DayLogType, DrumPosition, LaunchPayload} from '../types';
+import type {DayLogPayload, DrumPosition, LaunchPayload} from '../types';
 import {postLaunchToDb, postTraineeChangeToDb, removeLaunchFromDb} from '../api/dataClient';
 import { initialState, winchReducer } from '../state/winchReducer';
 
@@ -101,9 +101,7 @@ export const useWinchSession = () => {
 
             const responseData = await postTraineeChangeToDb(payload, state.winchId);
 
-
             dispatch({ type: 'CHANGE_TRAINEE', payload: responseData });
-
 
             return responseData;
         } catch (err) {
