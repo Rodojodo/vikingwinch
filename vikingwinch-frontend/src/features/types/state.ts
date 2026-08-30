@@ -1,5 +1,5 @@
-import type { DrumPosition } from './domain';
-import type { LaunchResponse } from './api';
+import type {DrumPosition} from './domain';
+import type {LaunchResponse} from './api';
 
 export interface LaunchRecord {
   id: number;
@@ -18,3 +18,9 @@ export interface WinchLogState {
 export type WinchAction =
   | { type: 'RECORD_LAUNCH'; payload: LaunchResponse }
   | { type: 'UNDO_LAUNCH'; payload: { drum: DrumPosition } };
+
+
+export interface Trainee {
+    id: string;
+    name: string;
+}
