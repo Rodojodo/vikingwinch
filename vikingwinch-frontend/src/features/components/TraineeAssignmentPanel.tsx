@@ -14,7 +14,6 @@ import type {Trainee} from "../types";
 import { useWinchSession } from '../hooks/useWinchSession'
 
 
-const { changeTrainee } = useWinchSession();
 const TRAINEES: Trainee[] = [
     {id: '1', name: 'Ben Ten'},
     {id: '2', name: 'Gwen Tennyson'},
@@ -27,6 +26,7 @@ type TraineeAssignmentPanelProps = {
 export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({isLoading}) => {
     const [isExpanded, setIsExpanded] = useState<boolean>(false);
     const [focusedTraineeId, setFocusedTraineeId] = useState<string>('1');
+    const { changeTrainee } = useWinchSession();
 
     const handleFocusChange = (event: SelectChangeEvent<string>) => {
         setFocusedTraineeId(event.target.value);

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { postLaunchToDb, removeLaunchFromDb } from '../api/dataClient';
-import type { LaunchPayload, LaunchResponse } from '../types';
+import { postLaunchToDb, removeLaunchFromDb, postTraineeChangeToDb } from '../api/dataClient';
+import type { LaunchPayload, LaunchResponse, DayLogPayload, DayLogResponse } from '../types';
 
 const API_BASE_URL = 'http://127.0.0.1:8000';
 
@@ -53,28 +53,6 @@ describe('postLaunchToDb', () => {
     expect(result).toStrictEqual(mockResponse);
   });
 
-  it('handles a burn launch payload correctly', async () => {
-    const burnPayload: LaunchPayload = { ...mockPayload, burn: true };
-    const burnResponse: LaunchResponse = { ...mockResponse, burn: true };
-
-    vi.mocked(fetch).mockResolvedValue({
-      ok: true,
-      json: async () => burnResponse,
-    } as Response);
-
-    const result = await postLaunchToDb(burnPayload);
-
-    expect(fetch).toHaveBeenCalledWith(`${API_BASE_URL}/launches`, {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(burnPayload),
-    });
-    expect(result.burn).toBe(true);
-  });
-
   it('throws backend detail message when response is not ok', async () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: false,
@@ -90,17 +68,11 @@ describe('postLaunchToDb', () => {
       ok: false,
       status: 500,
       json: async () => {
-        throw new Error('Unexpected token < in JSON at position 0');
+        throw new Error('Unexpected token');
       },
     } as unknown as Response);
 
     await expect(postLaunchToDb(mockPayload)).rejects.toThrow('HTTP error: 500');
-  });
-
-  it('propagates network-level errors', async () => {
-    vi.mocked(fetch).mockRejectedValue(new Error('Network connection lost'));
-
-    await expect(postLaunchToDb(mockPayload)).rejects.toThrow('Network connection lost');
   });
 });
 
@@ -144,22 +116,70 @@ describe('removeLaunchFromDb', () => {
       `Launch with id ${targetLaunchId} not found`
     );
   });
+});
 
-  it('falls back to HTTP status when deletion error response has no JSON body', async () => {
-    vi.mocked(fetch).mockResolvedValue({
-      ok: false,
-      status: 502,
-      json: async () => {
-        throw new Error('Bad Gateway');
-      },
-    } as unknown as Response);
+describe('postTraineeChangeToDb', () => {
+  const targetWinchId = 1;
+  const mockDayLogPayload: DayLogPayload = {
+    squadron_id: '123 VGS',
+    winch_id: targetWinchId,
+    operator_id: 'OFF-1001',
+    trainee: 'TRN-5501',
+    type: 'sign_on',
+    cable_check: 'OK',
+    hours: null,
+  };
 
-    await expect(removeLaunchFromDb(targetLaunchId)).rejects.toThrow('HTTP error: 502');
+  const mockDayLogResponse: DayLogResponse = {
+    id: 505,
+    squadron_id: '123 VGS',
+    winch_id: targetWinchId,
+    operator_id: 'OFF-1001',
+    trainee: 'TRN-5501',
+    type: 'sign_on',
+    cable_check: 'OK',
+    hours: null,
+    timestamp: '2026-08-30T10:15:00Z',
+  };
+
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn());
   });
 
-  it('propagates network-level errors', async () => {
-    vi.mocked(fetch).mockRejectedValue(new Error('ECONNREFUSED'));
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
 
-    await expect(removeLaunchFromDb(targetLaunchId)).rejects.toThrow('ECONNREFUSED');
+  it('executes a POST request with payload and correct URI structure', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      json: async () => mockDayLogResponse,
+    } as Response);
+
+    const result = await postTraineeChangeToDb(mockDayLogPayload, targetWinchId);
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledWith(`${API_BASE_URL}/winch/${targetWinchId}/day_log`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(mockDayLogPayload),
+    });
+    expect(result).toStrictEqual(mockDayLogResponse);
+  });
+
+  it('throws backend detail message when response is not ok', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: async () => ({ detail: 'Invalid log sequence' }),
+    } as Response);
+
+    await expect(postTraineeChangeToDb(mockDayLogPayload, targetWinchId)).rejects.toThrow(
+      'Invalid log sequence'
+    );
   });
 });

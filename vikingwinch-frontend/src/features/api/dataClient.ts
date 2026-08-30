@@ -2,6 +2,12 @@ import type {DayLogPayload, DayLogResponse, LaunchPayload, LaunchResponse} from 
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
 
+async function handleApiError(response: Response): Promise<void> {
+    if (!response.ok) {
+        const errorBody = await response.json().catch(() => null);
+        throw new Error(errorBody?.detail || `HTTP error: ${response.status}`);
+    }
+}
 
 export const postLaunchToDb = async (payload: LaunchPayload): Promise<LaunchResponse> =>{
     const response = await fetch(`${API_BASE_URL}/launches`, {
@@ -13,10 +19,7 @@ export const postLaunchToDb = async (payload: LaunchPayload): Promise<LaunchResp
         body: JSON.stringify(payload),
     });
 
-    if (!response.ok) {
-    const errorBody = await response.json().catch(() => null);
-    throw new Error(errorBody?.detail || `HTTP error: ${response.status}`);
-  }
+    await handleApiError(response);
 
     return response.json();
 }
@@ -30,10 +33,7 @@ export const removeLaunchFromDb = async (launchId: number): Promise<void> =>{
         },
     });
 
-    if (!response.ok) {
-    const errorBody = await response.json().catch(() => null);
-    throw new Error(errorBody?.detail || `HTTP error: ${response.status}`);
-  }
+    await handleApiError(response);
 }
 
 
@@ -47,10 +47,7 @@ export const postTraineeChangeToDb = async (payload: DayLogPayload, winchId: num
         body: JSON.stringify(payload),
     });
 
-    if (!response.ok) {
-    const errorBody = await response.json().catch(() => null);
-    throw new Error(errorBody?.detail || `HTTP error: ${response.status}`);
-  }
+    await handleApiError(response);
 
     return response.json();
 }
