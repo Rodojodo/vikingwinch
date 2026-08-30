@@ -1,4 +1,4 @@
-export type DrumPosition = 'left' | 'right';
+import type { DrumPosition } from './domain'
 
 export interface LaunchPayload {
   squadron_id: string;
@@ -10,6 +10,6 @@ export interface LaunchPayload {
 
 export interface LaunchResponse extends LaunchPayload {
   id: number;
-  launch_number: 42,
-  timestamp: string;
+  launch_number: number;
+  timestamp: string | null;
 }
