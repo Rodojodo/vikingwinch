@@ -1,35 +1,34 @@
-import type {WinchAction, WinchLogState} from "../types";
-
+import type { WinchAction, WinchLogState, LaunchRecord } from '../types';
 
 export const initialState: WinchLogState = {
-    leftLaunches: 0,
-    rightLaunches: 0,
-    leftLast: null,
-    rightLast: null,
-    operatorSn: 'OFF-1001',
-    lastDrum: null,
-    squadron: '123 VGS',
-    winchId: 1,
+  squadron: '123 VGS',
+  winchId: 1,
+  operatorSn: 'OFF-1001',
+  leftHistory: [],
+  rightHistory: [],
 };
 
 
 export const winchReducer = (state: WinchLogState, action: WinchAction): WinchLogState => {
-    switch (action.type) {
-        case 'RECORD_LEFT_LAUNCH':
-            return {
-                ...state,
-                leftLaunches: state.leftLaunches + 1,
-                leftLast: action.payload.timestamp,
-                lastDrum: 'left',
-            };
-        case 'RECORD_RIGHT_LAUNCH':
-            return {
-                ...state,
-                rightLaunches: state.rightLaunches + 1,
-                rightLast: action.payload.timestamp,
-                lastDrum: 'right',
-            };
-        default:
-            return state;
+  switch (action.type) {
+    case 'RECORD_LAUNCH': {
+      const { drum, timestamp, id } = action.payload;
+      const record: LaunchRecord = { id, timestamp };
+
+      if (drum === 'left') {
+        return { ...state, leftHistory: [...state.leftHistory, record] };
+      }
+      return { ...state, rightHistory: [...state.rightHistory, record] };
     }
+
+    case 'UNDO_LAUNCH': {
+    if (action.payload.drum === 'left') {
+        return { ...state, leftHistory: state.leftHistory.slice(0, -1) };
+      }
+      return { ...state, rightHistory: state.rightHistory.slice(0, -1) };
+    }
+
+    default:
+      return state;
+  }
 };

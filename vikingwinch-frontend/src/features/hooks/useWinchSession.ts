@@ -1,7 +1,7 @@
 import {useReducer, useState} from 'react';
-
-import {postLaunchToDb} from "../api/dataClient.ts";
-import {initialState, winchReducer} from "../state/winchReducer.ts";
+import type { DrumPosition, LaunchPayload } from '../types';
+import { postLaunchToDb, removeLaunchFromDb } from '../api/dataClient';
+import { initialState, winchReducer } from '../state/winchReducer';
 
 
 export const useWinchSession = () => {
@@ -9,37 +9,92 @@ export const useWinchSession = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const executeLaunch = async (drum: string, burn: boolean) => {
+
+    // --- Derived State Computations ---
+    const leftLaunches = state.leftHistory.length;
+    const rightLaunches = state.rightHistory.length;
+    
+    const leftLastRecord = state.leftHistory[leftLaunches - 1];
+    const rightLastRecord = state.rightHistory[rightLaunches - 1];
+    
+    const leftLast = leftLastRecord?.timestamp ?? null;
+    const rightLast = rightLastRecord?.timestamp ?? null;
+
+    let lastDrum: DrumPosition | null = null;
+    if (leftLastRecord || rightLastRecord) {
+        if (!leftLastRecord) lastDrum = 'right';
+        else if (!rightLastRecord) lastDrum = 'left';
+        else {
+        const leftTime = leftLast ? new Date(leftLast).getTime() : 0;
+        const rightTime = rightLast ? new Date(rightLast).getTime() : 0;
+        lastDrum = leftTime > rightTime ? 'left' : 'right';
+        }
+    }
+
+
+    // --- Actions ---
+    const executeLaunch = async (drum: DrumPosition, burn: boolean = false) => {
         setIsLoading(true);
         setError(null);
 
         try {
-            // 1. Extract ONLY the fields the POST request needs from state
-            const payload = {
+            const payload: LaunchPayload = {
                 squadron_id: state.squadron,
                 winch_id: state.winchId,
                 operator_id: state.operatorSn,
-                drum: drum,
-                burn: burn
+                drum,
+                burn,
             };
 
-            // 2. Send the payload
             const responseData = await postLaunchToDb(payload);
 
             if (!burn) {
-                // Dispatch different actions to the reducer based on the button clicked
-                dispatch({
-                    type: drum === 'left' ? 'RECORD_LEFT_LAUNCH' : 'RECORD_RIGHT_LAUNCH',
-                    payload: responseData
-                });
+                dispatch({ type: 'RECORD_LAUNCH', payload: responseData });
             }
 
+            return responseData;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Launch execution failed');
+            throw err;
         } finally {
             setIsLoading(false);
         }
     };
 
-    return {state, isLoading, error, executeLaunch};
+    const undoLaunch = async (drum: DrumPosition) => {
+        const targetRecord = drum === 'left' ? leftLastRecord : rightLastRecord;
+
+        if (!targetRecord) {
+            setError(`No recorded launches to undo on ${drum} drum.`);
+            return;
+        }
+
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            await removeLaunchFromDb(targetRecord.id);
+            dispatch({ type: 'UNDO_LAUNCH', payload: { drum } });
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Undo execution failed');
+            throw err;
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+    return {
+        state,
+        derived: {
+        leftLaunches,
+        rightLaunches,
+        leftLast,
+        rightLast,
+        lastDrum,
+        },
+        isLoading,
+        error,
+        executeLaunch,
+        undoLaunch,
+    };
 };

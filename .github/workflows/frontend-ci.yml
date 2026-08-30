@@ -2,7 +2,7 @@ name: Frontend Tests with Coverage
 
 on:
   pull_request:
-    branches: ["main"]
+    types: [opened, synchronize, reopened]
     paths:
       - 'vikingwinch-frontend/**'
       - '.github/workflows/frontend-ci.yml'
