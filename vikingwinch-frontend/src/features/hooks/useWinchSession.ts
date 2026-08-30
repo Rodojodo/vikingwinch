@@ -55,6 +55,7 @@ export const useWinchSession = () => {
             return responseData;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Launch execution failed');
+            throw err;
         } finally {
             setIsLoading(false);
         }
@@ -76,7 +77,7 @@ export const useWinchSession = () => {
             dispatch({ type: 'UNDO_LAUNCH', payload: { drum } });
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Undo execution failed');
-             throw err;
+            throw err;
         } finally {
             setIsLoading(false);
         }

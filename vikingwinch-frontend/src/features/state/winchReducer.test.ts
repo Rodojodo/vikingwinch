@@ -1,73 +1,87 @@
 import { describe, it, expect } from 'vitest';
 import { winchReducer, initialState } from './winchReducer';
-import type { WinchAction } from '../types';
+import type { WinchAction, LaunchResponse } from '../types';
 
 describe('winchReducer', () => {
-    it('returns the initial state when an unknown action is dispatched', () => {
-        const action = { type: 'UNKNOWN_ACTION' } as unknown as WinchAction;
-        const result = winchReducer(initialState, action);
+  const createPayload = (drum: 'left' | 'right', id: number, timestamp: string): LaunchResponse => ({
+    id,
+    launch_number: id,
+    squadron_id: '123 VGS',
+    winch_id: 1,
+    operator_id: 'OFF-1001',
+    drum,
+    burn: false,
+    timestamp,
+  });
 
-        expect(result).toEqual(initialState);
+  it('returns the initial state when an unknown action is dispatched', () => {
+    const action = { type: 'UNKNOWN_ACTION' } as unknown as WinchAction;
+    const result = winchReducer(initialState, action);
+
+    expect(result).toEqual(initialState);
+  });
+
+  it('processes RECORD_LAUNCH for the left drum and appends to leftHistory', () => {
+    const payload = createPayload('left', 101, '2026-08-30T09:15:00Z');
+    const action: WinchAction = { type: 'RECORD_LAUNCH', payload };
+
+    const result = winchReducer(initialState, action);
+
+    expect(result.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:15:00Z' }]);
+    expect(result.rightHistory).toEqual([]);
+  });
+
+  it('processes RECORD_LAUNCH for the right drum and appends to rightHistory', () => {
+    const payload = createPayload('right', 102, '2026-08-30T10:15:00Z');
+    const action: WinchAction = { type: 'RECORD_LAUNCH', payload };
+
+    const result = winchReducer(initialState, action);
+
+    expect(result.rightHistory).toEqual([{ id: 102, timestamp: '2026-08-30T10:15:00Z' }]);
+    expect(result.leftHistory).toEqual([]);
+  });
+
+  it('accumulates multiple launches accurately over successive dispatches', () => {
+    let state = winchReducer(initialState, {
+      type: 'RECORD_LAUNCH',
+      payload: createPayload('left', 101, '2026-08-30T09:15:00Z')
     });
 
-    it('processes RECORD_LEFT_LAUNCH and updates state correctly', () => {
-        const timestamp = '2026-06-06 09:15:00';
-        const action: WinchAction = {
-            type: 'RECORD_LEFT_LAUNCH',
-            payload: { timestamp }
-        };
-
-        const result = winchReducer(initialState, action);
-
-        expect(result).toEqual({
-            ...initialState,
-            leftLaunches: 1,
-            leftLast: timestamp,
-            lastDrum: 'left'
-        });
+    state = winchReducer(state, {
+      type: 'RECORD_LAUNCH',
+      payload: createPayload('right', 102, '2026-08-30T09:20:00Z')
     });
 
-    it('processes RECORD_RIGHT_LAUNCH and updates state correctly', () => {
-        const timestamp = '2026-06-06 10:15:00';
-        const action: WinchAction = {
-            type: 'RECORD_RIGHT_LAUNCH',
-            payload: { timestamp }
-        };
-
-        const result = winchReducer(initialState, action);
-
-        expect(result).toEqual({
-            ...initialState,
-            rightLaunches: 1,
-            rightLast: timestamp,
-            lastDrum: 'right'
-        });
+    state = winchReducer(state, {
+      type: 'RECORD_LAUNCH',
+      payload: createPayload('left', 103, '2026-08-30T09:30:00Z')
     });
 
-    it('accumulates multiple launches accurately over successive dispatches', () => {
-        const timestamp1 = '2026-06-06 09:15:00';
-        const timestamp2 = '2026-06-06 09:20:00';
-        const timestamp3 = '2026-06-06 09:30:00';
+    expect(state.leftHistory).toHaveLength(2);
+    expect(state.leftHistory[1].id).toBe(103);
+    expect(state.rightHistory).toHaveLength(1);
+    expect(state.rightHistory[0].id).toBe(102);
+  });
 
-        let state = winchReducer(initialState, {
-            type: 'RECORD_LEFT_LAUNCH',
-            payload: { timestamp: timestamp1 }
-        });
+  it('processes UNDO_LAUNCH and removes the last record from the specified drum', () => {
+    const state = {
+      ...initialState,
+      leftHistory: [
+        { id: 101, timestamp: '2026-08-30T09:15:00Z' },
+        { id: 102, timestamp: '2026-08-30T09:25:00Z' },
+      ],
+    };
 
-        state = winchReducer(state, {
-            type: 'RECORD_RIGHT_LAUNCH',
-            payload: { timestamp: timestamp2 }
-        });
+    const action: WinchAction = { type: 'UNDO_LAUNCH', payload: { drum: 'left' } };
+    const result = winchReducer(state, action);
 
-        state = winchReducer(state, {
-            type: 'RECORD_LEFT_LAUNCH',
-            payload: { timestamp: timestamp3 }
-        });
+    expect(result.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:15:00Z' }]);
+  });
 
-        expect(state.leftLaunches).toBe(2);
-        expect(state.rightLaunches).toBe(1);
-        expect(state.leftLast).toBe(timestamp3);
-        expect(state.rightLast).toBe(timestamp2);
-        expect(state.lastDrum).toBe('left');
-    });
+  it('handles UNDO_LAUNCH gracefully when the target history stack is empty', () => {
+    const action: WinchAction = { type: 'UNDO_LAUNCH', payload: { drum: 'left' } };
+    const result = winchReducer(initialState, action);
+
+    expect(result.leftHistory).toEqual([]);
+  });
 });
