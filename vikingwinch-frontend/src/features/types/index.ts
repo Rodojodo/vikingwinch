@@ -13,11 +13,4 @@ export type WinchAction =
   | { type: 'RECORD_LEFT_LAUNCH'; payload: { timestamp: string } }
   | { type: 'RECORD_RIGHT_LAUNCH'; payload: { timestamp: string } };
 
-
-export interface LaunchPayload {
-  squadron_id: string;
-  winch_id: number;
-  operator_id: string;
-  drum: string;
-  burn: boolean;
-}
+export * from './launches'
