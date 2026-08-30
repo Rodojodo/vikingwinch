@@ -75,7 +75,7 @@ describe('winchReducer', () => {
     expect(state.rightHistory[0].id).toBe(102);
   });
 
-  it('processes UNDO_LAUNCH and removes the last record from the specified drum', () => {
+  it('processes UNDO_LAUNCH for the left drum and removes the last record', () => {
     const state = {
       ...initialState,
       leftHistory: [
@@ -90,11 +90,26 @@ describe('winchReducer', () => {
     expect(result.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:15:00Z' }]);
   });
 
+  it('processes UNDO_LAUNCH for the right drum and removes the last record', () => {
+    const state = {
+      ...initialState,
+      rightHistory: [
+        { id: 201, timestamp: '2026-08-30T10:15:00Z' },
+        { id: 202, timestamp: '2026-08-30T10:25:00Z' },
+      ],
+    };
+
+    const action: WinchAction = { type: 'UNDO_LAUNCH', payload: { drum: 'right' } };
+    const result = winchReducer(state, action);
+
+    expect(result.rightHistory).toEqual([{ id: 201, timestamp: '2026-08-30T10:15:00Z' }]);
+  });
+
   it('handles UNDO_LAUNCH gracefully when the target history stack is empty', () => {
-    const action: WinchAction = { type: 'UNDO_LAUNCH', payload: { drum: 'left' } };
+    const action: WinchAction = { type: 'UNDO_LAUNCH', payload: { drum: 'right' } };
     const result = winchReducer(initialState, action);
 
-    expect(result.leftHistory).toEqual([]);
+    expect(result.rightHistory).toEqual([]);
   });
 
   it('processes CHANGE_TRAINEE and updates the traineeSn field', () => {
@@ -104,7 +119,6 @@ describe('winchReducer', () => {
     const result = winchReducer(initialState, action);
 
     expect(result.traineeSn).toBe('TRN-8080');
-    // Ensure rest of state is untouched
     expect(result.squadron).toBe(initialState.squadron);
     expect(result.leftHistory).toEqual(initialState.leftHistory);
   });
