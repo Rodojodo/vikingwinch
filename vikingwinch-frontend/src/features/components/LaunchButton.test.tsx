@@ -10,7 +10,7 @@ describe('LaunchButton', () => {
         onClick: vi.fn(),
         isLoading: false,
         label: 'Left Drum',
-        mode: 'default' as const,
+        mode: 'default' as LaunchButtonMode,
     };
 
     beforeEach(() => {
