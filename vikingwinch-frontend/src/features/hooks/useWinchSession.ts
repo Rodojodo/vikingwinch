@@ -1,22 +1,20 @@
 import {useReducer, useState} from 'react';
-import type { DrumPosition, LaunchPayload } from '../types';
-import { postLaunchToDb, removeLaunchFromDb } from '../api/dataClient';
+import type {DayLogPayload, DrumPosition, LaunchPayload} from '../types';
+import {postLaunchToDb, postTraineeChangeToDb, removeLaunchFromDb} from '../api/dataClient';
 import { initialState, winchReducer } from '../state/winchReducer';
-
 
 export const useWinchSession = () => {
     const [state, dispatch] = useReducer(winchReducer, initialState);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-
     // --- Derived State Computations ---
     const leftLaunches = state.leftHistory.length;
     const rightLaunches = state.rightHistory.length;
-    
+
     const leftLastRecord = state.leftHistory[leftLaunches - 1];
     const rightLastRecord = state.rightHistory[rightLaunches - 1];
-    
+
     const leftLast = leftLastRecord?.timestamp ?? null;
     const rightLast = rightLastRecord?.timestamp ?? null;
 
@@ -25,12 +23,11 @@ export const useWinchSession = () => {
         if (!leftLastRecord) lastDrum = 'right';
         else if (!rightLastRecord) lastDrum = 'left';
         else {
-        const leftTime = leftLast ? new Date(leftLast).getTime() : 0;
-        const rightTime = rightLast ? new Date(rightLast).getTime() : 0;
-        lastDrum = leftTime > rightTime ? 'left' : 'right';
+            const leftTime = leftLast ? new Date(leftLast).getTime() : 0;
+            const rightTime = rightLast ? new Date(rightLast).getTime() : 0;
+            lastDrum = leftTime > rightTime ? 'left' : 'right';
         }
     }
-
 
     // --- Actions ---
     const executeLaunch = async (drum: DrumPosition, burn: boolean = false) => {
@@ -83,18 +80,46 @@ export const useWinchSession = () => {
         }
     }
 
+    const changeTrainee = async (traineeSn: string) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const payload: DayLogPayload = {
+                squadron_id: state.squadron,
+                winch_id: state.winchId,
+                operator_id: state.operatorSn,
+                trainee: traineeSn,
+                type: 'sign_on',
+                cable_check: null,
+                hours: null,
+            };
+
+            const responseData = await postTraineeChangeToDb(payload, state.winchId);
+
+            dispatch({ type: 'CHANGE_TRAINEE', payload: responseData });
+
+            return responseData;
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Trainee change failed');
+            throw err;
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
     return {
         state,
         derived: {
-        leftLaunches,
-        rightLaunches,
-        leftLast,
-        rightLast,
-        lastDrum,
+            leftLaunches,
+            rightLaunches,
+            leftLast,
+            rightLast,
+            lastDrum,
         },
         isLoading,
         error,
         executeLaunch,
         undoLaunch,
+        changeTrainee,
     };
 };
