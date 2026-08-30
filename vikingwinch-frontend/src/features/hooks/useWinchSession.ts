@@ -1,6 +1,6 @@
 import {useReducer, useState} from 'react';
-import type { DrumPosition, LaunchPayload } from '../types';
-import { postLaunchToDb, removeLaunchFromDb } from '../api/dataClient';
+import type {DayLogPayload, DayLogType, DrumPosition, LaunchPayload} from '../types';
+import {postLaunchToDb, postTraineeChangeToDb, removeLaunchFromDb} from '../api/dataClient';
 import { initialState, winchReducer } from '../state/winchReducer';
 
 
@@ -83,6 +83,37 @@ export const useWinchSession = () => {
         }
     }
 
+
+
+    const changeTrainee = async (traineeSn: string) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const payload: DayLogPayload = {
+                squadron_id: state.squadron,
+                winch_id: state.winchId,
+                operator_id: state.operatorSn,
+                trainee: traineeSn,
+                'type': 'sign_on',
+                cable_check: null,
+                hours: null,
+            };
+
+            const responseData = await postTraineeChangeToDb(payload, state.winchId);
+
+
+            dispatch({ type: 'CHANGE_TRAINEE', payload: responseData });
+
+
+            return responseData;
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Launch execution failed');
+            throw err;
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
     return {
         state,
         derived: {
@@ -96,5 +127,6 @@ export const useWinchSession = () => {
         error,
         executeLaunch,
         undoLaunch,
+        changeTrainee,
     };
 };
