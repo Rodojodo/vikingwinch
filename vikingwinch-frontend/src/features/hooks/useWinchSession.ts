@@ -1,6 +1,6 @@
-import {useReducer, useState} from 'react';
-import type {DayLogPayload, DrumPosition, LaunchPayload} from '../types';
-import {postLaunchToDb, postTraineeChangeToDb, removeLaunchFromDb} from '../api/dataClient';
+import {useReducer, useState, useMemo, useCallback} from 'react';
+import type {DayLogPayload, DrumPosition, LaunchPayload, RemarkPayload} from '../types';
+import {postLaunchToDb, postRemarkToDb, postTraineeChangeToDb, removeLaunchFromDb} from '../api/dataClient';
 import { initialState, winchReducer } from '../state/winchReducer';
 
 export const useWinchSession = () => {
@@ -8,32 +8,39 @@ export const useWinchSession = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // --- Derived State Computations ---
-    const leftLaunches = state.leftHistory.length;
-    const rightLaunches = state.rightHistory.length;
+    const derived = useMemo(() => {
+        const leftLaunches = state.leftHistory.length;
+        const rightLaunches = state.rightHistory.length;
+        const leftLastRecord = state.leftHistory[leftLaunches - 1];
+        const rightLastRecord = state.rightHistory[rightLaunches - 1];
+        const leftLast = leftLastRecord?.timestamp ?? null;
+        const rightLast = rightLastRecord?.timestamp ?? null;
 
-    const leftLastRecord = state.leftHistory[leftLaunches - 1];
-    const rightLastRecord = state.rightHistory[rightLaunches - 1];
-
-    const leftLast = leftLastRecord?.timestamp ?? null;
-    const rightLast = rightLastRecord?.timestamp ?? null;
-
-    let lastDrum: DrumPosition | null = null;
-    if (leftLastRecord || rightLastRecord) {
-        if (!leftLastRecord) lastDrum = 'right';
-        else if (!rightLastRecord) lastDrum = 'left';
-        else {
-            const leftTime = leftLast ? new Date(leftLast).getTime() : 0;
-            const rightTime = rightLast ? new Date(rightLast).getTime() : 0;
-            lastDrum = leftTime > rightTime ? 'left' : 'right';
+        let lastDrum: DrumPosition | null = null;
+        if (leftLastRecord || rightLastRecord) {
+            if (!leftLastRecord) lastDrum = 'right';
+            else if (!rightLastRecord) lastDrum = 'left';
+            else {
+                const leftTime = leftLast ? new Date(leftLast).getTime() : 0;
+                const rightTime = rightLast ? new Date(rightLast).getTime() : 0;
+                lastDrum = leftTime > rightTime ? 'left' : 'right';
+            }
         }
-    }
 
-    // --- Actions ---
-    const executeLaunch = async (drum: DrumPosition, burn: boolean = false) => {
+        return {
+            leftLaunches,
+            rightLaunches,
+            leftLast,
+            rightLast,
+            lastDrum,
+            leftLastRecord,
+            rightLastRecord
+        };
+    }, [state.leftHistory, state.rightHistory]);
+
+    const executeLaunch = useCallback(async (drum: DrumPosition, burn: boolean = false) => {
         setIsLoading(true);
         setError(null);
-
         try {
             const payload: LaunchPayload = {
                 squadron_id: state.squadron,
@@ -42,13 +49,10 @@ export const useWinchSession = () => {
                 drum,
                 burn,
             };
-
             const responseData = await postLaunchToDb(payload);
-
             if (!burn) {
                 dispatch({ type: 'RECORD_LAUNCH', payload: responseData });
             }
-
             return responseData;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Launch execution failed');
@@ -56,19 +60,16 @@ export const useWinchSession = () => {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [state.squadron, state.winchId, state.operatorSn]);
 
-    const undoLaunch = async (drum: DrumPosition) => {
-        const targetRecord = drum === 'left' ? leftLastRecord : rightLastRecord;
-
+    const undoLaunch = useCallback(async (drum: DrumPosition) => {
+        const targetRecord = drum === 'left' ? derived.leftLastRecord : derived.rightLastRecord;
         if (!targetRecord) {
             setError(`No recorded launches to undo on ${drum} drum.`);
             return;
         }
-
         setIsLoading(true);
         setError(null);
-
         try {
             await removeLaunchFromDb(targetRecord.id);
             dispatch({ type: 'UNDO_LAUNCH', payload: { drum } });
@@ -78,9 +79,9 @@ export const useWinchSession = () => {
         } finally {
             setIsLoading(false);
         }
-    }
+    }, [derived.leftLastRecord, derived.rightLastRecord]);
 
-    const changeTrainee = async (traineeSn: string) => {
+    const changeTrainee = useCallback(async (traineeSn: string) => {
         setIsLoading(true);
         setError(null);
         try {
@@ -93,11 +94,8 @@ export const useWinchSession = () => {
                 cable_check: null,
                 hours: null,
             };
-
             const responseData = await postTraineeChangeToDb(payload, state.winchId);
-
             dispatch({ type: 'CHANGE_TRAINEE', payload: responseData });
-
             return responseData;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Trainee change failed');
@@ -105,21 +103,44 @@ export const useWinchSession = () => {
         } finally {
             setIsLoading(false);
         }
-    }
+    }, [state.squadron, state.winchId, state.operatorSn]);
+
+    const addRemark = useCallback(async (remark: string | null, drum: DrumPosition) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const targetRecord = drum === 'left' ? derived.leftLastRecord : derived.rightLastRecord;
+            if (!targetRecord) {
+                throw new Error(`No launch recorded on ${drum} drum.`);
+            }
+            const payload: RemarkPayload = {
+                launch_id: targetRecord.id,
+                winch_id: state.winchId,
+                remark: remark,
+            };
+            await postRemarkToDb(payload);
+
+            // Explicitly define parameters instead of passing the raw API response object
+            dispatch({
+                type: 'ADD_REMARK',
+                payload: { drum, id: targetRecord.id, remark }
+            });
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Add remark failed');
+            throw err;
+        } finally {
+            setIsLoading(false);
+        }
+    }, [derived.leftLastRecord, derived.rightLastRecord, state.winchId]);
 
     return {
         state,
-        derived: {
-            leftLaunches,
-            rightLaunches,
-            leftLast,
-            rightLast,
-            lastDrum,
-        },
+        derived,
         isLoading,
         error,
         executeLaunch,
         undoLaunch,
         changeTrainee,
+        addRemark,
     };
 };

@@ -12,6 +12,7 @@ export interface LaunchResponse extends LaunchPayload {
   id: number;
   launch_number: number;
   timestamp: string | null;
+  remark: string | null;
 }
 
 export type DayLogType = 'finish_day' | 'di' | 'sign_on';
@@ -36,4 +37,10 @@ export interface DayLogResponse {
   cable_check: string | null;
   hours: number| null;
   timestamp: string | null;
+}
+
+export interface RemarkPayload {
+  launch_id: number;
+  winch_id: number;
+  remark: string | null;
 }
