@@ -42,16 +42,20 @@ describe('RemarksPanel', () => {
         expect(mockAddRemark).toHaveBeenCalledWith('Test remark', 'left');
     });
 
-    it('shows error alert when error is present', () => {
-        vi.mocked(useWinchSession).mockReturnValue({
-            addRemark: mockAddRemark,
-            isLoading: false,
-            error: 'Test Error',
-            derived: { leftLaunches: 1, rightLaunches: 1 },
-        } as any);
-
+    it('shows error alert when submission fails', async () => {
+        mockAddRemark.mockRejectedValue(new Error('Test local Error'));
         render(<RemarksPanel />);
-        expect(screen.getByText('Test Error')).toBeInTheDocument();
+        
+        fireEvent.change(screen.getByPlaceholderText('Enter launch remarks...'), {
+            target: { value: 'Test remark' },
+        });
+
+        const submitButton = screen.getByRole('button', { name: /Submit Remark/i });
+        fireEvent.click(submitButton);
+
+        await waitFor(() => {
+            expect(screen.getByText('Test local Error')).toBeInTheDocument();
+        });
     });
 
     it('disables submit button and shows text when no launches', () => {

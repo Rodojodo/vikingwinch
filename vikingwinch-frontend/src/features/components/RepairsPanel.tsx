@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, FormControl, Grid, MenuItem, Select, TextField, Typography, Alert, Stack } from '@mui/material';
+import { Box, Button, FormControl, Grid, MenuItem, Select, TextField, Typography, Alert, Stack, CircularProgress } from '@mui/material';
 import { DrumToggleGroup } from './DrumToggleGroup';
 import type { DrumPosition, OperatorRead } from '../types';
 import { darkSelectStyles, darkTextFieldStyles } from '../../themes/styles';
@@ -7,53 +7,75 @@ import { useWinchSession } from '../hooks/useWinchSession';
 import { getOperatorsForSquadron } from '../api/dataClient';
 
 export const RepairsPanel: React.FC = () => {
-    const { addRemark, isLoading, error, derived, state } = useWinchSession();
+    const { addRemark, isLoading, derived, state } = useWinchSession();
     const [repair, setRepair] = useState<string>('');
     const [drum, setDrum] = useState<DrumPosition>('left');
     
     const [operators, setOperators] = useState<OperatorRead[]>([]);
-    const [driver, setDriver] = useState<string>('');
+    const [worker, setWorker] = useState<string>('');
     const [supervisor, setSupervisor] = useState<string>('none');
-    const [fetchError, setFetchError] = useState<string | null>(null);
+    
+    const [localError, setLocalError] = useState<string | null>(null);
+    const [isFetchingOperators, setIsFetchingOperators] = useState(false);
 
     const hasLaunches = drum === 'left' ? derived.leftLaunches > 0 : derived.rightLaunches > 0;
 
     useEffect(() => {
-        if (state.squadron) {
-            getOperatorsForSquadron(state.squadron)
-                .then(setOperators)
-                .catch(() => setFetchError('Failed to load operators'));
-        }
+        if (!state.squadron) return;
+
+        const controller = new AbortController();
+        setIsFetchingOperators(true);
+        setLocalError(null);
+
+        getOperatorsForSquadron(state.squadron)
+            .then((data) => {
+                if (!controller.signal.aborted) {
+                    setOperators(data);
+                }
+            })
+            .catch((err) => {
+                if (!controller.signal.aborted) {
+                    setLocalError('Failed to load operators');
+                }
+            })
+            .finally(() => {
+                if (!controller.signal.aborted) {
+                    setIsFetchingOperators(false);
+                }
+            });
+
+        return () => controller.abort();
     }, [state.squadron]);
 
     const handleSubmit = async () => {
-        if (!repair.trim() || !hasLaunches || !driver) return;
+        if (!repair.trim() || !hasLaunches || !worker) return;
         
-        let remarkText = `Repair: ${repair} | Worker: ${driver}`;
+        let remarkText = `Repair: ${repair} | Worker: ${worker}`;
         if (supervisor !== 'none') {
             remarkText += ` | Sup: ${supervisor}`;
         }
         
+        setLocalError(null);
         try {
             await addRemark(remarkText, drum);
             setRepair('');
-            setDriver('');
+            setWorker('');
             setSupervisor('none');
         } catch (err) {
-            // Error state is captured by useWinchSession and rendered below
+            setLocalError(err instanceof Error ? err.message : 'Failed to submit repair');
         }
     };
 
-    const isSubmitDisabled = isLoading || !repair.trim() || !hasLaunches || !driver || (driver === supervisor && supervisor !== 'none');
+    const isSubmitDisabled = isLoading || !repair.trim() || !hasLaunches || !worker || (worker === supervisor && supervisor !== 'none');
 
     return (
         <Box sx={{ mt: 2 }}>
             <Typography variant="subtitle2" sx={{ color: '#8b9bb4', mb: 1 }}>
                 Repair details
             </Typography>
-            {(error || fetchError) && (
+            {localError && (
                 <Alert severity="error" sx={{ mb: 2 }}>
-                    {error || fetchError}
+                    {localError}
                 </Alert>
             )}
             <TextField
@@ -79,15 +101,18 @@ export const RepairsPanel: React.FC = () => {
 
             <Grid container spacing={2}>
                 <Grid size={6}>
-                    <Typography variant="subtitle2" sx={{ color: '#8b9bb4', mb: 1 }}>Work c/o by (driver)</Typography>
+                    <Typography variant="subtitle2" sx={{ color: '#8b9bb4', mb: 1 }}>Work c/o by (worker)</Typography>
                     <FormControl fullWidth size="small">
                         <Select 
                             displayEmpty
-                            value={driver} 
-                            onChange={(e) => setDriver(e.target.value)} 
+                            value={worker} 
+                            onChange={(e) => setWorker(e.target.value)} 
                             sx={darkSelectStyles}
+                            disabled={isFetchingOperators}
                         >
-                            <MenuItem value="" disabled>Select worker...</MenuItem>
+                            <MenuItem value="" disabled>
+                                {isFetchingOperators ? 'Loading...' : 'Select worker...'}
+                            </MenuItem>
                             {operators.map(op => (
                                 <MenuItem 
                                     key={op.sn} 
@@ -108,13 +133,16 @@ export const RepairsPanel: React.FC = () => {
                             value={supervisor}
                             onChange={(e) => setSupervisor(e.target.value)}
                             sx={darkSelectStyles}
+                            disabled={isFetchingOperators}
                         >
-                            <MenuItem value="none">No supervisor</MenuItem>
+                            <MenuItem value="none">
+                                {isFetchingOperators ? 'Loading...' : 'No supervisor'}
+                            </MenuItem>
                             {operators.map(op => (
                                 <MenuItem 
                                     key={op.sn} 
                                     value={op.sn} 
-                                    disabled={op.sn === driver && driver !== ''}
+                                    disabled={op.sn === worker && worker !== ''}
                                 >
                                     {op.name}
                                 </MenuItem>

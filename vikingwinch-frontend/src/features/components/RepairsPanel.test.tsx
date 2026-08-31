@@ -103,17 +103,36 @@ describe('RepairsPanel', () => {
         expect(mockAddRemark).toHaveBeenCalledWith('Repair: cable fix | Worker: 123', 'left');
     });
 
-    it('shows error alert when error is present', () => {
+    it('shows error alert when submission fails', async () => {
+        const mockErrorAdd = vi.fn().mockRejectedValue(new Error('Test local Error'));
         vi.mocked(useWinchSession).mockReturnValue({
-            addRemark: mockAddRemark,
+            addRemark: mockErrorAdd,
             isLoading: false,
-            error: 'Test Error',
             derived: { leftLaunches: 1, rightLaunches: 1 },
             state: { squadron: 'sqn1' }
         } as any);
 
         render(<RepairsPanel />);
-        expect(screen.getByText('Test Error')).toBeInTheDocument();
+        
+        await waitFor(() => {
+            expect(getOperatorsForSquadron).toHaveBeenCalled();
+        });
+
+        fireEvent.change(screen.getByPlaceholderText('Describe the repair carried out...'), {
+            target: { value: 'test' },
+        });
+
+        const comboboxes = screen.getAllByRole('combobox');
+        fireEvent.mouseDown(comboboxes[0]);
+        const listbox = within(await screen.findByRole('presentation')).getByRole('listbox');
+        fireEvent.click(within(listbox).getByText('Joe Bloggs'));
+
+        const submitButton = screen.getByRole('button', { name: /Sign as Supervisor/i });
+        fireEvent.click(submitButton);
+
+        await waitFor(() => {
+            expect(screen.getByText('Test local Error')).toBeInTheDocument();
+        });
     });
 
     it('shows fetch error alert when getOperators fails', async () => {

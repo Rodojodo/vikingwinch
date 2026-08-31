@@ -6,7 +6,7 @@ import { darkTextFieldStyles } from '../../themes/styles';
 import { useWinchSession } from '../hooks/useWinchSession';
 
 export const RemarksPanel: React.FC = () => {
-    const { addRemark, isLoading, error, derived } = useWinchSession();
+    const { addRemark, isLoading, derived } = useWinchSession();
     const [remark, setRemark] = useState<string>('');
     const [drum, setDrum] = useState<DrumPosition>('left');
 
@@ -27,7 +27,7 @@ export const RemarksPanel: React.FC = () => {
             await addRemark(remark, drum);
             setRemark('');
         } catch (err) {
-            // Error state is captured by useWinchSession and rendered below
+            setLocalError(err instanceof Error ? err.message : 'Failed to submit remark');
         }
     };
 
@@ -36,9 +36,9 @@ export const RemarksPanel: React.FC = () => {
             <Typography variant="subtitle2" sx={{ color: '#8b9bb4', mb: 1 }}>
                 Launch remarks
             </Typography>
-            {(error || localError) && (
+            {localError && (
                 <Alert severity="error" sx={{ mb: 2 }}>
-                    {localError || error}
+                    {localError}
                 </Alert>
             )}
             <TextField

@@ -13,27 +13,28 @@ describe('RemarksRepairsPanel', () => {
         render(<RemarksRepairsPanel />);
         
         // Starts with no panel showing
-        expect(screen.queryByPlaceholderText('Enter launch remarks...')).not.toBeInTheDocument();
+        expect(screen.getByPlaceholderText('Enter launch remarks...')).not.toBeVisible();
         
         // Open Remarks
         fireEvent.click(screen.getByRole('button', { name: /Remarks/i }));
         
-        // Assume RemarksPanel renders something we can query (like the placeholder text)
-        expect(screen.getByText('Launch remarks')).toBeInTheDocument();
+        expect(screen.getByText('Launch remarks')).toBeVisible();
         
         // Click Remarks again to close
         fireEvent.click(screen.getByRole('button', { name: /Remarks/i }));
         
         // Panel should be hidden
-        expect(screen.queryByText('Launch remarks')).not.toBeInTheDocument();
+        expect(screen.getByText('Launch remarks')).not.toBeVisible();
     });
 
     it('toggles Repairs panel', () => {
         render(<RemarksRepairsPanel />);
         
+        expect(screen.getByText('Repair details')).not.toBeVisible();
+
         // Open Repairs
         fireEvent.click(screen.getByRole('button', { name: /Repairs/i }));
         
-        expect(screen.getByText('Repair details')).toBeInTheDocument();
+        expect(screen.getByText('Repair details')).toBeVisible();
     });
 });

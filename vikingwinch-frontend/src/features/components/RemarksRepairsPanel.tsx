@@ -34,20 +34,23 @@ export const RemarksRepairsPanel: React.FC = () => {
         </Button>
       </Stack>
 
-      {activePanel && (
-        <Box
-          sx={{
-            mt: 2,
-            p: 3,
-            backgroundColor: '#1c2536',
-            border: '1px solid #2f3a4e',
-            borderRadius: 3,
-          }}
-        >
-          {activePanel === 'remarks' && <RemarksPanel />}
-          {activePanel === 'repairs' && <RepairsPanel />}
+      <Box
+        sx={{
+          mt: 2,
+          p: 3,
+          backgroundColor: '#1c2536',
+          border: '1px solid #2f3a4e',
+          borderRadius: 3,
+          display: activePanel ? 'block' : 'none',
+        }}
+      >
+        <Box sx={{ display: activePanel === 'remarks' ? 'block' : 'none' }}>
+          <RemarksPanel />
         </Box>
-      )}
+        <Box sx={{ display: activePanel === 'repairs' ? 'block' : 'none' }}>
+          <RepairsPanel />
+        </Box>
+      </Box>
     </Box>
   );
 };
