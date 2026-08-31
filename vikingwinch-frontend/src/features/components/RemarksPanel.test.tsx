@@ -91,4 +91,18 @@ describe('RemarksPanel', () => {
         const submitButton = screen.getByRole('button', { name: /Submit Remark/i });
         expect(submitButton).toBeDisabled();
     });
+
+    it('blocks remarks starting with Repair', () => {
+        render(<RemarksPanel />);
+        
+        fireEvent.change(screen.getByPlaceholderText('Enter launch remarks...'), {
+            target: { value: 'Repair: broken cable' },
+        });
+
+        const submitButton = screen.getByRole('button', { name: /Submit Remark/i });
+        fireEvent.click(submitButton);
+
+        expect(mockAddRemark).not.toHaveBeenCalled();
+        expect(screen.getByText('Repairs should be logged in the Repairs tab')).toBeInTheDocument();
+    });
 });

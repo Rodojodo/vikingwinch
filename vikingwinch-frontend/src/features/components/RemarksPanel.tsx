@@ -12,8 +12,17 @@ export const RemarksPanel: React.FC = () => {
 
     const hasLaunches = drum === 'left' ? derived.leftLaunches > 0 : derived.rightLaunches > 0;
 
+    const [localError, setLocalError] = useState<string | null>(null);
+
     const handleSubmit = async () => {
         if (!remark.trim() || !hasLaunches) return;
+        
+        if (remark.toLowerCase().startsWith('repair')) {
+            setLocalError('Repairs should be logged in the Repairs tab');
+            return;
+        }
+        
+        setLocalError(null);
         try {
             await addRemark(remark, drum);
             setRemark('');
@@ -27,9 +36,9 @@ export const RemarksPanel: React.FC = () => {
             <Typography variant="subtitle2" sx={{ color: '#8b9bb4', mb: 1 }}>
                 Launch remarks
             </Typography>
-            {error && (
+            {(error || localError) && (
                 <Alert severity="error" sx={{ mb: 2 }}>
-                    {error}
+                    {localError || error}
                 </Alert>
             )}
             <TextField
@@ -42,7 +51,7 @@ export const RemarksPanel: React.FC = () => {
                 sx={darkTextFieldStyles}
             />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mt: 2 }}>
-                <Stack direction="row" spacing={2} alignItems="center">
+                <Stack direction="row" spacing={2} sx={{alignItems: 'center'}}>
                     <DrumToggleGroup value={drum} onChange={setDrum} />
                     {!hasLaunches && (
                         <Typography variant="body2" sx={{ color: '#8b9bb4' }}>

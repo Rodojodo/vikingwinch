@@ -26,6 +26,7 @@ describe('useWinchSession', () => {
     drum,
     burn,
     timestamp,
+    remark: null,
   });
 
   const createMockDayLogResponse = (trainee: string, id: number, timestamp: string): DayLogResponse => ({
@@ -289,7 +290,6 @@ describe('useWinchSession', () => {
 
   it('adds a remark successfully to the last launch on the specified drum', async () => {
     vi.mocked(postLaunchToDb).mockResolvedValueOnce(createMockLaunchResponse('left', 101, '2026-08-30T09:00:00Z'));
-    const { importActual } = await import('vitest');
     const { postRemarkToDb } = await import('../api/dataClient');
     
     vi.mocked(postRemarkToDb).mockResolvedValueOnce({} as any);
