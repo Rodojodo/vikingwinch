@@ -104,4 +104,17 @@ describe('LoginScreen', () => {
         fireEvent.click(screen.getByText('Log Out'));
         expect(logoutRedirectMock).toHaveBeenCalledTimes(1);
     });
+
+    it('does not fetch user data if inProgress is not none', async () => {
+        vi.mocked(msalReact.useMsal).mockReturnValue({
+            instance: { acquireTokenSilent: acquireTokenMock } as any,
+            accounts: [{ name: 'Joe Bloggs', username: 'joe@example.com' } as any],
+            inProgress: 'login',
+        } as any);
+
+        render(<LoginScreen />);
+
+        expect(acquireTokenMock).not.toHaveBeenCalled();
+        expect(getUserDepartment).not.toHaveBeenCalled();
+    });
 });
