@@ -9,6 +9,7 @@ vi.mock('../api/dataClient', () => ({
   postLaunchToDb: vi.fn(),
   removeLaunchFromDb: vi.fn(),
   postTraineeChangeToDb: vi.fn(),
+  postRemarkToDb: vi.fn(),
 }));
 
 describe('useWinchSession', () => {
@@ -25,6 +26,7 @@ describe('useWinchSession', () => {
     drum,
     burn,
     timestamp,
+    remark: null,
   });
 
   const createMockDayLogResponse = (trainee: string, id: number, timestamp: string): DayLogResponse => ({
@@ -73,7 +75,7 @@ describe('useWinchSession', () => {
       burn: false,
     });
 
-    expect(result.current.state.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:15:00Z' }]);
+    expect(result.current.state.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:15:00Z', remark: null }]);
     expect(result.current.derived.leftLaunches).toBe(1);
     expect(result.current.derived.leftLast).toBe('2026-08-30T09:15:00Z');
     expect(result.current.derived.lastDrum).toBe('left');
@@ -90,7 +92,7 @@ describe('useWinchSession', () => {
       await result.current.executeLaunch('right', false);
     });
 
-    expect(result.current.state.rightHistory).toEqual([{ id: 102, timestamp: '2026-08-30T10:15:00Z' }]);
+    expect(result.current.state.rightHistory).toEqual([{ id: 102, timestamp: '2026-08-30T10:15:00Z', remark: null }]);
     expect(result.current.derived.rightLaunches).toBe(1);
     expect(result.current.derived.rightLast).toBe('2026-08-30T10:15:00Z');
     expect(result.current.derived.lastDrum).toBe('right');
@@ -134,7 +136,7 @@ describe('useWinchSession', () => {
     });
 
     expect(removeLaunchFromDb).toHaveBeenCalledWith(102);
-    expect(result.current.state.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:00:00Z' }]);
+    expect(result.current.state.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:00:00Z', remark: null }]);
     expect(result.current.derived.leftLaunches).toBe(1);
     expect(result.current.derived.leftLast).toBe('2026-08-30T09:00:00Z');
   });
@@ -284,5 +286,79 @@ describe('useWinchSession', () => {
     });
 
     expect(result.current.error).toBe('Trainee change failed');
+  });
+
+  it('adds a remark successfully to the last launch on the specified drum', async () => {
+    vi.mocked(postLaunchToDb).mockResolvedValueOnce(createMockLaunchResponse('left', 101, '2026-08-30T09:00:00Z'));
+    const { postRemarkToDb } = await import('../api/dataClient');
+    
+    vi.mocked(postRemarkToDb).mockResolvedValueOnce({} as any);
+    
+    const { result } = renderHook(() => useWinchSession());
+    
+    await act(async () => {
+      await result.current.executeLaunch('left', false);
+    });
+
+    await act(async () => {
+      await result.current.addRemark('Cable dropped', 'left');
+    });
+
+    expect(postRemarkToDb).toHaveBeenCalledTimes(1);
+    expect(postRemarkToDb).toHaveBeenCalledWith({
+      launch_id: 101,
+      winch_id: initialState.winchId,
+      remark: 'Cable dropped',
+    });
+
+    expect(result.current.state.leftHistory[0].remark).toBe('Cable dropped');
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
+
+  it('fails to add remark if there are no launches on that drum', async () => {
+    const { result } = renderHook(() => useWinchSession());
+
+    await act(async () => {
+      await expect(result.current.addRemark('Cable dropped', 'right')).rejects.toThrow('No launch recorded on right drum.');
+    });
+
+    expect(result.current.error).toBe('No launch recorded on right drum.');
+  });
+
+  it('handles API rejection during addRemark and throws standard Error', async () => {
+    vi.mocked(postLaunchToDb).mockResolvedValueOnce(createMockLaunchResponse('left', 101, '2026-08-30T09:00:00Z'));
+    const { postRemarkToDb } = await import('../api/dataClient');
+    vi.mocked(postRemarkToDb).mockRejectedValueOnce(new Error('Network Error'));
+
+    const { result } = renderHook(() => useWinchSession());
+
+    await act(async () => {
+      await result.current.executeLaunch('left', false);
+    });
+
+    await act(async () => {
+      await expect(result.current.addRemark('Cable dropped', 'left')).rejects.toThrow('Network Error');
+    });
+
+    expect(result.current.error).toBe('Network Error');
+  });
+
+  it('falls back to default error message if addRemark throws non-Error', async () => {
+    vi.mocked(postLaunchToDb).mockResolvedValueOnce(createMockLaunchResponse('left', 101, '2026-08-30T09:00:00Z'));
+    const { postRemarkToDb } = await import('../api/dataClient');
+    vi.mocked(postRemarkToDb).mockRejectedValueOnce('Some string error');
+
+    const { result } = renderHook(() => useWinchSession());
+
+    await act(async () => {
+      await result.current.executeLaunch('left', false);
+    });
+
+    await act(async () => {
+      await expect(result.current.addRemark('Cable dropped', 'left')).rejects.toEqual('Some string error');
+    });
+
+    expect(result.current.error).toBe('Add remark failed');
   });
 });

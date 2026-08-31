@@ -14,7 +14,7 @@ export const winchReducer = (state: WinchLogState, action: WinchAction): WinchLo
     switch (action.type) {
         case 'RECORD_LAUNCH': {
             const {drum, timestamp, id} = action.payload;
-            const record: LaunchRecord = {id, timestamp};
+            const record: LaunchRecord = {id, timestamp, remark: null};
 
             if (drum === 'left') {
                 return {...state, leftHistory: [...state.leftHistory, record]};
@@ -33,6 +33,22 @@ export const winchReducer = (state: WinchLogState, action: WinchAction): WinchLo
             return {...state, traineeSn: action.payload.trainee };
         }
 
+        case 'ADD_REMARK': {
+            const { drum, id, remark } = action.payload;
+            const updateHistory = (history: LaunchRecord[]) =>
+                history.map(record => {
+                    if (record.id === id) {
+                        const newRemark = record.remark ? `${record.remark} | ${remark}` : remark;
+                        return { ...record, remark: newRemark };
+                    }
+                    return record;
+                });
+
+            if (drum === 'left') {
+                return { ...state, leftHistory: updateHistory(state.leftHistory) };
+            }
+            return { ...state, rightHistory: updateHistory(state.rightHistory) };
+        }
         default:
             return state;
     }

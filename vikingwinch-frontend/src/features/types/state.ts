@@ -4,6 +4,7 @@ import type {DayLogResponse, LaunchResponse} from './api';
 export interface LaunchRecord {
   id: number;
   timestamp: string | null;
+  remark: string | null;
 }
 
 export interface WinchLogState {
@@ -19,7 +20,8 @@ export interface WinchLogState {
 export type WinchAction =
   | { type: 'RECORD_LAUNCH'; payload: LaunchResponse }
   | { type: 'UNDO_LAUNCH'; payload: { drum: DrumPosition } }
-  | { type: 'CHANGE_TRAINEE'; payload: DayLogResponse };
+  | { type: 'CHANGE_TRAINEE'; payload: DayLogResponse }
+  | { type: 'ADD_REMARK'; payload: { drum: DrumPosition; id: number; remark: string | null } };
 
 
 
