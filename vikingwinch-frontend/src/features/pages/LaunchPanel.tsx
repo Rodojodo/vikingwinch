@@ -1,15 +1,36 @@
 import { Box, Stack, Typography, Chip, Button } from '@mui/material';
+import { useState, useEffect } from 'react';
 import { LaunchButton } from '../components/LaunchButton';
 import { TraineeAssignmentPanel } from '../components/TraineeAssignmentPanel';
 import { RemarksRepairsPanel } from '../components/RemarksRepairsPanel';
+import { WinchDetailsSticker } from '../components/WinchDetailsSticker';
 import { useWinchSession } from '../hooks/useWinchSession';
-
-import EnergySavingsLeafIcon from '@mui/icons-material/EnergySavingsLeaf';
 
 export const LaunchPanel = () => {
     const { derived, isLoading, executeLaunch, undoLaunch, changeTrainee, addRemark, state } = useWinchSession();
     
-    const { leftLaunches, rightLaunches } = derived;
+    const { leftLaunches, rightLaunches, leftLast, rightLast } = derived;
+
+    const [isRecentLaunch, setIsRecentLaunch] = useState(false);
+
+    useEffect(() => {
+        const checkRecent = () => {
+            let latestTime = 0;
+            if (leftLast) latestTime = Math.max(latestTime, new Date(leftLast).getTime());
+            if (rightLast) latestTime = Math.max(latestTime, new Date(rightLast).getTime());
+            
+            if (latestTime > 0) {
+                const diff = Date.now() - latestTime;
+                setIsRecentLaunch(diff < 2.5 * 60 * 1000);
+            } else {
+                setIsRecentLaunch(false);
+            }
+        };
+
+        checkRecent();
+        const interval = setInterval(checkRecent, 1000);
+        return () => clearInterval(interval);
+    }, [leftLast, rightLast]);
 
     const handleLaunchLeft = () => executeLaunch('left');
     const handleLaunchRight = () => executeLaunch('right');
@@ -41,22 +62,11 @@ export const LaunchPanel = () => {
                     Launch Panel
                 </Typography>
                 
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
-                    <Box sx={{
-                        display: 'flex', alignItems: 'center', gap: '6px',
-                        padding: '4px 10px', borderRadius: '20px',
-                        backgroundColor: 'rgba(76, 175, 80, 0.2)',
-                        color: '#4caf50',
-                        fontWeight: 700, fontSize: '13px',
-                        lineHeight: 1
-                    }}>
-                        <EnergySavingsLeafIcon sx={{ fontSize: '16px' }} />
-                        <span>Turn off winch</span>
-                    </Box>
-                    <Typography variant="body1" sx={{ color: '#94a3b8', fontSize: '16px', fontWeight: 500 }}>
-                        Winch 17 — 661 VGS
-                    </Typography>
-                </Box>
+                <WinchDetailsSticker 
+                    isRecentLaunch={isRecentLaunch} 
+                    squadron={state.squadron}
+                    winchId={state.winchId}
+                />
             </Box>
 
             <Stack direction="row" spacing={3} sx={{ width: '100%', justifyContent: 'center' }}>
