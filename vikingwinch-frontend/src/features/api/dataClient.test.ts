@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { postLaunchToDb, removeLaunchFromDb, postTraineeChangeToDb, postRemarkToDb } from '../api/dataClient';
+import { postLaunchToDb, removeLaunchFromDb, postTraineeChangeToDb, postRemarkToDb, getOperatorsForSquadron } from '../api/dataClient';
 import type { LaunchPayload, LaunchResponse, DayLogPayload, DayLogResponse, RemarkPayload } from '../types';
 
 const API_BASE_URL = 'http://127.0.0.1:8000';
@@ -290,5 +290,57 @@ describe('postRemarkToDb', () => {
     } as unknown as Response);
 
     await expect(postRemarkToDb(mockPayload)).rejects.toThrow('Launch ID not found for remark');
+  });
+});
+describe('getOperatorsForSquadron', () => {
+  const squadronId = '123 VGS';
+
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('executes GET request and returns operators array', async () => {
+    const mockOperators = [{ id: 1, name: 'Op 1' }];
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      text: async () => JSON.stringify(mockOperators),
+    } as Response);
+
+    const result = await getOperatorsForSquadron(squadronId);
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledWith(`${API_BASE_URL}/squadrons/${squadronId}/operators`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+    expect(result).toStrictEqual(mockOperators);
+  });
+
+  it('returns empty array if text is empty', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      text: async () => '',
+    } as Response);
+
+    const result = await getOperatorsForSquadron(squadronId);
+    expect(result).toStrictEqual([]);
+  });
+
+  it('returns empty array and logs error on catch', async () => {
+    vi.mocked(fetch).mockRejectedValue(new Error('Network fail'));
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const result = await getOperatorsForSquadron(squadronId);
+
+    expect(consoleSpy).toHaveBeenCalledWith('Failed to fetch operators:', expect.any(Error));
+    expect(result).toStrictEqual([]);
+    consoleSpy.mockRestore();
   });
 });

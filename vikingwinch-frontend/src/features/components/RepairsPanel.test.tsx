@@ -38,7 +38,7 @@ describe('RepairsPanel', () => {
     });
 
     it('renders RepairsPanel correctly', async () => {
-        render(<RepairsPanel />);
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 }} state={{ squadron: 'sqn1' }} />);
         expect(screen.getByText('Repair details')).toBeInTheDocument();
         expect(screen.getByPlaceholderText('Describe the repair carried out...')).toBeInTheDocument();
         
@@ -48,7 +48,7 @@ describe('RepairsPanel', () => {
     });
 
     it('submits repair as remark when button is clicked with worker and supervisor', async () => {
-        render(<RepairsPanel />);
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 }} state={{ squadron: 'sqn1' }} />);
         
         // Wait for operators to load
         await waitFor(() => {
@@ -79,7 +79,7 @@ describe('RepairsPanel', () => {
     });
 
     it('submits repair as remark without supervisor', async () => {
-        render(<RepairsPanel />);
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 }} state={{ squadron: 'sqn1' }} />);
         
         await waitFor(() => {
             expect(getOperatorsForSquadron).toHaveBeenCalled();
@@ -112,7 +112,7 @@ describe('RepairsPanel', () => {
             state: { squadron: 'sqn1' }
         } as any);
 
-        render(<RepairsPanel />);
+        render(<RepairsPanel addRemark={mockErrorAdd} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 }} state={{ squadron: 'sqn1' }} />);
         
         await waitFor(() => {
             expect(getOperatorsForSquadron).toHaveBeenCalled();
@@ -138,7 +138,7 @@ describe('RepairsPanel', () => {
     it('shows fetch error alert when getOperators fails', async () => {
         vi.mocked(getOperatorsForSquadron).mockRejectedValue(new Error('API fail'));
 
-        render(<RepairsPanel />);
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 }} state={{ squadron: 'sqn1' }} />);
         
         await waitFor(() => {
             expect(screen.getByText('Failed to load operators')).toBeInTheDocument();
@@ -154,14 +154,14 @@ describe('RepairsPanel', () => {
             state: { squadron: 'sqn1' }
         } as any);
 
-        render(<RepairsPanel />);
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 0, rightLaunches: 0 }} state={{ squadron: 'sqn1' }} />);
         expect(screen.getByText('No launches yet')).toBeInTheDocument();
         const submitButton = screen.getByRole('button', { name: /Sign as Supervisor/i });
         expect(submitButton).toBeDisabled();
     });
 
     it('does not submit if repair details are empty', () => {
-        render(<RepairsPanel />);
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 }} state={{ squadron: 'sqn1' }} />);
         const submitButton = screen.getByRole('button', { name: /Sign as Supervisor/i });
         expect(submitButton).toBeDisabled();
     });

@@ -24,13 +24,13 @@ describe('RemarksPanel', () => {
     });
 
     it('renders RemarksPanel correctly', () => {
-        render(<RemarksPanel />);
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 }} />);
         expect(screen.getByText('Launch remarks')).toBeInTheDocument();
         expect(screen.getByPlaceholderText('Enter launch remarks...')).toBeInTheDocument();
     });
 
     it('submits remark when button is clicked', async () => {
-        render(<RemarksPanel />);
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 }} />);
         
         fireEvent.change(screen.getByPlaceholderText('Enter launch remarks...'), {
             target: { value: 'Test remark' },
@@ -44,7 +44,7 @@ describe('RemarksPanel', () => {
 
     it('shows error alert when submission fails', async () => {
         mockAddRemark.mockRejectedValue(new Error('Test local Error'));
-        render(<RemarksPanel />);
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 }} />);
         
         fireEvent.change(screen.getByPlaceholderText('Enter launch remarks...'), {
             target: { value: 'Test remark' },
@@ -66,7 +66,7 @@ describe('RemarksPanel', () => {
             derived: { leftLaunches: 0, rightLaunches: 0 },
         } as any);
 
-        render(<RemarksPanel />);
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 0, rightLaunches: 0 }} />);
         expect(screen.getByText('No launches yet')).toBeInTheDocument();
         const submitButton = screen.getByRole('button', { name: /Submit Remark/i });
         expect(submitButton).toBeDisabled();
@@ -74,7 +74,7 @@ describe('RemarksPanel', () => {
     
     it('catches and swallows error thrown by addRemark', async () => {
         mockAddRemark.mockRejectedValue(new Error('Add remark failed'));
-        render(<RemarksPanel />);
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 }} />);
         
         fireEvent.change(screen.getByPlaceholderText('Enter launch remarks...'), {
             target: { value: 'Test remark' },
@@ -91,13 +91,13 @@ describe('RemarksPanel', () => {
     });
 
     it('does not submit if remark is empty', () => {
-        render(<RemarksPanel />);
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 }} />);
         const submitButton = screen.getByRole('button', { name: /Submit Remark/i });
         expect(submitButton).toBeDisabled();
     });
 
     it('blocks remarks starting with Repair', () => {
-        render(<RemarksPanel />);
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 }} />);
         
         fireEvent.change(screen.getByPlaceholderText('Enter launch remarks...'), {
             target: { value: 'Repair: broken cable' },
