@@ -1,8 +1,14 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { postLaunchToDb, removeLaunchFromDb, postTraineeChangeToDb } from '../api/dataClient';
-import type { LaunchPayload, LaunchResponse, DayLogPayload, DayLogResponse } from '../types';
+import { postLaunchToDb, removeLaunchFromDb, postTraineeChangeToDb, postRemarkToDb } from '../api/dataClient';
+import type { LaunchPayload, LaunchResponse, DayLogPayload, DayLogResponse, RemarkPayload } from '../types';
 
 const API_BASE_URL = 'http://127.0.0.1:8000';
+
+const createMockHeaders = (contentType: string | null = 'application/json') => ({
+  get: vi.fn().mockImplementation((key: string) =>
+    key.toLowerCase() === 'content-type' ? contentType : null
+  )
+});
 
 describe('postLaunchToDb', () => {
   const mockPayload: LaunchPayload = {
@@ -21,6 +27,7 @@ describe('postLaunchToDb', () => {
     operator_id: 'OFF-1001',
     drum: 'left',
     burn: false,
+    remark: null,
     timestamp: '2026-08-30T10:00:00Z',
   };
 
@@ -57,8 +64,9 @@ describe('postLaunchToDb', () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: false,
       status: 422,
+      headers: createMockHeaders(),
       json: async () => ({ detail: 'Invalid winch configuration' }),
-    } as Response);
+    } as unknown as Response);
 
     await expect(postLaunchToDb(mockPayload)).rejects.toThrow('Invalid winch configuration');
   });
@@ -67,12 +75,51 @@ describe('postLaunchToDb', () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: false,
       status: 500,
+      headers: createMockHeaders('text/plain'),
       json: async () => {
         throw new Error('Unexpected token');
+      },
+      text: async () => 'Raw internal server error trace',
+    } as unknown as Response);
+
+    await expect(postLaunchToDb(mockPayload)).rejects.toThrow('HTTP error: 500 - Raw internal server error trace');
+  });
+
+  it('falls back to HTTP status when backend returns JSON without detail', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      status: 400,
+      headers: createMockHeaders('application/json'),
+      json: async () => ({ otherField: 'something' }),
+    } as unknown as Response);
+
+    await expect(postLaunchToDb(mockPayload)).rejects.toThrow('HTTP error: 400');
+  });
+
+  it('falls back to HTTP status when json parsing throws', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      status: 500,
+      headers: createMockHeaders('application/json'),
+      json: async () => {
+        throw new Error('Unexpected end of JSON input');
       },
     } as unknown as Response);
 
     await expect(postLaunchToDb(mockPayload)).rejects.toThrow('HTTP error: 500');
+  });
+
+  it('falls back to HTTP status when text parsing throws', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      status: 503,
+      headers: createMockHeaders('text/plain'),
+      text: async () => {
+        throw new Error('Cannot read text');
+      },
+    } as unknown as Response);
+
+    await expect(postLaunchToDb(mockPayload)).rejects.toThrow('HTTP error: 503');
   });
 });
 
@@ -109,8 +156,9 @@ describe('removeLaunchFromDb', () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: false,
       status: 404,
+      headers: createMockHeaders(),
       json: async () => ({ detail: `Launch with id ${targetLaunchId} not found` }),
-    } as Response);
+    } as unknown as Response);
 
     await expect(removeLaunchFromDb(targetLaunchId)).rejects.toThrow(
       `Launch with id ${targetLaunchId} not found`
@@ -175,11 +223,72 @@ describe('postTraineeChangeToDb', () => {
     vi.mocked(fetch).mockResolvedValue({
       ok: false,
       status: 400,
+      headers: createMockHeaders(),
       json: async () => ({ detail: 'Invalid log sequence' }),
-    } as Response);
+    } as unknown as Response);
 
     await expect(postTraineeChangeToDb(mockDayLogPayload, targetWinchId)).rejects.toThrow(
       'Invalid log sequence'
     );
+  });
+});
+
+describe('postRemarkToDb', () => {
+  const mockPayload: RemarkPayload = {
+    launch_id: 101,
+    winch_id: 1,
+    remark: 'Cable drop early',
+  };
+
+  const mockResponse: LaunchResponse = {
+    id: 101,
+    launch_number: 42,
+    squadron_id: '123 VGS',
+    winch_id: 1,
+    operator_id: 'OFF-1001',
+    drum: 'left',
+    burn: false,
+    remark: 'Cable drop early',
+    timestamp: '2026-08-30T10:00:00Z',
+  };
+
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  it('executes a POST request to add a remark and resolves the updated launch', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      json: async () => mockResponse,
+    } as Response);
+
+    const result = await postRemarkToDb(mockPayload);
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledWith(`${API_BASE_URL}/remarks`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(mockPayload),
+    });
+    expect(result).toStrictEqual(mockResponse);
+  });
+
+  it('throws backend detail message when remark fails validation', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      status: 422,
+      headers: createMockHeaders(),
+      json: async () => ({ detail: 'Launch ID not found for remark' }),
+    } as unknown as Response);
+
+    await expect(postRemarkToDb(mockPayload)).rejects.toThrow('Launch ID not found for remark');
   });
 });

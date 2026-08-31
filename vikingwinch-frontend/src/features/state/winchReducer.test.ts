@@ -12,6 +12,7 @@ describe('winchReducer', () => {
     drum,
     burn: false,
     timestamp,
+    remark: null,
   });
 
   const createDayLogPayload = (trainee: string): DayLogResponse => ({
@@ -39,7 +40,7 @@ describe('winchReducer', () => {
 
     const result = winchReducer(initialState, action);
 
-    expect(result.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:15:00Z' }]);
+    expect(result.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:15:00Z', remark: null }]);
     expect(result.rightHistory).toEqual([]);
   });
 
@@ -49,7 +50,7 @@ describe('winchReducer', () => {
 
     const result = winchReducer(initialState, action);
 
-    expect(result.rightHistory).toEqual([{ id: 102, timestamp: '2026-08-30T10:15:00Z' }]);
+    expect(result.rightHistory).toEqual([{ id: 102, timestamp: '2026-08-30T10:15:00Z', remark: null }]);
     expect(result.leftHistory).toEqual([]);
   });
 
@@ -79,30 +80,30 @@ describe('winchReducer', () => {
     const state = {
       ...initialState,
       leftHistory: [
-        { id: 101, timestamp: '2026-08-30T09:15:00Z' },
-        { id: 102, timestamp: '2026-08-30T09:25:00Z' },
+        { id: 101, timestamp: '2026-08-30T09:15:00Z', remark: null },
+        { id: 102, timestamp: '2026-08-30T09:25:00Z', remark: null },
       ],
     };
 
     const action: WinchAction = { type: 'UNDO_LAUNCH', payload: { drum: 'left' } };
     const result = winchReducer(state, action);
 
-    expect(result.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:15:00Z' }]);
+    expect(result.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:15:00Z', remark: null }]);
   });
 
   it('processes UNDO_LAUNCH for the right drum and removes the last record', () => {
     const state = {
       ...initialState,
       rightHistory: [
-        { id: 201, timestamp: '2026-08-30T10:15:00Z' },
-        { id: 202, timestamp: '2026-08-30T10:25:00Z' },
+        { id: 201, timestamp: '2026-08-30T10:15:00Z', remark: null },
+        { id: 202, timestamp: '2026-08-30T10:25:00Z', remark: null },
       ],
     };
 
     const action: WinchAction = { type: 'UNDO_LAUNCH', payload: { drum: 'right' } };
     const result = winchReducer(state, action);
 
-    expect(result.rightHistory).toEqual([{ id: 201, timestamp: '2026-08-30T10:15:00Z' }]);
+    expect(result.rightHistory).toEqual([{ id: 201, timestamp: '2026-08-30T10:15:00Z', remark: null }]);
   });
 
   it('handles UNDO_LAUNCH gracefully when the target history stack is empty', () => {
@@ -120,6 +121,48 @@ describe('winchReducer', () => {
 
     expect(result.traineeSn).toBe('TRN-8080');
     expect(result.squadron).toBe(initialState.squadron);
+    expect(result.leftHistory).toEqual(initialState.leftHistory);
+  });
+
+  it('processes ADD_REMARK and updates the correct launch record', () => {
+    const state = {
+      ...initialState,
+      leftHistory: [
+        { id: 101, timestamp: '2026-08-30T09:15:00Z', remark: null },
+        { id: 102, timestamp: '2026-08-30T09:25:00Z', remark: null },
+      ],
+    };
+
+    const action: WinchAction = {
+      type: 'ADD_REMARK',
+      payload: { drum: 'left', id: 102, remark: 'Cable dropped' }
+    };
+
+    const result = winchReducer(state, action);
+
+    expect(result.leftHistory).toHaveLength(2);
+    expect(result.leftHistory[0].remark).toBeNull();
+    expect(result.leftHistory[1].remark).toBe('Cable dropped');
+    expect(result.rightHistory).toEqual(initialState.rightHistory);
+  });
+
+  it('processes ADD_REMARK for right drum and updates the correct launch record', () => {
+    const state = {
+      ...initialState,
+      rightHistory: [
+        { id: 201, timestamp: '2026-08-30T09:15:00Z', remark: null },
+      ],
+    };
+
+    const action: WinchAction = {
+      type: 'ADD_REMARK',
+      payload: { drum: 'right', id: 201, remark: 'Right drum remark' }
+    };
+
+    const result = winchReducer(state, action);
+
+    expect(result.rightHistory).toHaveLength(1);
+    expect(result.rightHistory[0].remark).toBe('Right drum remark');
     expect(result.leftHistory).toEqual(initialState.leftHistory);
   });
 });
