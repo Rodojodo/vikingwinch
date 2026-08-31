@@ -1,4 +1,4 @@
-import { Box, Stack, Typography } from '@mui/material';
+import { Box, Stack, Typography, ButtonBase, Divider } from '@mui/material';
 import { useState, useEffect, useRef } from 'react';
 import { TraineeAssignmentPanel } from '../components/TraineeAssignmentPanel';
 import { RemarksRepairsPanel } from '../components/RemarksRepairsPanel';
@@ -24,7 +24,7 @@ const ANIMATIONS = [
 
 const POST_LAUNCH_COOLDOWN_THRESHOLD_MS = 2.5 * 60 * 1000; // 2.5 minutes
 
-export const LaunchPanel = () => {
+export const LaunchPanel = ({ onViewSkylogValues }: { onViewSkylogValues?: () => void }) => {
     const { derived, isLoading, executeLaunch, undoLaunch, changeTrainee, addRemark, state } = useWinchSession();
     
     const { leftLaunches, rightLaunches, leftLast, rightLast } = derived;
@@ -159,6 +159,36 @@ export const LaunchPanel = () => {
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <TraineeAssignmentPanel isLoading={isLoading} changeTrainee={changeTrainee} />
                 <RemarksRepairsPanel addRemark={addRemark} isLoading={isLoading} derived={derived} state={state} />
+                
+                <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.08)', my: 0.5 }} />
+
+                <ButtonBase
+                    onClick={onViewSkylogValues}
+                    sx={{
+                        position: 'relative',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '100%',
+                        height: 56,
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '12px',
+                        color: '#f8fafc',
+                        overflow: 'hidden',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderColor: '#3b82f6',
+                            color: '#3b82f6',
+                            transform: 'translateY(-2px)'
+                        },
+                    }}
+                >
+                    <Typography sx={{fontWeight: 600, fontSize: '16px', zIndex: 1}}>
+                        Show skylog values
+                    </Typography>
+                </ButtonBase>
             </Box>
         </Box>
     );
