@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { Box, Button, TextField, Typography, Alert, Stack } from '@mui/material';
 import { DrumToggleGroup } from './DrumToggleGroup';
-import type { DrumPosition } from '../types';
-import { darkTextFieldStyles } from '../../themes/styles';
+import type { DrumPosition, DerivedWinchState } from '../types';
+import {darkTextFieldStyles} from "../../themes/styles.ts";
+
 
 type RemarksPanelProps = {
   addRemark: (remark: string | null, drum: DrumPosition) => Promise<void>;
   isLoading: boolean;
-  derived: any;
+  derived: DerivedWinchState;
 };
 
 export const RemarksPanel: React.FC<RemarksPanelProps> = ({ addRemark, isLoading, derived }) => {

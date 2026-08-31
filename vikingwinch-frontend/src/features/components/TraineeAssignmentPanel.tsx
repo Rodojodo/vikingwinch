@@ -10,7 +10,7 @@ import {
     Stack,
     Typography
 } from '@mui/material';
-import type {Trainee} from "../types";
+import type {DayLogResponse, Trainee} from "../types";
 
 
 const TRAINEES: Trainee[] = [
@@ -20,7 +20,7 @@ const TRAINEES: Trainee[] = [
 
 type TraineeAssignmentPanelProps = {
   isLoading: boolean;
-  changeTrainee: (traineeSn: string) => Promise<any>;
+  changeTrainee: (traineeSn: string) => Promise<DayLogResponse>;
 };
 
 export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({isLoading, changeTrainee}) => {

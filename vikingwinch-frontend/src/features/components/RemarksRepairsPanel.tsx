@@ -3,12 +3,14 @@ import { Box, Button, Stack } from '@mui/material';
 import type {PanelType} from '../types';
 import { RemarksPanel } from './RemarksPanel';
 import { RepairsPanel } from './RepairsPanel';
+import type { DrumPosition, WinchLogState, DerivedWinchState } from '../types';
+
 
 type RemarksRepairsPanelProps = {
-  addRemark: (remark: string | null, drum: any) => Promise<void>;
+  addRemark: (remark: string | null, drum: DrumPosition) => Promise<void>;
   isLoading: boolean;
-  derived: any;
-  state: any;
+  derived: DerivedWinchState;
+  state: WinchLogState;
 };
 
 export const RemarksRepairsPanel: React.FC<RemarksRepairsPanelProps> = ({ addRemark, isLoading, derived, state }) => {

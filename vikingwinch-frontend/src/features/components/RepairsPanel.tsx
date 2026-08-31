@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Button, FormControl, Grid, MenuItem, Select, TextField, Typography, Alert, Stack } from '@mui/material';
 import { DrumToggleGroup } from './DrumToggleGroup';
-import type { DrumPosition, OperatorRead } from '../types';
 import { darkSelectStyles, darkTextFieldStyles } from '../../themes/styles';
-import { getOperatorsForSquadron } from '../api/dataClient';
+import type { DrumPosition, OperatorRead, WinchLogState, DerivedWinchState } from '../types';
+import {getOperatorsForSquadron} from "../api/dataClient.ts";
+
 
 type RepairsPanelProps = {
   addRemark: (remark: string | null, drum: DrumPosition) => Promise<void>;
   isLoading: boolean;
-  derived: any;
-  state: any;
+  derived: DerivedWinchState;
+  state: WinchLogState;
 };
 
 export const RepairsPanel: React.FC<RepairsPanelProps> = ({ addRemark, isLoading, derived, state }) => {
