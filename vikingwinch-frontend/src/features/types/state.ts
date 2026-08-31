@@ -6,6 +6,7 @@ export interface LaunchRecord {
   id: number;
   timestamp: string | null;
   remark: string | null;
+  burn: boolean;
 }
 
 
@@ -34,6 +35,8 @@ export interface Trainee {
 
 
 export interface DerivedWinchState {
+  leftTotal: number;
+  rightTotal: number;
   leftLaunches: number;
   rightLaunches: number;
   leftLast: string | null;

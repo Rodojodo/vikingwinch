@@ -9,10 +9,12 @@ export const useWinchSession = () => {
     const [error, setError] = useState<string | null>(null);
 
     const derived = useMemo(() => {
-        const leftLaunches = state.leftHistory.length;
-        const rightLaunches = state.rightHistory.length;
-        const leftLastRecord = state.leftHistory[leftLaunches - 1];
-        const rightLastRecord = state.rightHistory[rightLaunches - 1];
+        const leftTotal = state.leftHistory.length;
+        const rightTotal = state.rightHistory.length;
+        const leftLaunches = state.leftHistory.filter(r => !r.burn).length;
+        const rightLaunches = state.rightHistory.filter(r => !r.burn).length;
+        const leftLastRecord = state.leftHistory[leftTotal - 1];
+        const rightLastRecord = state.rightHistory[rightTotal - 1];
         const leftLast = leftLastRecord?.timestamp ?? null;
         const rightLast = rightLastRecord?.timestamp ?? null;
 
@@ -28,6 +30,8 @@ export const useWinchSession = () => {
         }
 
         return {
+            leftTotal,
+            rightTotal,
             leftLaunches,
             rightLaunches,
             leftLast,
@@ -50,9 +54,7 @@ export const useWinchSession = () => {
                 burn,
             };
             const responseData = await postLaunchToDb(payload);
-            if (!burn) {
-                dispatch({ type: 'RECORD_LAUNCH', payload: responseData });
-            }
+            dispatch({ type: 'RECORD_LAUNCH', payload: responseData });
             return responseData;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Launch execution failed');

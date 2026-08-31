@@ -46,8 +46,8 @@ describe('useWinchSession', () => {
 
     expect(result.current.state).toEqual(initialState);
     expect(result.current.derived).toEqual({
-      leftLaunches: 0,
-      rightLaunches: 0,
+      leftTotal: 0, leftLaunches: 0,
+      rightTotal: 0, rightLaunches: 0,
       leftLast: null,
       rightLast: null,
       lastDrum: null,
@@ -75,7 +75,7 @@ describe('useWinchSession', () => {
       burn: false,
     });
 
-    expect(result.current.state.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:15:00Z', remark: null }]);
+    expect(result.current.state.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:15:00Z', remark: null, burn: false }]);
     expect(result.current.derived.leftLaunches).toBe(1);
     expect(result.current.derived.leftLast).toBe('2026-08-30T09:15:00Z');
     expect(result.current.derived.lastDrum).toBe('left');
@@ -92,24 +92,26 @@ describe('useWinchSession', () => {
       await result.current.executeLaunch('right', false);
     });
 
-    expect(result.current.state.rightHistory).toEqual([{ id: 102, timestamp: '2026-08-30T10:15:00Z', remark: null }]);
+    expect(result.current.state.rightHistory).toEqual([{ id: 102, timestamp: '2026-08-30T10:15:00Z', remark: null, burn: false }]);
     expect(result.current.derived.rightLaunches).toBe(1);
     expect(result.current.derived.rightLast).toBe('2026-08-30T10:15:00Z');
     expect(result.current.derived.lastDrum).toBe('right');
   });
 
-  it('executes a burn launch, bypassing local state updates', async () => {
+  it('executes a burn launch and updates local state correctly', async () => {
     const mockResponse = createMockLaunchResponse('left', 103, '2026-08-30T11:00:00Z', true);
     vi.mocked(postLaunchToDb).mockResolvedValueOnce(mockResponse);
 
     const { result } = renderHook(() => useWinchSession());
-
+    
     await act(async () => {
       await result.current.executeLaunch('left', true);
     });
 
     expect(postLaunchToDb).toHaveBeenCalledWith(expect.objectContaining({ burn: true }));
-    expect(result.current.state.leftHistory).toHaveLength(0);
+    expect(result.current.state.leftHistory).toHaveLength(1);
+    expect(result.current.state.leftHistory[0].burn).toBe(true);
+    expect(result.current.derived.leftTotal).toBe(1);
     expect(result.current.derived.leftLaunches).toBe(0);
   });
 
@@ -136,7 +138,7 @@ describe('useWinchSession', () => {
     });
 
     expect(removeLaunchFromDb).toHaveBeenCalledWith(102);
-    expect(result.current.state.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:00:00Z', remark: null }]);
+    expect(result.current.state.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:00:00Z', remark: null, burn: false }]);
     expect(result.current.derived.leftLaunches).toBe(1);
     expect(result.current.derived.leftLast).toBe('2026-08-30T09:00:00Z');
   });

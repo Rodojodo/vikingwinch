@@ -1,11 +1,11 @@
-import { Box, Stack, Typography } from '@mui/material';
+import { Box, Stack, Typography, ButtonBase, Divider } from '@mui/material';
 import { useState, useEffect, useRef } from 'react';
-import { TraineeAssignmentPanel } from '../components/TraineeAssignmentPanel';
-import { RemarksRepairsPanel } from '../components/RemarksRepairsPanel';
-import { WinchDetailsSticker } from '../components/WinchDetailsSticker';
+import { TraineeAssignmentPanel } from './TraineeAssignmentPanel';
+import { RemarksRepairsPanel } from './RemarksRepairsPanel';
+import { WinchDetailsSticker } from './WinchDetailsSticker';
 import { useWinchSession } from '../hooks/useWinchSession';
 import './LaunchPanel.css';
-import {DrumControl} from "../components/DrumControl.tsx";
+import {DrumControl} from "./DrumControl";
 
 const ANIMATIONS = [
     'animFadeScale 0.6s cubic-bezier(0.2, 0, 0, 1) forwards', // M3 Emphasized
@@ -24,10 +24,15 @@ const ANIMATIONS = [
 
 const POST_LAUNCH_COOLDOWN_THRESHOLD_MS = 2.5 * 60 * 1000; // 2.5 minutes
 
-export const LaunchPanel = () => {
-    const { derived, isLoading, executeLaunch, undoLaunch, changeTrainee, addRemark, state } = useWinchSession();
+interface LaunchPanelProps {
+    onViewSkylogValues?: () => void;
+    session: ReturnType<typeof useWinchSession>;
+}
+
+export const LaunchPanel = ({ onViewSkylogValues, session }: LaunchPanelProps) => {
+    const { derived, isLoading, executeLaunch, undoLaunch, changeTrainee, addRemark, state } = session;
     
-    const { leftLaunches, rightLaunches, leftLast, rightLast } = derived;
+    const { leftTotal, rightTotal, leftLaunches, rightLaunches, leftLast, rightLast } = derived;
 
     const [isRecentLaunch, setIsRecentLaunch] = useState(false);
 
@@ -53,17 +58,17 @@ export const LaunchPanel = () => {
     const [isResetting, setIsResetting] = useState(false);
     const [currentAnim, setCurrentAnim] = useState('none');
     
-    const prevLaunchesRef = useRef({ left: leftLaunches, right: rightLaunches });
+    const prevLaunchesRef = useRef({ left: leftTotal, right: rightTotal });
     const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
     useEffect(() => {
         const prev = prevLaunchesRef.current;
-        const leftChanged = leftLaunches !== prev.left;
-        const rightChanged = rightLaunches !== prev.right;
+        const leftChanged = leftTotal !== prev.left;
+        const rightChanged = rightTotal !== prev.right;
 
         if (leftChanged || rightChanged) {
             // If they just became equal via a new launch (increase), trigger reset animation
-            if (leftLaunches === rightLaunches && (leftLaunches > prev.left || rightLaunches > prev.right)) {
+            if (leftTotal === rightTotal && (leftTotal > prev.left || rightTotal > prev.right)) {
                 setIsResetting(true);
                 
                 const timer1 = setTimeout(() => {
@@ -80,8 +85,8 @@ export const LaunchPanel = () => {
             }
         }
         
-        prevLaunchesRef.current = { left: leftLaunches, right: rightLaunches };
-    }, [leftLaunches, rightLaunches]);
+        prevLaunchesRef.current = { left: leftTotal, right: rightTotal };
+    }, [leftTotal, rightTotal]);
 
     useEffect(() => {
         return () => {
@@ -89,9 +94,9 @@ export const LaunchPanel = () => {
         };
     }, []);
 
-    const isActuallyEqual = leftLaunches === rightLaunches;
-    const leftUsed = (leftLaunches > rightLaunches) || (isActuallyEqual && isResetting);
-    const rightUsed = (rightLaunches > leftLaunches) || (isActuallyEqual && isResetting);
+    const isActuallyEqual = leftTotal === rightTotal;
+    const leftUsed = (leftTotal > rightTotal) || (isActuallyEqual && isResetting);
+    const rightUsed = (rightTotal > leftTotal) || (isActuallyEqual && isResetting);
 
     const handleLaunchLeft = () => executeLaunch('left').catch(console.error);
     const handleLaunchRight = () => executeLaunch('right').catch(console.error);
@@ -159,6 +164,36 @@ export const LaunchPanel = () => {
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <TraineeAssignmentPanel isLoading={isLoading} changeTrainee={changeTrainee} />
                 <RemarksRepairsPanel addRemark={addRemark} isLoading={isLoading} derived={derived} state={state} />
+                
+                <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.08)', my: 0.5 }} />
+
+                <ButtonBase
+                    onClick={onViewSkylogValues}
+                    sx={{
+                        position: 'relative',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        width: '100%',
+                        height: 56,
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '12px',
+                        color: '#f8fafc',
+                        overflow: 'hidden',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            borderColor: '#3b82f6',
+                            color: '#3b82f6',
+                            transform: 'translateY(-2px)'
+                        },
+                    }}
+                >
+                    <Typography sx={{fontWeight: 600, fontSize: '16px', zIndex: 1}}>
+                        Show skylog values
+                    </Typography>
+                </ButtonBase>
             </Box>
         </Box>
     );
