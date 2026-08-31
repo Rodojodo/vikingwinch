@@ -3,10 +3,14 @@ import { Box, Button, TextField, Typography, Alert, Stack } from '@mui/material'
 import { DrumToggleGroup } from './DrumToggleGroup';
 import type { DrumPosition } from '../types';
 import { darkTextFieldStyles } from '../../themes/styles';
-import { useWinchSession } from '../hooks/useWinchSession';
 
-export const RemarksPanel: React.FC = () => {
-    const { addRemark, isLoading, derived } = useWinchSession();
+type RemarksPanelProps = {
+  addRemark: (remark: string | null, drum: DrumPosition) => Promise<void>;
+  isLoading: boolean;
+  derived: any;
+};
+
+export const RemarksPanel: React.FC<RemarksPanelProps> = ({ addRemark, isLoading, derived }) => {
     const [remark, setRemark] = useState<string>('');
     const [drum, setDrum] = useState<DrumPosition>('left');
 

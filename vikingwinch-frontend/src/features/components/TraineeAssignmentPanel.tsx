@@ -11,7 +11,6 @@ import {
     Typography
 } from '@mui/material';
 import type {Trainee} from "../types";
-import { useWinchSession } from '../hooks/useWinchSession'
 
 
 const TRAINEES: Trainee[] = [
@@ -21,12 +20,12 @@ const TRAINEES: Trainee[] = [
 
 type TraineeAssignmentPanelProps = {
   isLoading: boolean;
+  changeTrainee: (traineeSn: string) => Promise<any>;
 };
 
-export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({isLoading}) => {
+export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({isLoading, changeTrainee}) => {
     const [isExpanded, setIsExpanded] = useState<boolean>(false);
     const [focusedTraineeId, setFocusedTraineeId] = useState<string>('1');
-    const { changeTrainee } = useWinchSession();
 
     const handleFocusChange = (event: SelectChangeEvent<string>) => {
         setFocusedTraineeId(event.target.value);

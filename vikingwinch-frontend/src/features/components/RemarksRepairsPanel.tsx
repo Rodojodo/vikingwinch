@@ -4,7 +4,14 @@ import type {PanelType} from '../types';
 import { RemarksPanel } from './RemarksPanel';
 import { RepairsPanel } from './RepairsPanel';
 
-export const RemarksRepairsPanel: React.FC = () => {
+type RemarksRepairsPanelProps = {
+  addRemark: (remark: string | null, drum: any) => Promise<void>;
+  isLoading: boolean;
+  derived: any;
+  state: any;
+};
+
+export const RemarksRepairsPanel: React.FC<RemarksRepairsPanelProps> = ({ addRemark, isLoading, derived, state }) => {
   const [activePanel, setActivePanel] = useState<PanelType>(null);
 
   const handleToggle = (panel: PanelType) => {
@@ -74,10 +81,10 @@ export const RemarksRepairsPanel: React.FC = () => {
         }}
       >
         <Box sx={{ display: activePanel === 'remarks' ? 'block' : 'none' }}>
-          <RemarksPanel />
+          <RemarksPanel addRemark={addRemark} isLoading={isLoading} derived={derived} />
         </Box>
         <Box sx={{ display: activePanel === 'repairs' ? 'block' : 'none' }}>
-          <RepairsPanel />
+          <RepairsPanel addRemark={addRemark} isLoading={isLoading} derived={derived} state={state} />
         </Box>
       </Box>
     </Box>

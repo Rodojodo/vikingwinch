@@ -1,12 +1,25 @@
-import React from 'react';
 import { Box, Stack, Typography, Chip, Button } from '@mui/material';
 import { LaunchButton } from '../components/LaunchButton';
 import { TraineeAssignmentPanel } from '../components/TraineeAssignmentPanel';
 import { RemarksRepairsPanel } from '../components/RemarksRepairsPanel';
+import { useWinchSession } from '../hooks/useWinchSession';
 
 import EnergySavingsLeafIcon from '@mui/icons-material/EnergySavingsLeaf';
 
 export const LaunchPanel = () => {
+    const { derived, isLoading, executeLaunch, undoLaunch, changeTrainee, addRemark, state } = useWinchSession();
+    
+    const { leftLaunches, rightLaunches } = derived;
+
+    const handleLaunchLeft = () => executeLaunch('left');
+    const handleLaunchRight = () => executeLaunch('right');
+    
+    const handleUndoLeft = () => undoLaunch('left');
+    const handleUndoRight = () => undoLaunch('right');
+
+    const handleBurnLeft = () => executeLaunch('left', true);
+    const handleBurnRight = () => executeLaunch('right', true);
+
     return (
         <Box sx={{ 
             p: 5, 
@@ -50,8 +63,8 @@ export const LaunchPanel = () => {
                 {/* Left Drum */}
                 <Stack spacing={1} sx={{ flex: 1 }}>
                     <LaunchButton
-                        isLoading={false}
-                        onClick={() => {}}
+                        isLoading={isLoading}
+                        onClick={handleLaunchLeft}
                         sx={{
                             background: 'linear-gradient(145deg, #3b82f6, #2563eb)',
                             boxShadow: '0 8px 24px rgba(37, 99, 235, 0.4)',
@@ -68,14 +81,14 @@ export const LaunchPanel = () => {
                         label={
                             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                                 <Typography sx={{ fontSize: '20px', fontWeight: 700 }}>Left Drum</Typography>
-                                <Chip label="0 launches" size="small" sx={{ backgroundColor: 'rgba(0, 0, 0, 0.2)', color: 'white', border: 'none', px: 1.5, py: 0.5, height: 'auto', fontSize: '14px', fontWeight: 500, borderRadius: '12px' }} />
+                                <Chip label={`${leftLaunches} launches`} size="small" sx={{ backgroundColor: 'rgba(0, 0, 0, 0.2)', color: 'white', border: 'none', px: 1.5, py: 0.5, height: 'auto', fontSize: '14px', fontWeight: 500, borderRadius: '12px' }} />
                             </Box>
                         }
                     />
                     
                     <LaunchButton
-                        isLoading={false}
-                        onClick={() => {}}
+                        isLoading={isLoading}
+                        onClick={handleBurnLeft}
                         mode="burn"
                         sx={{
                             borderRadius: '10px',
@@ -102,6 +115,8 @@ export const LaunchPanel = () => {
                     <Button
                         variant="outlined"
                         fullWidth
+                        disabled={isLoading || leftLaunches === 0}
+                        onClick={handleUndoLeft}
                         sx={{
                             backgroundColor: 'rgba(59, 130, 246, 0.05)',
                             border: '2px solid #3b82f6',
@@ -121,6 +136,11 @@ export const LaunchPanel = () => {
                                 transform: 'scale(1.02)',
                                 boxShadow: '0 8px 24px rgba(59, 130, 246, 0.5)',
                                 borderColor: 'transparent'
+                            },
+                            '&:disabled': {
+                                opacity: 0.5,
+                                color: 'rgba(255, 255, 255, 0.3)',
+                                borderColor: 'rgba(255, 255, 255, 0.1)',
                             }
                         }}
                     >
@@ -128,15 +148,15 @@ export const LaunchPanel = () => {
                     </Button>
                     
                     <Typography sx={{ color: '#94a3b8', textAlign: 'center', fontSize: '14px', mt: 1, fontFamily: 'monospace', fontWeight: 500 }}>
-                        Not yet launched
+                        {leftLaunches === 0 ? 'Not yet launched' : `${leftLaunches} recorded`}
                     </Typography>
                 </Stack>
 
                 {/* Right Drum */}
                 <Stack spacing={1} sx={{ flex: 1 }}>
                     <LaunchButton
-                        isLoading={false}
-                        onClick={() => {}}
+                        isLoading={isLoading}
+                        onClick={handleLaunchRight}
                         sx={{
                             background: 'linear-gradient(145deg, #10b981, #059669)',
                             boxShadow: '0 8px 24px rgba(16, 185, 129, 0.4)',
@@ -153,14 +173,14 @@ export const LaunchPanel = () => {
                         label={
                             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                                 <Typography sx={{ fontSize: '20px', fontWeight: 700 }}>Right Drum</Typography>
-                                <Chip label="0 launches" size="small" sx={{ backgroundColor: 'rgba(0, 0, 0, 0.2)', color: 'white', border: 'none', px: 1.5, py: 0.5, height: 'auto', fontSize: '14px', fontWeight: 500, borderRadius: '12px' }} />
+                                <Chip label={`${rightLaunches} launches`} size="small" sx={{ backgroundColor: 'rgba(0, 0, 0, 0.2)', color: 'white', border: 'none', px: 1.5, py: 0.5, height: 'auto', fontSize: '14px', fontWeight: 500, borderRadius: '12px' }} />
                             </Box>
                         }
                     />
                     
                     <LaunchButton
-                        isLoading={false}
-                        onClick={() => {}}
+                        isLoading={isLoading}
+                        onClick={handleBurnRight}
                         mode="burn"
                         sx={{
                             borderRadius: '10px',
@@ -187,6 +207,8 @@ export const LaunchPanel = () => {
                     <Button
                         variant="outlined"
                         fullWidth
+                        disabled={isLoading || rightLaunches === 0}
+                        onClick={handleUndoRight}
                         sx={{
                             backgroundColor: 'rgba(59, 130, 246, 0.05)',
                             border: '2px solid #3b82f6',
@@ -206,6 +228,11 @@ export const LaunchPanel = () => {
                                 transform: 'scale(1.02)',
                                 boxShadow: '0 8px 24px rgba(59, 130, 246, 0.5)',
                                 borderColor: 'transparent'
+                            },
+                            '&:disabled': {
+                                opacity: 0.5,
+                                color: 'rgba(255, 255, 255, 0.3)',
+                                borderColor: 'rgba(255, 255, 255, 0.1)',
                             }
                         }}
                     >
@@ -213,14 +240,14 @@ export const LaunchPanel = () => {
                     </Button>
                     
                     <Typography sx={{ color: '#94a3b8', textAlign: 'center', fontSize: '14px', mt: 1, fontFamily: 'monospace', fontWeight: 500 }}>
-                        Not yet launched
+                        {rightLaunches === 0 ? 'Not yet launched' : `${rightLaunches} recorded`}
                     </Typography>
                 </Stack>
             </Stack>
 
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <TraineeAssignmentPanel isLoading={false} />
-                <RemarksRepairsPanel />
+                <TraineeAssignmentPanel isLoading={isLoading} changeTrainee={changeTrainee} />
+                <RemarksRepairsPanel addRemark={addRemark} isLoading={isLoading} derived={derived} state={state} />
             </Box>
         </Box>
     );
