@@ -1,94 +1,11 @@
 import { Box, Stack, Typography, Chip, Button } from '@mui/material';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { LaunchButton } from '../components/LaunchButton';
 import { TraineeAssignmentPanel } from '../components/TraineeAssignmentPanel';
 import { RemarksRepairsPanel } from '../components/RemarksRepairsPanel';
 import { WinchDetailsSticker } from '../components/WinchDetailsSticker';
 import { useWinchSession } from '../hooks/useWinchSession';
-
-const globalStyles = `
-@keyframes animFadeScale {
-  0% { transform: scale(0.92); opacity: 0.3; }
-  100% { transform: scale(1); opacity: 1; }
-}
-@keyframes animSlideUp {
-  0% { transform: scale(0.92) translateY(15px); opacity: 0.3; }
-  100% { transform: scale(1) translateY(0); opacity: 1; }
-}
-@keyframes animPop {
-  0% { transform: scale(0.92); opacity: 0.3; }
-  50% { transform: scale(1.05); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
-}
-@keyframes animFlip {
-  0% { transform: scale(0.92) rotateX(90deg); opacity: 0.3; }
-  100% { transform: scale(1) rotateX(0deg); opacity: 1; }
-}
-@keyframes animWobble {
-  0% { transform: scale(0.92) rotate(-3deg); opacity: 0.3; }
-  33% { transform: scale(1.02) rotate(3deg); opacity: 1; }
-  66% { transform: scale(0.98) rotate(-2deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0deg); opacity: 1; }
-}
-@keyframes animSpinIn {
-  0% { transform: scale(0.92) rotate(-360deg); opacity: 0.3; }
-  100% { transform: scale(1) rotate(0deg); opacity: 1; }
-}
-@keyframes animElastic {
-  0% { transform: scale(0.92); opacity: 0.3; }
-  30% { transform: scale3d(1.25, 0.75, 1); opacity: 1; }
-  40% { transform: scale3d(0.75, 1.25, 1); }
-  50% { transform: scale3d(1.15, 0.85, 1); }
-  65% { transform: scale3d(0.95, 1.05, 1); }
-  75% { transform: scale3d(1.05, 0.95, 1); }
-  100% { transform: scale(1); opacity: 1; }
-}
-@keyframes animTada {
-  0% { transform: scale(0.92); opacity: 0.3; }
-  10% { transform: scale(0.9) rotate(-3deg); opacity: 1; }
-  20% { transform: scale(0.9) rotate(-3deg); }
-  30% { transform: scale(1.1) rotate(3deg); }
-  40% { transform: scale(1.1) rotate(-3deg); }
-  50% { transform: scale(1.1) rotate(3deg); }
-  60% { transform: scale(1.1) rotate(-3deg); }
-  70% { transform: scale(1.1) rotate(3deg); }
-  80% { transform: scale(1.1) rotate(-3deg); }
-  90% { transform: scale(1.1) rotate(3deg); }
-  100% { transform: scale(1) rotate(0); opacity: 1; }
-}
-@keyframes animJello {
-  0% { transform: scale(0.92); opacity: 0.3; }
-  11% { transform: scale(1); opacity: 1; }
-  22% { transform: skewX(-12.5deg) skewY(-12.5deg); }
-  33% { transform: skewX(6.25deg) skewY(6.25deg); }
-  44% { transform: skewX(-3.125deg) skewY(-3.125deg); }
-  55% { transform: skewX(1.5625deg) skewY(1.5625deg); }
-  66% { transform: skewX(-0.78125deg) skewY(-0.78125deg); }
-  77% { transform: skewX(0.390625deg) skewY(0.390625deg); }
-  88% { transform: skewX(-0.1953125deg) skewY(-0.1953125deg); }
-  100% { transform: skewX(0) skewY(0); opacity: 1; }
-}
-@keyframes animDropBounce {
-  0% { transform: translateY(-50px) scale(0.92); opacity: 0.3; }
-  20% { transform: translateY(0) scaleY(0.9) scaleX(1.1); opacity: 1; }
-  40% { transform: translateY(-20px) scale(1); }
-  60% { transform: translateY(0) scaleY(0.95) scaleX(1.05); }
-  80% { transform: translateY(-10px) scale(1); }
-  100% { transform: translateY(0) scale(1); opacity: 1; }
-}
-@keyframes animRollIn {
-  0% { opacity: 0.3; transform: translate3d(-100px, 0, 0) rotate3d(0, 0, 1, -120deg) scale(0.92); }
-  100% { opacity: 1; transform: translate3d(0, 0, 0) rotate3d(0, 0, 1, 0deg) scale(1); }
-}
-@keyframes animHeartbeat {
-  0% { transform: scale(0.92); opacity: 0.3; }
-  14% { transform: scale(1.1); opacity: 1; }
-  28% { transform: scale(1); }
-  42% { transform: scale(1.1); }
-  70% { transform: scale(1); }
-  100% { transform: scale(1); opacity: 1; }
-}
-`;
+import './LaunchPanel.css';
 
 const ANIMATIONS = [
     'animFadeScale 0.6s cubic-bezier(0.2, 0, 0, 1) forwards', // M3 Emphasized
@@ -131,75 +48,57 @@ export const LaunchPanel = () => {
         return () => clearInterval(interval);
     }, [leftLast, rightLast]);
 
-    const [leftUsed, setLeftUsed] = useState(false);
-    const [rightUsed, setRightUsed] = useState(false);
     const [isResetting, setIsResetting] = useState(false);
     const [currentAnim, setCurrentAnim] = useState('none');
+    
+    const prevLaunchesRef = useRef({ left: leftLaunches, right: rightLaunches });
+    const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
     useEffect(() => {
-        let timer1: ReturnType<typeof setTimeout>;
-        let timer2: ReturnType<typeof setTimeout>;
+        const prev = prevLaunchesRef.current;
+        const leftChanged = leftLaunches !== prev.left;
+        const rightChanged = rightLaunches !== prev.right;
 
-        if (leftUsed && rightUsed) {
-            setIsResetting(true);
-            timer1 = setTimeout(() => {
-                const randomAnim = ANIMATIONS[Math.floor(Math.random() * ANIMATIONS.length)];
-                setCurrentAnim(randomAnim);
-
-                setLeftUsed(false);
-                setRightUsed(false);
-                setIsResetting(false);
+        if (leftChanged || rightChanged) {
+            // If they just became equal via a new launch (increase), trigger reset animation
+            if (leftLaunches === rightLaunches && (leftLaunches > prev.left || rightLaunches > prev.right)) {
+                setIsResetting(true);
                 
-                timer2 = setTimeout(() => {
-                    setCurrentAnim('none');
-                }, 700);
-            }, 400); 
+                const timer1 = setTimeout(() => {
+                    const randomAnim = ANIMATIONS[Math.floor(Math.random() * ANIMATIONS.length)];
+                    setCurrentAnim(randomAnim);
+                    setIsResetting(false);
+                    
+                    const timer2 = setTimeout(() => {
+                        setCurrentAnim('none');
+                    }, 700);
+                    timersRef.current.push(timer2);
+                }, 400); 
+                timersRef.current.push(timer1);
+            }
         }
         
+        prevLaunchesRef.current = { left: leftLaunches, right: rightLaunches };
+    }, [leftLaunches, rightLaunches]);
+
+    useEffect(() => {
         return () => {
-            if (timer1) clearTimeout(timer1);
-            if (timer2) clearTimeout(timer2);
+            timersRef.current.forEach(clearTimeout);
         };
-    }, [leftUsed, rightUsed]);
+    }, []);
 
-    const handleLaunchLeft = async () => {
-        try {
-            await executeLaunch('left');
-            setLeftUsed(true);
-        } catch (e) {}
-    };
-    const handleLaunchRight = async () => {
-        try {
-            await executeLaunch('right');
-            setRightUsed(true);
-        } catch (e) {}
-    };
+    const isActuallyEqual = leftLaunches === rightLaunches;
+    const leftUsed = (leftLaunches > rightLaunches) || (isActuallyEqual && isResetting);
+    const rightUsed = (rightLaunches > leftLaunches) || (isActuallyEqual && isResetting);
+
+    const handleLaunchLeft = () => executeLaunch('left').catch(console.error);
+    const handleLaunchRight = () => executeLaunch('right').catch(console.error);
     
-    const handleUndoLeft = async () => {
-        try {
-            await undoLaunch('left');
-            setLeftUsed(false);
-        } catch (e) {}
-    };
-    const handleUndoRight = async () => {
-        try {
-            await undoLaunch('right');
-            setRightUsed(false);
-        } catch (e) {}
-    };
+    const handleUndoLeft = () => undoLaunch('left').catch(console.error);
+    const handleUndoRight = () => undoLaunch('right').catch(console.error);
 
-    const handleBurnLeft = async () => {
-        try {
-            await executeLaunch('left', true);
-            setLeftUsed(true);
-        } catch (e) {}
-    };
-    const handleBurnRight = async () => {
-        try {
-            await executeLaunch('right', true);
-            setRightUsed(true);
-        } catch (e) {}
-    };
+    const handleBurnLeft = () => executeLaunch('left', true).catch(console.error);
+    const handleBurnRight = () => executeLaunch('right', true).catch(console.error);
 
     return (
         <Box sx={{ 
@@ -217,7 +116,6 @@ export const LaunchPanel = () => {
             width: '100%',
             maxWidth: 540
         }}>
-            <style>{globalStyles}</style>
             <Box sx={{ textAlign: 'center', width: '100%' }}>
                 <Typography variant="h2" sx={{ fontSize: '32px', fontWeight: 700, letterSpacing: '-0.5px', mb: 1, fontFamily: '"Outfit", sans-serif' }}>
                     Launch Panel
