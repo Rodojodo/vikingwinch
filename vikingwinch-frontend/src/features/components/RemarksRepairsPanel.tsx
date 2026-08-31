@@ -15,12 +15,12 @@ export const RemarksRepairsPanel: React.FC = () => {
   return (
     <Box sx={{ maxWidth: 600, p: 2, backgroundColor: '#0f172a', borderRadius: 3 }}>
 
-      <Stack direction="row" spacing={1} alignItems="center">
+      <Stack direction="row" spacing={1}>
         <Button
           fullWidth
           variant={activePanel === 'remarks' ? 'contained' : 'outlined'}
           onClick={() => handleToggle('remarks')}
-          sx={getTabButtonStyles(activePanel === 'remarks')}
+          sx={{ ...getTabButtonStyles(activePanel === 'remarks'), alignItems: 'center' }}
         >
           Remarks
         </Button>
