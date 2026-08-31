@@ -13,6 +13,24 @@ type RemarksRepairsPanelProps = {
   state: WinchLogState;
 };
 
+const getTabStyle = (isActive: boolean) => ({
+    py: 1.5,
+    textTransform: 'none',
+    fontWeight: 600,
+    fontSize: '16px',
+    backgroundColor: isActive ? '#3b82f6' : 'rgba(255, 255, 255, 0.03)',
+    color: isActive ? 'white' : '#94a3b8',
+    border: `1px solid ${isActive ? '#3b82f6' : 'rgba(255, 255, 255, 0.1)'}`,
+    borderRadius: '12px',
+    boxShadow: isActive ? '0 2px 8px rgba(59, 130, 246, 0.5)' : 'none',
+    transition: 'all 0.2s ease',
+    '&:hover': {
+        backgroundColor: isActive ? '#3b82f6' : 'rgba(255, 255, 255, 0.08)',
+        color: 'white',
+        borderColor: isActive ? '#3b82f6' : 'rgba(255, 255, 255, 0.1)'
+    }
+});
+
 export const RemarksRepairsPanel: React.FC<RemarksRepairsPanelProps> = ({ addRemark, isLoading, derived, state }) => {
   const [activePanel, setActivePanel] = useState<PanelType>(null);
 
@@ -27,46 +45,14 @@ export const RemarksRepairsPanel: React.FC<RemarksRepairsPanelProps> = ({ addRem
         <Button
           fullWidth
           onClick={() => handleToggle('remarks')}
-          sx={{
-            py: 1.5,
-            textTransform: 'none',
-            fontWeight: 600,
-            fontSize: '16px',
-            backgroundColor: activePanel === 'remarks' ? '#3b82f6' : 'rgba(255, 255, 255, 0.03)',
-            color: activePanel === 'remarks' ? 'white' : '#94a3b8',
-            border: `1px solid ${activePanel === 'remarks' ? '#3b82f6' : 'rgba(255, 255, 255, 0.1)'}`,
-            borderRadius: '12px',
-            boxShadow: activePanel === 'remarks' ? '0 2px 8px rgba(59, 130, 246, 0.5)' : 'none',
-            transition: 'all 0.2s ease',
-            '&:hover': {
-              backgroundColor: activePanel === 'remarks' ? '#3b82f6' : 'rgba(255, 255, 255, 0.08)',
-              color: 'white',
-              borderColor: activePanel === 'remarks' ? '#3b82f6' : 'rgba(255, 255, 255, 0.1)'
-            }
-          }}
+          sx={getTabStyle(activePanel === 'remarks')}
         >
           Remarks
         </Button>
         <Button
           fullWidth
           onClick={() => handleToggle('repairs')}
-          sx={{
-            py: 1.5,
-            textTransform: 'none',
-            fontWeight: 600,
-            fontSize: '16px',
-            backgroundColor: activePanel === 'repairs' ? '#3b82f6' : 'rgba(255, 255, 255, 0.03)',
-            color: activePanel === 'repairs' ? 'white' : '#94a3b8',
-            border: `1px solid ${activePanel === 'repairs' ? '#3b82f6' : 'rgba(255, 255, 255, 0.1)'}`,
-            borderRadius: '12px',
-            boxShadow: activePanel === 'repairs' ? '0 2px 8px rgba(59, 130, 246, 0.5)' : 'none',
-            transition: 'all 0.2s ease',
-            '&:hover': {
-              backgroundColor: activePanel === 'repairs' ? '#3b82f6' : 'rgba(255, 255, 255, 0.08)',
-              color: 'white',
-              borderColor: activePanel === 'repairs' ? '#3b82f6' : 'rgba(255, 255, 255, 0.1)'
-            }
-          }}
+          sx={getTabStyle(activePanel === 'repairs')}
         >
           Repairs
         </Button>

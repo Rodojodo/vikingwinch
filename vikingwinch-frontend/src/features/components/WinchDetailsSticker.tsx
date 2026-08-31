@@ -1,5 +1,6 @@
 import { Box, Typography } from '@mui/material';
 import EnergySavingsLeafIcon from '@mui/icons-material/EnergySavingsLeaf';
+import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 
 interface WinchDetailsStickerProps {
     isRecentLaunch: boolean;
@@ -19,7 +20,7 @@ export const WinchDetailsSticker = ({ isRecentLaunch, squadron, winchId }: Winch
                     fontWeight: 700, fontSize: '13px',
                     lineHeight: 1
                 }}>
-                    <span style={{ fontSize: '16px' }}>🔥</span>
+                    <LocalFireDepartmentIcon sx={{ fontSize: '16px' }} />
                     <span>Don't turn off winch</span>
                 </Box>
             ) : (

@@ -1,4 +1,5 @@
 import { Box, Stack, Typography, Chip, Button } from '@mui/material';
+import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import { LaunchButton } from '../components/LaunchButton';
 import type { DrumPosition } from '../types';
 
@@ -104,7 +105,7 @@ export const DrumControl = ({
                     }}
                     label={
                         <Typography sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: '13px', fontWeight: 600 }}>
-                            🔥 Burn {drumType === 'left' ? 'Left' : 'Right'}
+                            <LocalFireDepartmentIcon sx={{ fontSize: '16px' }} /> Burn {drumType === 'left' ? 'Left' : 'Right'}
                         </Typography>
                     }
                 />

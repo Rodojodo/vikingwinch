@@ -22,6 +22,8 @@ const ANIMATIONS = [
     'animHeartbeat 0.7s ease forwards'
 ];
 
+const POST_LAUNCH_COOLDOWN_THRESHOLD_MS = 2.5 * 60 * 1000; // 2.5 minutes
+
 export const LaunchPanel = () => {
     const { derived, isLoading, executeLaunch, undoLaunch, changeTrainee, addRemark, state } = useWinchSession();
     
@@ -37,7 +39,7 @@ export const LaunchPanel = () => {
             
             if (latestTime > 0) {
                 const diff = Date.now() - latestTime;
-                setIsRecentLaunch(diff < 2.5 * 60 * 1000);
+                setIsRecentLaunch(diff < POST_LAUNCH_COOLDOWN_THRESHOLD_MS);
             } else {
                 setIsRecentLaunch(false);
             }
