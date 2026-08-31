@@ -4,7 +4,7 @@ import EnergySavingsLeafIcon from '@mui/icons-material/EnergySavingsLeaf';
 interface WinchDetailsStickerProps {
     isRecentLaunch: boolean;
     squadron: string;
-    winchId: string;
+    winchId: number;
 }
 
 export const WinchDetailsSticker = ({ isRecentLaunch, squadron, winchId }: WinchDetailsStickerProps) => {
