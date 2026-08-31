@@ -43,34 +43,37 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({i
                     alignItems: 'center',
                     justifyContent: 'center',
                     width: '100%',
-                    maxWidth: 500,
-                    height: 64,
-                    backgroundColor: '#273044',
+                    height: 56,
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
                     border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: 2,
+                    borderRadius: '12px',
+                    color: '#f8fafc',
                     overflow: 'hidden',
+                    transition: 'all 0.2s ease',
                     '&:hover': {
-                        backgroundColor: '#2c3648',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderColor: '#3b82f6',
+                        color: '#3b82f6',
+                        transform: 'translateY(-2px)'
                     },
                 }}
             >
-                <Typography sx={{color: '#ffffff', fontWeight: 500, fontSize: '1rem', zIndex: 1}}>
+                <Typography sx={{fontWeight: 600, fontSize: '16px', zIndex: 1}}>
                     + Add trainee
                 </Typography>
             </ButtonBase>
-    )
-        ;
+        );
     }
 
     return (
         <Paper
-            elevation={3}
+            elevation={0}
             sx={{
-                backgroundColor: '#1d2a45', // Target ThemeProvider background.paper
-                border: '1px solid #2f3a4e',
-                borderRadius: 2,
+                backgroundColor: 'rgba(59, 130, 246, 0.06)',
+                border: '1px solid rgba(59, 130, 246, 0.25)',
+                borderRadius: '14px',
                 p: 2,
-                width: 400,
+                width: '100%',
                 boxSizing: 'border-box'
             }}
             aria-expanded={true}
