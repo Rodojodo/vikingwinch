@@ -1,12 +1,12 @@
+import React from 'react';
 import { Button, type ButtonProps } from '@mui/material';
-
 
 type LaunchButtonMode = 'default' | 'burn';
 
 export interface LaunchButtonProps extends ButtonProps {
   onClick: () => void;
   isLoading: boolean;
-  label: string;
+  label: React.ReactNode;
   mode?: LaunchButtonMode;
 }
 
@@ -53,6 +53,7 @@ export const LaunchButton = ({
             flexDirection: 'column',
             gap: 1,
             whiteSpace: 'nowrap',
+            textTransform: 'none',
 
             // Mode-specific styles
             ...modeStyles[mode],

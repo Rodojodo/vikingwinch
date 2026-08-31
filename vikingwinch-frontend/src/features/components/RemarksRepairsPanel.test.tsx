@@ -1,16 +1,17 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import RemarksRepairsPanel from './RemarksRepairsPanel';
 
 describe('RemarksRepairsPanel', () => {
+    const mockAddRemark = vi.fn();
     it('renders Remarks and Repairs toggle buttons', () => {
-        render(<RemarksRepairsPanel />);
+        render(<RemarksRepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 }} state={{ squadron: 'sqn1' }} />);
         expect(screen.getByRole('button', { name: /Remarks/i })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Repairs/i })).toBeInTheDocument();
     });
 
     it('toggles Remarks panel', () => {
-        render(<RemarksRepairsPanel />);
+        render(<RemarksRepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 }} state={{ squadron: 'sqn1' }} />);
         
         // Starts with no panel showing
         expect(screen.getByPlaceholderText('Enter launch remarks...')).not.toBeVisible();
@@ -28,7 +29,7 @@ describe('RemarksRepairsPanel', () => {
     });
 
     it('toggles Repairs panel', () => {
-        render(<RemarksRepairsPanel />);
+        render(<RemarksRepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 }} state={{ squadron: 'sqn1' }} />);
         
         expect(screen.getByText('Repair details')).not.toBeVisible();
 

@@ -14,6 +14,7 @@ vi.mock('../hooks/useWinchSession', () => ({
 describe('TraineeAssignmentPanel', () => {
     const defaultProps = {
         isLoading: false,
+        changeTrainee: mockChangeTrainee
     };
 
     beforeEach(() => {
@@ -51,7 +52,7 @@ describe('TraineeAssignmentPanel', () => {
 
     it('disables the cancel button when isLoading is true', async () => {
         const user = userEvent.setup();
-        render(<TraineeAssignmentPanel isLoading={true} />);
+        render(<TraineeAssignmentPanel isLoading={true} changeTrainee={mockChangeTrainee} />);
 
         await user.click(screen.getByText('+ Add trainee'));
 
