@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, FormControl, Grid, MenuItem, Select, TextField, Typography, Alert, Stack, CircularProgress } from '@mui/material';
+import { Box, Button, FormControl, Grid, MenuItem, Select, TextField, Typography, Alert, Stack } from '@mui/material';
 import { DrumToggleGroup } from './DrumToggleGroup';
-import type { DrumPosition, OperatorRead } from '../types';
 import { darkSelectStyles, darkTextFieldStyles } from '../../themes/styles';
-import { useWinchSession } from '../hooks/useWinchSession';
-import { getOperatorsForSquadron } from '../api/dataClient';
+import type { DrumPosition, OperatorRead, WinchLogState, DerivedWinchState } from '../types';
+import {getOperatorsForSquadron} from "../api/dataClient.ts";
 
-export const RepairsPanel: React.FC = () => {
-    const { addRemark, isLoading, derived, state } = useWinchSession();
+
+type RepairsPanelProps = {
+  addRemark: (remark: string | null, drum: DrumPosition) => Promise<void>;
+  isLoading: boolean;
+  derived: DerivedWinchState;
+  state: WinchLogState;
+};
+
+export const RepairsPanel: React.FC<RepairsPanelProps> = ({ addRemark, isLoading, derived, state }) => {
     const [repair, setRepair] = useState<string>('');
     const [drum, setDrum] = useState<DrumPosition>('left');
     
@@ -33,7 +39,7 @@ export const RepairsPanel: React.FC = () => {
                     setOperators(data);
                 }
             })
-            .catch((err) => {
+            .catch(() => {
                 if (!controller.signal.aborted) {
                     setLocalError('Failed to load operators');
                 }

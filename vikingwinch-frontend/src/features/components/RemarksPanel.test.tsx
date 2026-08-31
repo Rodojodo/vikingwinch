@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RemarksPanel } from './RemarksPanel';
 import { useWinchSession } from '../hooks/useWinchSession';
@@ -24,34 +24,38 @@ describe('RemarksPanel', () => {
     });
 
     it('renders RemarksPanel correctly', () => {
-        render(<RemarksPanel />);
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 } as any} />);
         expect(screen.getByText('Launch remarks')).toBeInTheDocument();
         expect(screen.getByPlaceholderText('Enter launch remarks...')).toBeInTheDocument();
     });
 
     it('submits remark when button is clicked', async () => {
-        render(<RemarksPanel />);
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 } as any} />);
         
         fireEvent.change(screen.getByPlaceholderText('Enter launch remarks...'), {
             target: { value: 'Test remark' },
         });
 
         const submitButton = screen.getByRole('button', { name: /Submit Remark/i });
-        fireEvent.click(submitButton);
+        await act(async () => {
+            fireEvent.click(submitButton);
+        });
 
         expect(mockAddRemark).toHaveBeenCalledWith('Test remark', 'left');
     });
 
     it('shows error alert when submission fails', async () => {
         mockAddRemark.mockRejectedValue(new Error('Test local Error'));
-        render(<RemarksPanel />);
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 } as any} />);
         
         fireEvent.change(screen.getByPlaceholderText('Enter launch remarks...'), {
             target: { value: 'Test remark' },
         });
 
         const submitButton = screen.getByRole('button', { name: /Submit Remark/i });
-        fireEvent.click(submitButton);
+        await act(async () => {
+            fireEvent.click(submitButton);
+        });
 
         await waitFor(() => {
             expect(screen.getByText('Test local Error')).toBeInTheDocument();
@@ -66,7 +70,7 @@ describe('RemarksPanel', () => {
             derived: { leftLaunches: 0, rightLaunches: 0 },
         } as any);
 
-        render(<RemarksPanel />);
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 0, rightLaunches: 0 } as any} />);
         expect(screen.getByText('No launches yet')).toBeInTheDocument();
         const submitButton = screen.getByRole('button', { name: /Submit Remark/i });
         expect(submitButton).toBeDisabled();
@@ -74,14 +78,16 @@ describe('RemarksPanel', () => {
     
     it('catches and swallows error thrown by addRemark', async () => {
         mockAddRemark.mockRejectedValue(new Error('Add remark failed'));
-        render(<RemarksPanel />);
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 } as any} />);
         
         fireEvent.change(screen.getByPlaceholderText('Enter launch remarks...'), {
             target: { value: 'Test remark' },
         });
 
         const submitButton = screen.getByRole('button', { name: /Submit Remark/i });
-        fireEvent.click(submitButton);
+        await act(async () => {
+            fireEvent.click(submitButton);
+        });
 
         await waitFor(() => {
             expect(mockAddRemark).toHaveBeenCalled();
@@ -91,20 +97,22 @@ describe('RemarksPanel', () => {
     });
 
     it('does not submit if remark is empty', () => {
-        render(<RemarksPanel />);
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 } as any} />);
         const submitButton = screen.getByRole('button', { name: /Submit Remark/i });
         expect(submitButton).toBeDisabled();
     });
 
-    it('blocks remarks starting with Repair', () => {
-        render(<RemarksPanel />);
+    it('blocks remarks starting with Repair', async () => {
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 } as any} />);
         
         fireEvent.change(screen.getByPlaceholderText('Enter launch remarks...'), {
             target: { value: 'Repair: broken cable' },
         });
 
         const submitButton = screen.getByRole('button', { name: /Submit Remark/i });
-        fireEvent.click(submitButton);
+        await act(async () => {
+            fireEvent.click(submitButton);
+        });
 
         expect(mockAddRemark).not.toHaveBeenCalled();
         expect(screen.getByText('Repairs should be logged in the Repairs tab')).toBeInTheDocument();
