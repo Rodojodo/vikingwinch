@@ -67,7 +67,7 @@ describe('LaunchPanel', () => {
 
     it('handles left burn click', () => {
         render(<LaunchPanel />);
-        const burnBtn = screen.getByText('🔥 Burn Left').closest('button');
+        const burnBtn = screen.getByRole('button', { name: /Burn Left/i });
         fireEvent.click(burnBtn!);
         expect(mockExecuteLaunch).toHaveBeenCalledWith('left', true);
     });
@@ -81,7 +81,7 @@ describe('LaunchPanel', () => {
 
     it('handles right burn click', () => {
         render(<LaunchPanel />);
-        const burnBtn = screen.getByText('🔥 Burn Right').closest('button');
+        const burnBtn = screen.getByRole('button', { name: /Burn Right/i });
         fireEvent.click(burnBtn!);
         expect(mockExecuteLaunch).toHaveBeenCalledWith('right', true);
     });

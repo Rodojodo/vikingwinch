@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RepairsPanel } from './RepairsPanel';
 import { useWinchSession } from '../hooks/useWinchSession';
@@ -38,7 +38,7 @@ describe('RepairsPanel', () => {
     });
 
     it('renders RepairsPanel correctly', async () => {
-        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 }} state={{ squadron: 'sqn1' }} />);
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 } as any} state={{ squadron: 'sqn1' } as any} />);
         expect(screen.getByText('Repair details')).toBeInTheDocument();
         expect(screen.getByPlaceholderText('Describe the repair carried out...')).toBeInTheDocument();
         
@@ -48,7 +48,7 @@ describe('RepairsPanel', () => {
     });
 
     it('submits repair as remark when button is clicked with worker and supervisor', async () => {
-        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 }} state={{ squadron: 'sqn1' }} />);
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 } as any} state={{ squadron: 'sqn1' } as any} />);
         
         // Wait for operators to load
         await waitFor(() => {
@@ -73,13 +73,15 @@ describe('RepairsPanel', () => {
 
         const submitButton = screen.getByRole('button', { name: /Sign as Supervisor/i });
         expect(submitButton).not.toBeDisabled();
-        fireEvent.click(submitButton);
+        await act(async () => {
+            fireEvent.click(submitButton);
+        });
 
         expect(mockAddRemark).toHaveBeenCalledWith('Repair: weak link | Worker: 123 | Sup: 456', 'left');
     });
 
     it('submits repair as remark without supervisor', async () => {
-        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 }} state={{ squadron: 'sqn1' }} />);
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 } as any} state={{ squadron: 'sqn1' } as any} />);
         
         await waitFor(() => {
             expect(getOperatorsForSquadron).toHaveBeenCalled();
@@ -98,7 +100,9 @@ describe('RepairsPanel', () => {
 
         const submitButton = screen.getByRole('button', { name: /Sign as Supervisor/i });
         expect(submitButton).not.toBeDisabled();
-        fireEvent.click(submitButton);
+        await act(async () => {
+            fireEvent.click(submitButton);
+        });
 
         expect(mockAddRemark).toHaveBeenCalledWith('Repair: cable fix | Worker: 123', 'left');
     });
@@ -112,7 +116,7 @@ describe('RepairsPanel', () => {
             state: { squadron: 'sqn1' }
         } as any);
 
-        render(<RepairsPanel addRemark={mockErrorAdd} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 }} state={{ squadron: 'sqn1' }} />);
+        render(<RepairsPanel addRemark={mockErrorAdd} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 } as any} state={{ squadron: 'sqn1' } as any} />);
         
         await waitFor(() => {
             expect(getOperatorsForSquadron).toHaveBeenCalled();
@@ -128,7 +132,9 @@ describe('RepairsPanel', () => {
         fireEvent.click(within(listbox).getByText('Joe Bloggs'));
 
         const submitButton = screen.getByRole('button', { name: /Sign as Supervisor/i });
-        fireEvent.click(submitButton);
+        await act(async () => {
+            fireEvent.click(submitButton);
+        });
 
         await waitFor(() => {
             expect(screen.getByText('Test local Error')).toBeInTheDocument();
@@ -138,14 +144,14 @@ describe('RepairsPanel', () => {
     it('shows fetch error alert when getOperators fails', async () => {
         vi.mocked(getOperatorsForSquadron).mockRejectedValue(new Error('API fail'));
 
-        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 }} state={{ squadron: 'sqn1' }} />);
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 } as any} state={{ squadron: 'sqn1' } as any} />);
         
         await waitFor(() => {
             expect(screen.getByText('Failed to load operators')).toBeInTheDocument();
         });
     });
 
-    it('disables submit button and shows text when no launches', () => {
+    it('disables submit button and shows text when no launches', async () => {
         vi.mocked(useWinchSession).mockReturnValue({
             addRemark: mockAddRemark,
             isLoading: false,
@@ -154,14 +160,24 @@ describe('RepairsPanel', () => {
             state: { squadron: 'sqn1' }
         } as any);
 
-        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 0, rightLaunches: 0 }} state={{ squadron: 'sqn1' }} />);
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 0, rightLaunches: 0 } as any} state={{ squadron: 'sqn1' } as any} />);
+        
+        await waitFor(() => {
+            expect(getOperatorsForSquadron).toHaveBeenCalled();
+        });
+
         expect(screen.getByText('No launches yet')).toBeInTheDocument();
         const submitButton = screen.getByRole('button', { name: /Sign as Supervisor/i });
         expect(submitButton).toBeDisabled();
     });
 
-    it('does not submit if repair details are empty', () => {
-        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 }} state={{ squadron: 'sqn1' }} />);
+    it('does not submit if repair details are empty', async () => {
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLaunches: 1, rightLaunches: 1 } as any} state={{ squadron: 'sqn1' } as any} />);
+        
+        await waitFor(() => {
+            expect(getOperatorsForSquadron).toHaveBeenCalled();
+        });
+
         const submitButton = screen.getByRole('button', { name: /Sign as Supervisor/i });
         expect(submitButton).toBeDisabled();
     });

@@ -26,7 +26,7 @@ describe('DrumControl', () => {
     it('renders correctly for left drum', () => {
         render(<DrumControl {...defaultProps} drumType="left" />);
         expect(screen.getByText('Left Drum')).toBeInTheDocument();
-        expect(screen.getByText('🔥 Burn Left')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Burn Left/i })).toBeInTheDocument();
         expect(screen.getByText('− Undo Left')).toBeInTheDocument();
         expect(screen.getByText('5 launches')).toBeInTheDocument();
         expect(screen.getByText('5 recorded')).toBeInTheDocument();
@@ -35,7 +35,7 @@ describe('DrumControl', () => {
     it('renders correctly for right drum', () => {
         render(<DrumControl {...defaultProps} drumType="right" launches={2} />);
         expect(screen.getByText('Right Drum')).toBeInTheDocument();
-        expect(screen.getByText('🔥 Burn Right')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Burn Right/i })).toBeInTheDocument();
         expect(screen.getByText('− Undo Right')).toBeInTheDocument();
         expect(screen.getByText('2 launches')).toBeInTheDocument();
         expect(screen.getByText('2 recorded')).toBeInTheDocument();
@@ -57,7 +57,7 @@ describe('DrumControl', () => {
 
     it('triggers onBurn when burn button is clicked', () => {
         render(<DrumControl {...defaultProps} />);
-        const burnBtn = screen.getByText('🔥 Burn Left').closest('button');
+        const burnBtn = screen.getByRole('button', { name: /Burn Left/i });
         fireEvent.click(burnBtn!);
         expect(mockOnBurn).toHaveBeenCalledTimes(1);
     });
@@ -72,14 +72,14 @@ describe('DrumControl', () => {
     it('disables launch and burn buttons when isLoading is true', () => {
         render(<DrumControl {...defaultProps} isLoading={true} />);
         expect(screen.getByText('Left Drum').closest('button')).toBeDisabled();
-        expect(screen.getByText('🔥 Burn Left').closest('button')).toBeDisabled();
+        expect(screen.getByRole('button', { name: /Burn Left/i })).toBeDisabled();
         expect(screen.getByText('− Undo Left').closest('button')).toBeDisabled();
     });
 
     it('disables launch and burn buttons when isUsed is true', () => {
         render(<DrumControl {...defaultProps} isUsed={true} />);
         expect(screen.getByText('Left Drum').closest('button')).toBeDisabled();
-        expect(screen.getByText('🔥 Burn Left').closest('button')).toBeDisabled();
+        expect(screen.getByRole('button', { name: /Burn Left/i })).toBeDisabled();
         // Undo shouldn't be disabled by isUsed, only by isLoading or launches === 0
         expect(screen.getByText('− Undo Left').closest('button')).not.toBeDisabled();
     });
@@ -87,6 +87,6 @@ describe('DrumControl', () => {
     it('disables launch and burn buttons when isResetting is true', () => {
         render(<DrumControl {...defaultProps} isResetting={true} />);
         expect(screen.getByText('Left Drum').closest('button')).toBeDisabled();
-        expect(screen.getByText('🔥 Burn Left').closest('button')).toBeDisabled();
+        expect(screen.getByRole('button', { name: /Burn Left/i })).toBeDisabled();
     });
 });
