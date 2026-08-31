@@ -44,3 +44,9 @@ export interface RemarkPayload {
   winch_id: number;
   remark: string | null;
 }
+
+export interface OperatorRead {
+  sn: string;
+  name: string;
+  squadron_id: string;
+}
