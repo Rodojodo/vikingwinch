@@ -14,8 +14,8 @@ export const initialState: WinchLogState = {
 export const winchReducer = (state: WinchLogState, action: WinchAction): WinchLogState => {
     switch (action.type) {
         case 'RECORD_LAUNCH': {
-            const {drum, timestamp, id, burn} = action.payload;
-            const record: LaunchRecord = {id, timestamp, remark: null, burn};
+            const {drum, timestamp, id, launch_number, burn} = action.payload;
+            const record: LaunchRecord = {id, launch_number, timestamp, remark: null, burn};
 
             if (drum === 'left') {
                 return {...state, leftHistory: [...state.leftHistory, record]};

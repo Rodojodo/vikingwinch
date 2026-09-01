@@ -3,6 +3,7 @@ import { Box, Button, FormControl, MenuItem, Select, TextField, Typography, Aler
 import { darkSelectStyles, darkTextFieldStyles } from '../../themes/styles';
 import { getOperatorsForSquadron } from '../api/dataClient';
 import type { OperatorRead, WinchLogState } from '../types';
+import { exportLog } from '../utils/exportLog';
 
 type FinishDayPanelProps = {
     finishDay: (cableCheck: string | null, hours: number | null) => Promise<any>;
@@ -87,8 +88,8 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ finishDay, isLoa
     };
 
     const handleDownloadLog = () => {
-        // Placeholder for download log functionality
-        console.log('Downloading log...');
+        const hours = hoursStop ? parseFloat(hoursStop) : null;
+        exportLog(state, isNaN(hours as number) ? null : hours).catch(console.error);
     };
 
     return (

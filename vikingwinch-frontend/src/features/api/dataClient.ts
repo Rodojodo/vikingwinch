@@ -102,3 +102,25 @@ export const getOperatorsForSquadron = async (squadronId: string): Promise<any[]
         return [];
     }
 }
+
+export const getWinch = async (winchId: number): Promise<any> => {
+    const response = await fetch(`${API_BASE_URL}/winches/${winchId}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+        },
+    });
+    await handleApiError(response);
+    return response.json();
+}
+
+export const getDayLog = async (winchId: number, day: string): Promise<DayLogResponse[]> => {
+    const response = await fetch(`${API_BASE_URL}/winch/${winchId}/day_log?day=${day}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+        },
+    });
+    await handleApiError(response);
+    return response.json();
+}

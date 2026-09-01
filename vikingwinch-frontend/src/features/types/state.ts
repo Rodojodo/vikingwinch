@@ -4,6 +4,7 @@ import type {DayLogResponse, LaunchResponse} from './api';
 
 export interface LaunchRecord {
   id: number;
+  launch_number: number | null;
   timestamp: string | null;
   remark: string | null;
   burn: boolean;
