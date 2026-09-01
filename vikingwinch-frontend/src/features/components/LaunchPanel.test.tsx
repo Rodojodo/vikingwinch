@@ -50,7 +50,7 @@ describe('LaunchPanel', () => {
     });
 
     it('renders LaunchPanel correctly', () => {
-        render(<LaunchPanel />);
+        render(<LaunchPanel session={useWinchSession() as any} />);
         expect(screen.getByText('Left Drum')).toBeInTheDocument();
         expect(screen.getByText('Right Drum')).toBeInTheDocument();
         expect(screen.getByTestId('winch-sticker')).toBeInTheDocument();
@@ -59,28 +59,28 @@ describe('LaunchPanel', () => {
     });
 
     it('handles left launch click', () => {
-        render(<LaunchPanel />);
+        render(<LaunchPanel session={useWinchSession() as any} />);
         const launchBtn = screen.getByText('Left Drum').closest('button');
         fireEvent.click(launchBtn!);
         expect(mockExecuteLaunch).toHaveBeenCalledWith('left');
     });
 
     it('handles left burn click', () => {
-        render(<LaunchPanel />);
+        render(<LaunchPanel session={useWinchSession() as any} />);
         const burnBtn = screen.getByRole('button', { name: /Burn Left/i });
         fireEvent.click(burnBtn!);
         expect(mockExecuteLaunch).toHaveBeenCalledWith('left', true);
     });
 
     it('handles right launch click', () => {
-        render(<LaunchPanel />);
+        render(<LaunchPanel session={useWinchSession() as any} />);
         const launchBtn = screen.getByText('Right Drum').closest('button');
         fireEvent.click(launchBtn!);
         expect(mockExecuteLaunch).toHaveBeenCalledWith('right');
     });
 
     it('handles right burn click', () => {
-        render(<LaunchPanel />);
+        render(<LaunchPanel session={useWinchSession() as any} />);
         const burnBtn = screen.getByRole('button', { name: /Burn Right/i });
         fireEvent.click(burnBtn!);
         expect(mockExecuteLaunch).toHaveBeenCalledWith('right', true);
@@ -94,7 +94,7 @@ describe('LaunchPanel', () => {
             undoLaunch: mockUndoLaunch,
             state: { squadron: 'sqn1', winchNum: 42 }
         } as any);
-        render(<LaunchPanel />);
+        render(<LaunchPanel session={useWinchSession() as any} />);
         const undoBtn = screen.getByText('− Undo Left');
         fireEvent.click(undoBtn);
         expect(mockUndoLaunch).toHaveBeenCalledWith('left');
@@ -108,14 +108,14 @@ describe('LaunchPanel', () => {
             undoLaunch: mockUndoLaunch,
             state: { squadron: 'sqn1', winchNum: 42 }
         } as any);
-        render(<LaunchPanel />);
+        render(<LaunchPanel session={useWinchSession() as any} />);
         const undoBtn = screen.getByText('− Undo Right');
         fireEvent.click(undoBtn);
         expect(mockUndoLaunch).toHaveBeenCalledWith('right');
     });
 
     it('disables undo buttons when no launches', () => {
-        render(<LaunchPanel />);
+        render(<LaunchPanel session={useWinchSession() as any} />);
         const undoLeft = screen.getByText('− Undo Left');
         const undoRight = screen.getByText('− Undo Right');
         expect(undoLeft).toBeDisabled();
@@ -134,7 +134,7 @@ describe('LaunchPanel', () => {
             undoLaunch: mockUndoLaunch
         } as any);
 
-        render(<LaunchPanel />);
+        render(<LaunchPanel session={useWinchSession() as any} />);
         expect(screen.getByTestId('winch-sticker')).toHaveAttribute('data-recent', 'true');
 
         // Fast forward 16 minutes
@@ -156,7 +156,7 @@ describe('LaunchPanel', () => {
             undoLaunch: mockUndoLaunch
         } as any);
 
-        const { rerender } = render(<LaunchPanel />);
+        const { rerender } = render(<LaunchPanel session={useWinchSession() as any} />);
 
         // Now make them equal and increase
         mockUseWinchSession.mockReturnValue({
@@ -167,7 +167,7 @@ describe('LaunchPanel', () => {
             undoLaunch: mockUndoLaunch
         } as any);
 
-        rerender(<LaunchPanel />);
+        rerender(<LaunchPanel session={useWinchSession() as any} />);
 
         // Fast forward to trigger the reset animation setTimeout
         act(() => {

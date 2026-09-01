@@ -2,8 +2,13 @@ import { Box, Typography, Button } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { useWinchSession } from '../hooks/useWinchSession';
 
-export const SkylogValues = ({ onBack }: { onBack?: () => void }) => {
-    const { derived, state } = useWinchSession();
+interface SkylogValuesProps {
+    onBack?: () => void;
+    session: ReturnType<typeof useWinchSession>;
+}
+
+export const SkylogValues = ({ onBack, session }: SkylogValuesProps) => {
+    const { derived, state } = session;
     const { leftLaunches, rightLaunches } = derived;
     
     const winchTotal = leftLaunches + rightLaunches;

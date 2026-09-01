@@ -1,11 +1,11 @@
 import { Box, Stack, Typography, ButtonBase, Divider } from '@mui/material';
 import { useState, useEffect, useRef } from 'react';
-import { TraineeAssignmentPanel } from '../components/TraineeAssignmentPanel';
-import { RemarksRepairsPanel } from '../components/RemarksRepairsPanel';
-import { WinchDetailsSticker } from '../components/WinchDetailsSticker';
+import { TraineeAssignmentPanel } from './TraineeAssignmentPanel';
+import { RemarksRepairsPanel } from './RemarksRepairsPanel';
+import { WinchDetailsSticker } from './WinchDetailsSticker';
 import { useWinchSession } from '../hooks/useWinchSession';
 import './LaunchPanel.css';
-import {DrumControl} from "../components/DrumControl.tsx";
+import {DrumControl} from "./DrumControl";
 
 const ANIMATIONS = [
     'animFadeScale 0.6s cubic-bezier(0.2, 0, 0, 1) forwards', // M3 Emphasized
@@ -24,8 +24,13 @@ const ANIMATIONS = [
 
 const POST_LAUNCH_COOLDOWN_THRESHOLD_MS = 2.5 * 60 * 1000; // 2.5 minutes
 
-export const LaunchPanel = ({ onViewSkylogValues }: { onViewSkylogValues?: () => void }) => {
-    const { derived, isLoading, executeLaunch, undoLaunch, changeTrainee, addRemark, state } = useWinchSession();
+interface LaunchPanelProps {
+    onViewSkylogValues?: () => void;
+    session: ReturnType<typeof useWinchSession>;
+}
+
+export const LaunchPanel = ({ onViewSkylogValues, session }: LaunchPanelProps) => {
+    const { derived, isLoading, executeLaunch, undoLaunch, changeTrainee, addRemark, state } = session;
     
     const { leftLaunches, rightLaunches, leftLast, rightLast } = derived;
 

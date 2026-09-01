@@ -50,9 +50,7 @@ export const useWinchSession = () => {
                 burn,
             };
             const responseData = await postLaunchToDb(payload);
-            if (!burn) {
-                dispatch({ type: 'RECORD_LAUNCH', payload: responseData });
-            }
+            dispatch({ type: 'RECORD_LAUNCH', payload: responseData });
             return responseData;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Launch execution failed');
