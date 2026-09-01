@@ -3,8 +3,8 @@ import { createRoot } from 'react-dom/client';
 import { MsalProvider } from '@azure/msal-react';
 import { ThemeProvider } from '@mui/material/styles';
 import { appTheme } from './themes/theme'; // Import your new theme
-import { msalInstance } from './features/auth/authConfig';
-import App from './features/pages/App.tsx';
+import { msalInstance } from './features/auth/config/authConfig';
+import App from './pages/App.tsx';
 
 
 // MSAL requires initialization before the provider renders
