@@ -57,22 +57,37 @@ export const WinchSelectPanel = ({ squadronId, onSelectWinch }: WinchSelectPanel
             ) : winches.length === 0 ? (
                 <Typography>No winches available for this squadron.</Typography>
             ) : (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, width: '100%' }}>
+                <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 2, width: '100%', justifyContent: 'center' }}>
                     {winches.map(winch => (
                         <Button
                             key={winch.id}
                             variant="outlined"
                             onClick={() => onSelectWinch(winch.id)}
                             sx={{
-                                color: 'white',
-                                borderColor: 'rgba(56, 189, 248, 0.5)',
-                                borderRadius: '12px',
-                                py: 2,
+                                flex: 1,
+                                minWidth: '120px',
+                                backgroundColor: 'rgba(59, 130, 246, 0.05)',
+                                border: '2px solid #3b82f6',
+                                color: '#f8fafc',
                                 textTransform: 'none',
-                                fontSize: '1.1rem',
+                                borderRadius: '16px',
+                                py: 2.5,
+                                px: 2,
+                                fontSize: '16px',
+                                fontWeight: 600,
+                                backdropFilter: 'blur(4px)',
+                                transition: 'all 0.2s ease',
                                 '&:hover': {
-                                    borderColor: 'rgba(56, 189, 248, 1)',
-                                    backgroundColor: 'rgba(56, 189, 248, 0.1)'
+                                    backgroundColor: '#3b82f6',
+                                    color: 'white',
+                                    transform: 'scale(1.02)',
+                                    boxShadow: '0 8px 24px rgba(59, 130, 246, 0.5)',
+                                    borderColor: 'transparent'
+                                },
+                                '&:disabled': {
+                                    opacity: 0.5,
+                                    color: 'rgba(255, 255, 255, 0.3)',
+                                    borderColor: 'rgba(255, 255, 255, 0.1)',
                                 }
                             }}
                         >
