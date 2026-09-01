@@ -44,8 +44,8 @@ export const SignOnPanel: React.FC<SignOnPanelProps> = ({ session, onComplete, a
         }
     };
 
-    const currentOperatorObj = operators.find(o => o.sn === state.operatorSn);
-    const traineeObj = operators.find(o => o.sn === selectedTraineeSn);
+    const currentOperatorObj = operators.find(o => o.service_no === state.operatorSn);
+    const traineeObj = operators.find(o => o.service_no === selectedTraineeSn);
     
     let currentOperatorText = currentOperatorObj ? currentOperatorObj.name : state.operatorSn;
     if (traineeObj) {
@@ -109,8 +109,8 @@ export const SignOnPanel: React.FC<SignOnPanelProps> = ({ session, onComplete, a
                         }}
                     >
                         <MenuItem value="">— None —</MenuItem>
-                        {operators.filter(op => op.sn !== state.operatorSn).map(op => (
-                            <MenuItem key={op.sn} value={op.sn}>
+                        {operators.filter(op => op.service_no !== state.operatorSn).map(op => (
+                            <MenuItem key={op.service_no} value={op.service_no}>
                                 {op.name}
                             </MenuItem>
                         ))}

@@ -46,7 +46,7 @@ export interface RemarkPayload {
 }
 
 export interface OperatorRead {
-  sn: string;
+  service_no: string;
   name: string;
   squadron_id: string;
 }
