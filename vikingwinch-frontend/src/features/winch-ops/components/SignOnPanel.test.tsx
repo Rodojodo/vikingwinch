@@ -32,7 +32,7 @@ describe('SignOnPanel', () => {
     });
 
     it('renders winch ID, operators, and already inspected message', async () => {
-        render(<SignOnPanel session={mockSession as any} onComplete={mockOnComplete} alreadyInspected={true} />);
+        render(<SignOnPanel session={mockSession as any} onComplete={mockOnComplete} alreadyInspected={true} lastOperatorSn="OP1" lastTraineeSn="OP2" />);
 
         // Wait for fetching to finish
         await waitFor(() => {
@@ -40,12 +40,12 @@ describe('SignOnPanel', () => {
         });
 
         expect(screen.getByText('Winch 42')).toBeInTheDocument();
-        expect(screen.getByText('Current operator: Geronimo Jones')).toBeInTheDocument();
+        expect(screen.getByText('Current operator: Geronimo Jones & Charlie Bloggs')).toBeInTheDocument();
         expect(screen.getByText('This winch has already been inspected today.')).toBeInTheDocument();
     });
 
     it('does not show already inspected message if false', async () => {
-        render(<SignOnPanel session={mockSession as any} onComplete={mockOnComplete} alreadyInspected={false} />);
+        render(<SignOnPanel session={mockSession as any} onComplete={mockOnComplete} alreadyInspected={false} lastOperatorSn={null} lastTraineeSn={null} />);
         
         await waitFor(() => {
             expect(screen.queryByText('— None —')).toBeInTheDocument();
@@ -54,9 +54,9 @@ describe('SignOnPanel', () => {
         expect(screen.queryByText('This winch has already been inspected today.')).not.toBeInTheDocument();
     });
 
-    it('allows selecting a trainee and updates the current operator text', async () => {
+    it('allows selecting a trainee but it does not change the current operator text', async () => {
         const user = userEvent.setup();
-        render(<SignOnPanel session={mockSession as any} onComplete={mockOnComplete} alreadyInspected={false} />);
+        render(<SignOnPanel session={mockSession as any} onComplete={mockOnComplete} alreadyInspected={false} lastOperatorSn="OP1" lastTraineeSn={null} />);
 
         await waitFor(() => {
             expect(screen.getByRole('combobox')).toBeInTheDocument();
@@ -69,12 +69,13 @@ describe('SignOnPanel', () => {
         const traineeOption = within(listbox).getByRole('option', { name: 'Charlie Bloggs' });
         await user.click(traineeOption);
 
-        expect(screen.getByText('Current operator: Geronimo Jones & Charlie Bloggs')).toBeInTheDocument();
+        // Text shouldn't change to include Charlie Bloggs since it's the PREVIOUS operator shown
+        expect(screen.getByText('Current operator: Geronimo Jones')).toBeInTheDocument();
     });
 
     it('submits sign on and calls onComplete when clicking Walkaround complete', async () => {
         const user = userEvent.setup();
-        render(<SignOnPanel session={mockSession as any} onComplete={mockOnComplete} alreadyInspected={false} />);
+        render(<SignOnPanel session={mockSession as any} onComplete={mockOnComplete} alreadyInspected={false} lastOperatorSn="OP1" lastTraineeSn={null} />);
 
         await waitFor(() => {
             expect(screen.getByRole('combobox')).toBeInTheDocument();
@@ -95,7 +96,7 @@ describe('SignOnPanel', () => {
         mockRecordSignOn.mockRejectedValue(new Error('Network error'));
         
         const user = userEvent.setup();
-        render(<SignOnPanel session={mockSession as any} onComplete={mockOnComplete} alreadyInspected={false} />);
+        render(<SignOnPanel session={mockSession as any} onComplete={mockOnComplete} alreadyInspected={false} lastOperatorSn="OP1" lastTraineeSn={null} />);
 
         await waitFor(() => {
             expect(screen.getByRole('combobox')).toBeInTheDocument();
@@ -112,7 +113,7 @@ describe('SignOnPanel', () => {
     });
 
     it('disables the submit button when isLoading is true', () => {
-        render(<SignOnPanel session={{ ...mockSession, isLoading: true } as any} onComplete={mockOnComplete} alreadyInspected={false} />);
+        render(<SignOnPanel session={{ ...mockSession, isLoading: true } as any} onComplete={mockOnComplete} alreadyInspected={false} lastOperatorSn="OP1" lastTraineeSn={null} />);
         
         const btn = screen.getByRole('button', { name: /Walkaround complete/i });
         expect(btn).toBeDisabled();
@@ -122,7 +123,7 @@ describe('SignOnPanel', () => {
         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         vi.mocked(getOperatorsForSquadron).mockRejectedValueOnce(new Error('Fetch failed'));
 
-        render(<SignOnPanel session={mockSession as any} onComplete={mockOnComplete} alreadyInspected={false} />);
+        render(<SignOnPanel session={mockSession as any} onComplete={mockOnComplete} alreadyInspected={false} lastOperatorSn="OP1" lastTraineeSn={null} />);
 
         await waitFor(() => {
             expect(consoleSpy).toHaveBeenCalledWith(expect.any(Error));

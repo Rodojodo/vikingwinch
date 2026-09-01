@@ -8,9 +8,11 @@ interface SignOnPanelProps {
     session: ReturnType<typeof useWinchSession>;
     onComplete: () => void;
     alreadyInspected: boolean;
+    lastOperatorSn: string | null;
+    lastTraineeSn: string | null;
 }
 
-export const SignOnPanel: React.FC<SignOnPanelProps> = ({ session, onComplete, alreadyInspected }) => {
+export const SignOnPanel: React.FC<SignOnPanelProps> = ({ session, onComplete, alreadyInspected, lastOperatorSn, lastTraineeSn }) => {
     const { state, recordSignOn, isLoading } = session;
     const [operators, setOperators] = useState<OperatorRead[]>([]);
     const [selectedTraineeSn, setSelectedTraineeSn] = useState<string>('');
@@ -44,12 +46,14 @@ export const SignOnPanel: React.FC<SignOnPanelProps> = ({ session, onComplete, a
         }
     };
 
-    const currentOperatorObj = operators.find(o => o.service_no === state.operatorSn);
-    const traineeObj = operators.find(o => o.service_no === selectedTraineeSn);
-    
-    let currentOperatorText = currentOperatorObj ? currentOperatorObj.name : state.operatorSn;
-    if (traineeObj) {
-        currentOperatorText += ` & ${traineeObj.name}`;
+    let currentOperatorText = "None";
+    if (lastOperatorSn) {
+        const lastOperatorObj = operators.find(o => o.service_no === lastOperatorSn);
+        currentOperatorText = lastOperatorObj ? lastOperatorObj.name : lastOperatorSn;
+        if (lastTraineeSn) {
+            const lastTraineeObj = operators.find(o => o.service_no === lastTraineeSn);
+            currentOperatorText += ` & ${lastTraineeObj ? lastTraineeObj.name : lastTraineeSn}`;
+        }
     }
 
     return (

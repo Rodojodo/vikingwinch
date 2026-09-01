@@ -19,6 +19,8 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, onWinchSelect
     const [page, setPage] = useState<'launch' | 'skylog'>('launch');
     const [needsSignOn, setNeedsSignOn] = useState<boolean | null>(null);
     const [alreadyInspected, setAlreadyInspected] = useState(false);
+    const [lastOperatorSn, setLastOperatorSn] = useState<string | null>(null);
+    const [lastTraineeSn, setLastTraineeSn] = useState<string | null>(null);
     
     const session = useWinchSession(squadronId, operatorSn, winchId);
     
@@ -51,6 +53,8 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, onWinchSelect
                 
                 if (signOnLogs.length > 0) {
                     const lastLog = signOnLogs[signOnLogs.length - 1];
+                    setLastOperatorSn(lastLog.operator_id);
+                    setLastTraineeSn(lastLog.trainee);
                     // Bypass if they were the last person to sign on today
                     if (lastLog.operator_id === operatorSn) {
                         setNeedsSignOn(false);
@@ -60,6 +64,8 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, onWinchSelect
                         setNeedsSignOn(true);
                     }
                 } else {
+                    setLastOperatorSn(null);
+                    setLastTraineeSn(null);
                     setNeedsSignOn(true);
                 }
             } catch (err) {
@@ -95,6 +101,8 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, onWinchSelect
                 <SignOnPanel 
                     session={session} 
                     alreadyInspected={alreadyInspected}
+                    lastOperatorSn={lastOperatorSn}
+                    lastTraineeSn={lastTraineeSn}
                     onComplete={() => setNeedsSignOn(false)} 
                 />
             ) : page === 'launch' ? (
