@@ -21,7 +21,7 @@ describe('useWinchSession', () => {
     id,
     launch_number: id,
     squadron_id: initialState.squadron,
-    winch_id: initialState.winchId,
+    winch_id: 1,
     operator_id: initialState.operatorSn,
     drum,
     burn,
@@ -32,7 +32,7 @@ describe('useWinchSession', () => {
   const createMockDayLogResponse = (trainee: string, id: number, timestamp: string): DayLogResponse => ({
     id,
     squadron_id: initialState.squadron,
-    winch_id: initialState.winchId,
+    winch_id: 1,
     operator_id: initialState.operatorSn,
     trainee,
     type: 'sign_on',
@@ -61,6 +61,7 @@ describe('useWinchSession', () => {
     vi.mocked(postLaunchToDb).mockResolvedValueOnce(mockResponse);
 
     const { result } = renderHook(() => useWinchSession());
+    act(() => { result.current.setWinchId(1); });
 
     await act(async () => {
       await result.current.executeLaunch('left', false);
@@ -69,7 +70,7 @@ describe('useWinchSession', () => {
     expect(postLaunchToDb).toHaveBeenCalledTimes(1);
     expect(postLaunchToDb).toHaveBeenCalledWith({
       squadron_id: initialState.squadron,
-      winch_id: initialState.winchId,
+      winch_id: 1,
       operator_id: initialState.operatorSn,
       drum: 'left',
       burn: false,
@@ -87,6 +88,7 @@ describe('useWinchSession', () => {
     vi.mocked(postLaunchToDb).mockResolvedValueOnce(mockResponse);
 
     const { result } = renderHook(() => useWinchSession());
+    act(() => { result.current.setWinchId(1); });
 
     await act(async () => {
       await result.current.executeLaunch('right', false);
@@ -103,6 +105,7 @@ describe('useWinchSession', () => {
     vi.mocked(postLaunchToDb).mockResolvedValueOnce(mockResponse);
 
     const { result } = renderHook(() => useWinchSession());
+    act(() => { result.current.setWinchId(1); });
     
     await act(async () => {
       await result.current.executeLaunch('left', true);
@@ -125,6 +128,7 @@ describe('useWinchSession', () => {
     vi.mocked(removeLaunchFromDb).mockResolvedValueOnce(undefined);
 
     const { result } = renderHook(() => useWinchSession());
+    act(() => { result.current.setWinchId(1); });
 
     await act(async () => {
       await result.current.executeLaunch('left', false);
@@ -148,6 +152,7 @@ describe('useWinchSession', () => {
     vi.mocked(postLaunchToDb).mockRejectedValueOnce(new Error(errorMessage));
 
     const { result } = renderHook(() => useWinchSession());
+    act(() => { result.current.setWinchId(1); });
 
     await act(async () => {
       await expect(result.current.executeLaunch('left', false)).rejects.toThrow(errorMessage);
@@ -160,6 +165,7 @@ describe('useWinchSession', () => {
 
   it('computes lastDrum correctly by comparing timestamps when both drums have history', async () => {
     const { result } = renderHook(() => useWinchSession());
+    act(() => { result.current.setWinchId(1); });
 
     vi.mocked(postLaunchToDb).mockResolvedValueOnce(createMockLaunchResponse('left', 101, '2026-08-30T09:00:00Z'));
     await act(async () => {
@@ -182,6 +188,7 @@ describe('useWinchSession', () => {
 
   it('sets an error and aborts undoLaunch if the target drum history is empty', async () => {
     const { result } = renderHook(() => useWinchSession());
+    act(() => { result.current.setWinchId(1); });
 
     await act(async () => {
       await result.current.undoLaunch('left');
@@ -195,6 +202,7 @@ describe('useWinchSession', () => {
   it('handles API rejection during undoLaunch, sets error state, and throws', async () => {
     vi.mocked(postLaunchToDb).mockResolvedValueOnce(createMockLaunchResponse('right', 101, '2026-08-30T09:00:00Z'));
     const { result } = renderHook(() => useWinchSession());
+    act(() => { result.current.setWinchId(1); });
     await act(async () => {
       await result.current.executeLaunch('right', false);
     });
@@ -216,6 +224,7 @@ describe('useWinchSession', () => {
     vi.mocked(postDayLogToDb).mockResolvedValueOnce(mockResponse);
 
     const { result } = renderHook(() => useWinchSession());
+    act(() => { result.current.setWinchId(1); });
 
     let responseData;
     await act(async () => {
@@ -225,13 +234,13 @@ describe('useWinchSession', () => {
     expect(postDayLogToDb).toHaveBeenCalledTimes(1);
     expect(postDayLogToDb).toHaveBeenCalledWith({
       squadron_id: initialState.squadron,
-      winch_id: initialState.winchId,
+      winch_id: 1,
       operator_id: initialState.operatorSn,
       trainee: traineeSn,
       type: 'sign_on',
       cable_check: null,
       hours: null,
-    }, initialState.winchId);
+    }, 1);
 
     expect(responseData).toEqual(mockResponse);
     expect(result.current.isLoading).toBe(false);
@@ -243,6 +252,7 @@ describe('useWinchSession', () => {
     vi.mocked(postDayLogToDb).mockRejectedValueOnce(new Error(errorMessage));
 
     const { result } = renderHook(() => useWinchSession());
+    act(() => { result.current.setWinchId(1); });
 
     await act(async () => {
       await expect(result.current.changeTrainee('TRN-9999')).rejects.toThrow(errorMessage);
@@ -255,6 +265,7 @@ describe('useWinchSession', () => {
   it('falls back to default error messages if executeLaunch throws a non-Error exception', async () => {
     vi.mocked(postLaunchToDb).mockRejectedValueOnce('Unexpected string exception');
     const { result } = renderHook(() => useWinchSession());
+    act(() => { result.current.setWinchId(1); });
 
     await act(async () => {
       await expect(result.current.executeLaunch('left', false)).rejects.toEqual('Unexpected string exception');
@@ -266,6 +277,7 @@ describe('useWinchSession', () => {
   it('falls back to default error messages if undoLaunch throws a non-Error exception', async () => {
     vi.mocked(postLaunchToDb).mockResolvedValueOnce(createMockLaunchResponse('left', 101, '2026-08-30T09:00:00Z'));
     const { result } = renderHook(() => useWinchSession());
+    act(() => { result.current.setWinchId(1); });
     await act(async () => {
       await result.current.executeLaunch('left', false);
     });
@@ -282,6 +294,7 @@ describe('useWinchSession', () => {
   it('falls back to default error messages if changeTrainee throws a non-Error exception', async () => {
     vi.mocked(postDayLogToDb).mockRejectedValueOnce('Unexpected string exception');
     const { result } = renderHook(() => useWinchSession());
+    act(() => { result.current.setWinchId(1); });
 
     await act(async () => {
       await expect(result.current.changeTrainee('TRN-1111')).rejects.toEqual('Unexpected string exception');
@@ -297,6 +310,7 @@ describe('useWinchSession', () => {
     vi.mocked(postRemarkToDb).mockResolvedValueOnce({} as any);
     
     const { result } = renderHook(() => useWinchSession());
+    act(() => { result.current.setWinchId(1); });
     
     await act(async () => {
       await result.current.executeLaunch('left', false);
@@ -309,7 +323,7 @@ describe('useWinchSession', () => {
     expect(postRemarkToDb).toHaveBeenCalledTimes(1);
     expect(postRemarkToDb).toHaveBeenCalledWith({
       launch_id: 101,
-      winch_id: initialState.winchId,
+      winch_id: 1,
       remark: 'Cable dropped',
     });
 
@@ -320,6 +334,7 @@ describe('useWinchSession', () => {
 
   it('fails to add remark if there are no launches on that drum', async () => {
     const { result } = renderHook(() => useWinchSession());
+    act(() => { result.current.setWinchId(1); });
 
     await act(async () => {
       await expect(result.current.addRemark('Cable dropped', 'right')).rejects.toThrow('No launch recorded on right drum.');
@@ -334,6 +349,7 @@ describe('useWinchSession', () => {
     vi.mocked(postRemarkToDb).mockRejectedValueOnce(new Error('Network Error'));
 
     const { result } = renderHook(() => useWinchSession());
+    act(() => { result.current.setWinchId(1); });
 
     await act(async () => {
       await result.current.executeLaunch('left', false);
@@ -352,6 +368,7 @@ describe('useWinchSession', () => {
     vi.mocked(postRemarkToDb).mockRejectedValueOnce('Some string error');
 
     const { result } = renderHook(() => useWinchSession());
+    act(() => { result.current.setWinchId(1); });
 
     await act(async () => {
       await result.current.executeLaunch('left', false);
@@ -370,6 +387,7 @@ describe('useWinchSession', () => {
       vi.mocked(postDayLogToDb).mockResolvedValue(mockResponse as any);
       
       const { result } = renderHook(() => useWinchSession());
+    act(() => { result.current.setWinchId(1); });
       
       let response;
       await act(async () => {
@@ -384,6 +402,7 @@ describe('useWinchSession', () => {
       vi.mocked(postDayLogToDb).mockRejectedValue(new Error('API error'));
       
       const { result } = renderHook(() => useWinchSession());
+    act(() => { result.current.setWinchId(1); });
       
       await act(async () => {
         await expect(result.current.finishDay('OP1', 12.5)).rejects.toThrow('API error');
