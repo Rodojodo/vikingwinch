@@ -182,5 +182,3 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ finishDay, isLoa
         </Box>
     );
 };
-
-export default FinishDayPanel;

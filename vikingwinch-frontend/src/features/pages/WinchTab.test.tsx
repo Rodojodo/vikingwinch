@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import WinchTab from './WinchTab';
+import { WinchTab } from './WinchTab';
 import { useWinchSession } from '../hooks/useWinchSession';
 
 vi.mock('../hooks/useWinchSession', () => ({

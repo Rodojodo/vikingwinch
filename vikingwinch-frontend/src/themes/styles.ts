@@ -34,3 +34,38 @@ export const darkSelectStyles: SxProps<Theme> = {
   '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#2970ff' },
   '& .MuiSvgIcon-root': { color: '#8b9bb4' },
 };
+
+export const skylogCardStyle: SxProps<Theme> = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  width: '100%',
+  p: 3,
+  borderRadius: '16px',
+  backgroundColor: '#151c2f',
+  border: '1px solid rgba(255, 255, 255, 0.05)',
+  boxSizing: 'border-box',
+  transition: 'all 0.2s ease-in-out',
+  cursor: 'default',
+  '&:hover': {
+    transform: 'scale(1.02)',
+    backgroundColor: '#101523',
+  }
+};
+
+export const skylogTotalCardStyle: SxProps<Theme> = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  width: '100%',
+  p: 3,
+  borderRadius: '16px',
+  backgroundColor: 'rgba(59, 130, 246, 0.15)',
+  border: '1px solid #3b82f6',
+  boxSizing: 'border-box',
+  transition: 'all 0.2s ease-in-out',
+  cursor: 'default',
+  '&:hover': {
+    transform: 'scale(1.02)'
+  }
+};

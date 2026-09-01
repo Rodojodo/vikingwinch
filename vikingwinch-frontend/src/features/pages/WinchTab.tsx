@@ -28,5 +28,3 @@ export const WinchTab = () => {
         </Box>
     );
 };
-
-export default WinchTab;
