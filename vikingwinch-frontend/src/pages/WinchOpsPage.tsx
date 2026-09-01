@@ -43,23 +43,24 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#0f172a' }}>
-            <AppBar position="static" sx={{ bgcolor: '#1e293b', boxShadow: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+            <AppBar position="static" elevation={0} sx={{ bgcolor: '#1b2438', backgroundImage: 'none', boxShadow: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                 <Toolbar>
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 'bold' }}>
+                    <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 'bold', color: '#498ff8' }}>
                         {squadronId} — Winch Log
                     </Typography>
-                    <Typography variant="body1" sx={{ mr: 2 }}>
+                    <Typography variant="body1" sx={{ mr: 2, color: '#f7f9fb', fontWeight: 500 }}>
                         {operatorSn}
                     </Typography>
                     <Button color="inherit" variant="outlined" size="small" sx={{ textTransform: 'none' }}>Sign out</Button>
                 </Toolbar>
             </AppBar>
-            <Box sx={{ display: 'flex', alignItems: 'center', bgcolor: '#1e293b', borderBottom: 1, borderColor: 'divider', px: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'flex-end', bgcolor: '#10172d', borderBottom: 1, borderColor: 'divider', px: 2, pt: 1.5 }}>
                 <Tabs 
                     value={activeTabId} 
                     onChange={(_, nv) => setActiveTabId(nv)} 
                     variant="scrollable" 
                     scrollButtons="auto"
+                    textColor="inherit"
                     sx={{
                         minHeight: '48px',
                         '& .MuiTabs-indicator': { display: 'none' }
@@ -72,22 +73,33 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
                             disableRipple
                             label={
                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <Typography sx={{ textTransform: 'none', mr: 1, fontWeight: activeTabId === tab.id ? 'bold' : 'normal', color: activeTabId === tab.id ? 'white' : 'rgba(255,255,255,0.7)' }}>
+                                    <Typography sx={{ textTransform: 'none', mr: 2, fontWeight: activeTabId === tab.id ? 500 : 400, color: 'inherit' }}>
                                         {tab.winchId ? `Winch ${tab.winchId}` : 'New Winch'}
                                     </Typography>
-                                    <IconButton size="small" onClick={(e) => handleCloseTab(e, tab.id)} sx={{ p: 0.5, color: 'rgba(255,255,255,0.5)', '&:hover': { color: 'white' } }}>
-                                        <CloseIcon fontSize="small" sx={{ width: 16, height: 16 }} />
+                                    <IconButton size="small" onClick={(e) => handleCloseTab(e, tab.id)} sx={{ p: 0.25, color: 'inherit', '&:hover': { color: '#f7f9fb', bgcolor: 'rgba(255,255,255,0.1)' } }}>
+                                        <CloseIcon sx={{ width: 14, height: 14 }} />
                                     </IconButton>
                                 </Box>
                             } 
                             sx={{
                                 minHeight: '48px',
-                                bgcolor: activeTabId === tab.id ? '#0f172a' : 'transparent',
-                                borderRadius: '8px 8px 0 0',
+                                px: 3,
+                                backgroundColor: activeTabId === tab.id ? '#192336' : '#161e31',
+                                borderRadius: '12px 12px 0 0',
                                 opacity: 1,
-                                mr: 1,
-                                border: activeTabId === tab.id ? '1px solid rgba(255,255,255,0.1)' : 'none',
-                                borderBottom: 'none'
+                                mr: 1.5,
+                                border: '1px solid',
+                                borderColor: activeTabId === tab.id ? '#31394a' : 'transparent',
+                                borderBottom: 'none',
+                                color: activeTabId === tab.id ? '#f7f9fb' : '#909eb4',
+                                transition: 'all 0.2s ease',
+                                '&.Mui-selected': {
+                                    color: '#f7f9fb',
+                                },
+                                '&:hover': {
+                                    backgroundColor: activeTabId === tab.id ? '#192336' : '#1c263d',
+                                    color: activeTabId === tab.id ? '#f7f9fb' : '#b0bed4',
+                                }
                             }}
                         />
                     ))}
@@ -95,7 +107,15 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
                 <IconButton 
                     onClick={handleAddTab} 
                     disabled={availableWinches.length > 0 && tabs.length >= availableWinches.length} 
-                    sx={{ color: 'white', ml: 1, '&.Mui-disabled': { color: 'rgba(255,255,255,0.3)' } }}
+                    sx={{ 
+                        color: '#909eb4', ml: 1, mb: 0.5,
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                            backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                            color: '#f7f9fb'
+                        },
+                        '&.Mui-disabled': { color: 'rgba(255,255,255,0.2)' }
+                    }}
                 >
                     <AddIcon fontSize="small" />
                 </IconButton>
