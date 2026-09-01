@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Tabs, Tab, IconButton, Typography, Button, AppBar, Toolbar } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
+import { useMsal } from '@azure/msal-react';
 import { WinchTab } from './WinchTab';
 import { getWinchesForSquadron } from '../features/winch-ops/api/dataClient';
 import type { WinchRead } from '../features/winch-ops/types';
@@ -17,6 +18,9 @@ interface TabData {
 }
 
 export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
+    const { accounts, instance } = useMsal();
+    const operatorName = accounts[0]?.name || 'Unknown Operator';
+
     const [tabs, setTabs] = useState<TabData[]>([{ id: '1', winchId: null }]);
     const [activeTabId, setActiveTabId] = useState<string>('1');
     const [availableWinches, setAvailableWinches] = useState<WinchRead[]>([]);
@@ -49,9 +53,30 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
                         {squadronId} — Winch Log
                     </Typography>
                     <Typography variant="body1" sx={{ mr: 2, color: '#f7f9fb', fontWeight: 500 }}>
-                        {operatorSn}
+                        {operatorName}
                     </Typography>
-                    <Button color="inherit" variant="outlined" size="small" sx={{ textTransform: 'none' }}>Sign out</Button>
+                    <Button 
+                        size="small" 
+                        onClick={() => instance.logoutRedirect().catch(console.error)} 
+                        sx={{ 
+                            textTransform: 'none',
+                            backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '12px',
+                            color: '#f8fafc',
+                            overflow: 'hidden',
+                            transition: 'all 0.2s ease',
+                            px: 2,
+                            '&:hover': {
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                borderColor: '#3b82f6',
+                                color: '#3b82f6',
+                                transform: 'translateY(-2px)'
+                            }
+                        }}
+                    >
+                        Sign out
+                    </Button>
                 </Toolbar>
             </AppBar>
             <Box sx={{ display: 'flex', alignItems: 'flex-end', bgcolor: '#10172d', borderBottom: 1, borderColor: 'divider', px: 2, pt: 1.5 }}>
