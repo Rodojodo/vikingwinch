@@ -32,7 +32,7 @@ interface LaunchPanelProps {
 export const LaunchPanel = ({ onViewSkylogValues, session }: LaunchPanelProps) => {
     const { derived, isLoading, executeLaunch, undoLaunch, changeTrainee, addRemark, state } = session;
     
-    const { leftLaunches, rightLaunches, leftLast, rightLast } = derived;
+    const { leftTotal, rightTotal, leftLaunches, rightLaunches, leftLast, rightLast } = derived;
 
     const [isRecentLaunch, setIsRecentLaunch] = useState(false);
 
@@ -58,17 +58,17 @@ export const LaunchPanel = ({ onViewSkylogValues, session }: LaunchPanelProps) =
     const [isResetting, setIsResetting] = useState(false);
     const [currentAnim, setCurrentAnim] = useState('none');
     
-    const prevLaunchesRef = useRef({ left: leftLaunches, right: rightLaunches });
+    const prevLaunchesRef = useRef({ left: leftTotal, right: rightTotal });
     const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
     useEffect(() => {
         const prev = prevLaunchesRef.current;
-        const leftChanged = leftLaunches !== prev.left;
-        const rightChanged = rightLaunches !== prev.right;
+        const leftChanged = leftTotal !== prev.left;
+        const rightChanged = rightTotal !== prev.right;
 
         if (leftChanged || rightChanged) {
             // If they just became equal via a new launch (increase), trigger reset animation
-            if (leftLaunches === rightLaunches && (leftLaunches > prev.left || rightLaunches > prev.right)) {
+            if (leftTotal === rightTotal && (leftTotal > prev.left || rightTotal > prev.right)) {
                 setIsResetting(true);
                 
                 const timer1 = setTimeout(() => {
@@ -85,8 +85,8 @@ export const LaunchPanel = ({ onViewSkylogValues, session }: LaunchPanelProps) =
             }
         }
         
-        prevLaunchesRef.current = { left: leftLaunches, right: rightLaunches };
-    }, [leftLaunches, rightLaunches]);
+        prevLaunchesRef.current = { left: leftTotal, right: rightTotal };
+    }, [leftTotal, rightTotal]);
 
     useEffect(() => {
         return () => {
@@ -94,9 +94,9 @@ export const LaunchPanel = ({ onViewSkylogValues, session }: LaunchPanelProps) =
         };
     }, []);
 
-    const isActuallyEqual = leftLaunches === rightLaunches;
-    const leftUsed = (leftLaunches > rightLaunches) || (isActuallyEqual && isResetting);
-    const rightUsed = (rightLaunches > leftLaunches) || (isActuallyEqual && isResetting);
+    const isActuallyEqual = leftTotal === rightTotal;
+    const leftUsed = (leftTotal > rightTotal) || (isActuallyEqual && isResetting);
+    const rightUsed = (rightTotal > leftTotal) || (isActuallyEqual && isResetting);
 
     const handleLaunchLeft = () => executeLaunch('left').catch(console.error);
     const handleLaunchRight = () => executeLaunch('right').catch(console.error);
