@@ -2,6 +2,7 @@ import { Box, Stack, Typography, ButtonBase, Divider } from '@mui/material';
 import { useState, useEffect, useRef } from 'react';
 import { TraineeAssignmentPanel } from './TraineeAssignmentPanel';
 import { RemarksRepairsPanel } from './RemarksRepairsPanel';
+import { FinishDayPanel } from './FinishDayPanel';
 import { WinchDetailsSticker } from './WinchDetailsSticker';
 import { useWinchSession } from '../hooks/useWinchSession';
 import './LaunchPanel.css';
@@ -164,7 +165,6 @@ export const LaunchPanel = ({ onViewSkylogValues, session }: LaunchPanelProps) =
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <TraineeAssignmentPanel isLoading={isLoading} changeTrainee={changeTrainee} />
                 <RemarksRepairsPanel addRemark={addRemark} isLoading={isLoading} derived={derived} state={state} />
-                
                 <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.08)', my: 0.5 }} />
 
                 <ButtonBase
@@ -194,6 +194,7 @@ export const LaunchPanel = ({ onViewSkylogValues, session }: LaunchPanelProps) =
                         Show skylog values
                     </Typography>
                 </ButtonBase>
+                <FinishDayPanel finishDay={session.finishDay} isLoading={isLoading} state={state} />
             </Box>
         </Box>
     );

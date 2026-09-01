@@ -3,7 +3,7 @@ import { describe, it, expect, vi } from 'vitest';
 import App from './App';
 
 vi.mock('./WinchTab', () => ({
-    default: () => <div data-testid="winch-tab-mock" />
+    WinchTab: () => <div data-testid="winch-tab-mock" />
 }));
 
 describe('App', () => {

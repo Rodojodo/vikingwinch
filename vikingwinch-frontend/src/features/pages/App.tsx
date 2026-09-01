@@ -1,6 +1,6 @@
 import '../../App.css'
 
-import WinchTab from './WinchTab';
+import { WinchTab } from './WinchTab';
 
 function App() {
     return (

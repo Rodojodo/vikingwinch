@@ -1,16 +1,16 @@
 import { Box, Typography, Button } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { useWinchSession } from '../hooks/useWinchSession';
+import { skylogCardStyle, skylogTotalCardStyle } from '../../themes/styles';
 
 interface SkylogValuesProps {
-    onBack?: () => void;
-    session: ReturnType<typeof useWinchSession>;
+    onBack: () => void;
+    winchId: number;
+    squadron: string;
+    leftLaunches: number;
+    rightLaunches: number;
 }
 
-export const SkylogValues = ({ onBack, session }: SkylogValuesProps) => {
-    const { derived, state } = session;
-    const { leftLaunches, rightLaunches } = derived;
-    
+export const SkylogValues = ({ onBack, winchId, squadron, leftLaunches, rightLaunches }: SkylogValuesProps) => {
     const winchTotal = leftLaunches + rightLaunches;
 
     return (
@@ -60,29 +60,13 @@ export const SkylogValues = ({ onBack, session }: SkylogValuesProps) => {
                 </Typography>
                 
                 <Typography variant="body1" sx={{ color: '#94a3b8', fontSize: '16px', fontWeight: 500 }}>
-                    {`Winch ${state.winchId} — ${state.squadron}`}
+                    {`Winch ${winchId} — ${squadron}`}
                 </Typography>
             </Box>
 
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {/* Left Drum */}
-                <Box sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    width: '100%',
-                    p: 3,
-                    borderRadius: '16px',
-                    backgroundColor: '#151c2f',
-                    border: '1px solid rgba(255, 255, 255, 0.05)',
-                    boxSizing: 'border-box',
-                    transition: 'all 0.2s ease-in-out',
-                    cursor: 'default',
-                    '&:hover': {
-                        transform: 'scale(1.02)',
-                        backgroundColor: '#101523',
-                    }
-                }}>
+                <Box sx={skylogCardStyle}>
                     <Typography sx={{ fontSize: '18px', fontWeight: 600, color: '#94a3b8' }}>
                         Left Drum Total
                     </Typography>
@@ -99,23 +83,7 @@ export const SkylogValues = ({ onBack, session }: SkylogValuesProps) => {
                 </Box>
 
                 {/* Right Drum */}
-                <Box sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    width: '100%',
-                    p: 3,
-                    borderRadius: '16px',
-                    backgroundColor: '#151c2f',
-                    border: '1px solid rgba(255, 255, 255, 0.05)',
-                    boxSizing: 'border-box',
-                    transition: 'all 0.2s ease-in-out',
-                    cursor: 'default',
-                    '&:hover': {
-                        transform: 'scale(1.02)',
-                        backgroundColor: '#101523',
-                    }
-                }}>
+                <Box sx={skylogCardStyle}>
                     <Typography sx={{ fontSize: '18px', fontWeight: 600, color: '#94a3b8' }}>
                         Right Drum Total
                     </Typography>
@@ -132,22 +100,7 @@ export const SkylogValues = ({ onBack, session }: SkylogValuesProps) => {
                 </Box>
 
                 {/* Winch Total */}
-                <Box sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    width: '100%',
-                    p: 3,
-                    borderRadius: '16px',
-                    backgroundColor: 'rgba(59, 130, 246, 0.15)',
-                    border: '1px solid #3b82f6',
-                    boxSizing: 'border-box',
-                    transition: 'all 0.2s ease-in-out',
-                    cursor: 'default',
-                    '&:hover': {
-                        transform: 'scale(1.02)'
-                    }
-                }}>
+                <Box sx={skylogTotalCardStyle}>
                     <Typography sx={{ fontSize: '18px', fontWeight: 600, color: '#60a5fa' }}>
                         Winch Total (L + R)
                     </Typography>

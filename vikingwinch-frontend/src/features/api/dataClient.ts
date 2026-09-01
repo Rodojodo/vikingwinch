@@ -1,4 +1,4 @@
-import type {DayLogPayload, DayLogResponse, LaunchPayload, LaunchResponse, RemarkPayload} from '../types';
+import type {DayLogPayload, DayLogResponse, LaunchPayload, LaunchResponse, RemarkPayload, OperatorRead} from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
 
@@ -51,7 +51,7 @@ export const removeLaunchFromDb = async (launchId: number): Promise<void> =>{
 }
 
 
-export const postTraineeChangeToDb = async (payload: DayLogPayload, winchId: number): Promise<DayLogResponse> =>{
+export const postDayLogToDb = async (payload: DayLogPayload, winchId: number): Promise<DayLogResponse> =>{
     const response = await fetch(`${API_BASE_URL}/winch/${winchId}/day_log`, {
         method: 'POST',
         headers: {
@@ -83,22 +83,40 @@ export const postRemarkToDb = async (payload: RemarkPayload): Promise<LaunchResp
     return response.json();
 }
 
-export const getOperatorsForSquadron = async (squadronId: string): Promise<any[]> => {
-    try {
-        const response = await fetch(`${API_BASE_URL}/squadrons/${squadronId}/operators`, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-            },
-        });
+export const getOperatorsForSquadron = async (squadronId: string, signal?: AbortSignal): Promise<OperatorRead[]> => {
+    const response = await fetch(`${API_BASE_URL}/squadrons/${squadronId}/operators`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+        },
+        signal,
+    });
 
-        await handleApiError(response);
-        
-        const text = await response.text();
-        if (!text) return [];
-        return JSON.parse(text);
-    } catch (error) {
-        console.error("Failed to fetch operators:", error);
-        return [];
-    }
+    await handleApiError(response);
+    
+    const text = await response.text();
+    if (!text) return [];
+    return JSON.parse(text) as OperatorRead[];
+}
+
+export const getWinch = async (winchId: number): Promise<{ registration: string }> => {
+    const response = await fetch(`${API_BASE_URL}/winches/${winchId}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+        },
+    });
+    await handleApiError(response);
+    return response.json();
+}
+
+export const getDayLog = async (winchId: number, day: string): Promise<DayLogResponse[]> => {
+    const response = await fetch(`${API_BASE_URL}/winch/${winchId}/day_log?day=${day}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+        },
+    });
+    await handleApiError(response);
+    return response.json();
 }

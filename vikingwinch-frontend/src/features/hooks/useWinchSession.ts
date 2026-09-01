@@ -1,6 +1,6 @@
 import {useReducer, useState, useMemo, useCallback} from 'react';
 import type {DayLogPayload, DrumPosition, LaunchPayload, RemarkPayload} from '../types';
-import {postLaunchToDb, postRemarkToDb, postTraineeChangeToDb, removeLaunchFromDb} from '../api/dataClient';
+import {postLaunchToDb, postRemarkToDb, postDayLogToDb, removeLaunchFromDb} from '../api/dataClient';
 import { initialState, winchReducer } from '../state/winchReducer';
 
 export const useWinchSession = () => {
@@ -96,7 +96,7 @@ export const useWinchSession = () => {
                 cable_check: null,
                 hours: null,
             };
-            const responseData = await postTraineeChangeToDb(payload, state.winchId);
+            const responseData = await postDayLogToDb(payload, state.winchId);
             dispatch({ type: 'CHANGE_TRAINEE', payload: responseData });
             return responseData;
         } catch (err) {
@@ -135,6 +135,30 @@ export const useWinchSession = () => {
         }
     }, [derived.leftLastRecord, derived.rightLastRecord, state.winchId]);
 
+    const finishDay = useCallback(async (cableCheck: string | null, hours: number | null) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const payload: DayLogPayload = {
+                squadron_id: state.squadron,
+                winch_id: state.winchId,
+                operator_id: state.operatorSn,
+                trainee: state.traineeSn,
+                type: 'finish_day',
+                cable_check: cableCheck,
+                hours: hours,
+            };
+            const responseData = await postDayLogToDb(payload, state.winchId);
+            dispatch({ type: 'FINISH_DAY', payload: responseData });
+            return responseData;
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Finish day failed');
+            throw err;
+        } finally {
+            setIsLoading(false);
+        }
+    }, [state.squadron, state.winchId, state.operatorSn]);
+
     return {
         state,
         derived,
@@ -144,5 +168,6 @@ export const useWinchSession = () => {
         undoLaunch,
         changeTrainee,
         addRemark,
+        finishDay,
     };
 };
