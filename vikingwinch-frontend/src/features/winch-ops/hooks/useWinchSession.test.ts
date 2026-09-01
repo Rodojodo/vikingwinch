@@ -228,7 +228,7 @@ describe('useWinchSession', () => {
 
     let responseData;
     await act(async () => {
-      responseData = await result.current.changeTrainee(traineeSn);
+      responseData = await result.current.recordSignOn(traineeSn);
     });
 
     expect(postDayLogToDb).toHaveBeenCalledTimes(1);
@@ -247,7 +247,7 @@ describe('useWinchSession', () => {
     expect(result.current.error).toBeNull();
   });
 
-  it('handles API rejection during changeTrainee, sets error state, and throws', async () => {
+  it('handles API rejection during recordSignOn, sets error state, and throws', async () => {
     const errorMessage = 'Trainee profile not found';
     vi.mocked(postDayLogToDb).mockRejectedValueOnce(new Error(errorMessage));
 
@@ -255,7 +255,7 @@ describe('useWinchSession', () => {
     act(() => { result.current.setWinchId(1); });
 
     await act(async () => {
-      await expect(result.current.changeTrainee('TRN-9999')).rejects.toThrow(errorMessage);
+      await expect(result.current.recordSignOn('TRN-9999')).rejects.toThrow(errorMessage);
     });
 
     expect(result.current.error).toBe(errorMessage);
@@ -291,16 +291,16 @@ describe('useWinchSession', () => {
     expect(result.current.error).toBe('Undo execution failed');
   });
 
-  it('falls back to default error messages if changeTrainee throws a non-Error exception', async () => {
+  it('falls back to default error messages if recordSignOn throws a non-Error exception', async () => {
     vi.mocked(postDayLogToDb).mockRejectedValueOnce('Unexpected string exception');
     const { result } = renderHook(() => useWinchSession("123 VGS", "OFF-1001"));
     act(() => { result.current.setWinchId(1); });
 
     await act(async () => {
-      await expect(result.current.changeTrainee('TRN-1111')).rejects.toEqual('Unexpected string exception');
+      await expect(result.current.recordSignOn('TRN-1111')).rejects.toEqual('Unexpected string exception');
     });
 
-    expect(result.current.error).toBe('Trainee change failed');
+    expect(result.current.error).toBe('Sign on failed');
   });
 
   it('adds a remark successfully to the last launch on the specified drum', async () => {
@@ -411,10 +411,10 @@ describe('useWinchSession', () => {
     });
   });
 
-  it('throws error if winchId is null when changeTrainee is called', async () => {
+  it('throws error if winchId is null when recordSignOn is called', async () => {
     const { result } = renderHook(() => useWinchSession("123 VGS", "OFF-1001"));
     await act(async () => {
-      await expect(result.current.changeTrainee('TRN-123')).rejects.toThrow("No winch selected");
+      await expect(result.current.recordSignOn('TRN-123')).rejects.toThrow("No winch selected");
     });
   });
 

@@ -11,7 +11,7 @@ interface SignOnPanelProps {
 }
 
 export const SignOnPanel: React.FC<SignOnPanelProps> = ({ session, onComplete, alreadyInspected }) => {
-    const { state, changeTrainee, isLoading } = session;
+    const { state, recordSignOn, isLoading } = session;
     const [operators, setOperators] = useState<OperatorRead[]>([]);
     const [selectedTraineeSn, setSelectedTraineeSn] = useState<string>('');
     const [isFetching, setIsFetching] = useState(false);
@@ -37,7 +37,7 @@ export const SignOnPanel: React.FC<SignOnPanelProps> = ({ session, onComplete, a
 
     const handleSignOn = async () => {
         try {
-            await changeTrainee(selectedTraineeSn || null as any);
+            await recordSignOn(selectedTraineeSn || null as any);
             onComplete();
         } catch (e) {
             console.error("Sign on failed", e);

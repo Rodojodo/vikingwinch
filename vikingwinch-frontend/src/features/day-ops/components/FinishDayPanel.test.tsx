@@ -18,7 +18,7 @@ describe('FinishDayPanel', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        vi.mocked(getOperatorsForSquadron).mockResolvedValue([{ sn: 'OP1', name: 'Operator 1', squadron_id: 'sqn1' }]);
+        vi.mocked(getOperatorsForSquadron).mockResolvedValue([{ service_no: 'OP1', name: 'Operator 1', squadron_id: 'sqn1' }]);
     });
 
     it('renders Finish Day button and toggles panel', () => {
@@ -134,7 +134,7 @@ describe('FinishDayPanel', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Finish Day' }));
         
         unmount(); // Unmount before resolve
-        resolvePromise([{ sn: 'OP1', name: 'Operator 1', squadron_id: 'sqn1' }]);
+        resolvePromise([{ service_no: 'OP1', name: 'Operator 1', squadron_id: 'sqn1' }]);
         
         // Wait just to ensure no error is thrown
         await new Promise(r => setTimeout(r, 0));

@@ -92,7 +92,7 @@ export const useWinchSession = (squadronId: string, operatorSn: string, initialW
         }
     }, [derived.leftLastRecord, derived.rightLastRecord]);
 
-    const changeTrainee = useCallback(async (traineeSn: string) => {
+    const recordSignOn = useCallback(async (traineeSn: string) => {
         setIsLoading(true);
         setError(null);
         try {
@@ -110,7 +110,7 @@ export const useWinchSession = (squadronId: string, operatorSn: string, initialW
             dispatch({ type: 'CHANGE_TRAINEE', payload: responseData });
             return responseData;
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Trainee change failed');
+            setError(err instanceof Error ? err.message : 'Sign on failed');
             throw err;
         } finally {
             setIsLoading(false);
@@ -182,7 +182,7 @@ export const useWinchSession = (squadronId: string, operatorSn: string, initialW
         error,
         executeLaunch,
         undoLaunch,
-        changeTrainee,
+        recordSignOn,
         addRemark,
         finishDay,
         setWinchId,

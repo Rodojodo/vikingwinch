@@ -3,18 +3,18 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TraineeAssignmentPanel } from './TraineeAssignmentPanel.tsx';
 
-const mockChangeTrainee = vi.fn();
+const mockRecordSignOn = vi.fn().mockResolvedValue({});
 
 vi.mock('../hooks/useWinchSession', () => ({
     useWinchSession: vi.fn(() => ({
-        changeTrainee: mockChangeTrainee
+        recordSignOn: mockRecordSignOn
     }))
 }));
 
 describe('TraineeAssignmentPanel', () => {
     const defaultProps = {
         isLoading: false,
-        changeTrainee: mockChangeTrainee
+        recordSignOn: mockRecordSignOn
     };
 
     beforeEach(() => {
@@ -52,7 +52,7 @@ describe('TraineeAssignmentPanel', () => {
 
     it('disables the cancel button when isLoading is true', async () => {
         const user = userEvent.setup();
-        render(<TraineeAssignmentPanel isLoading={true} changeTrainee={mockChangeTrainee} />);
+        render(<TraineeAssignmentPanel isLoading={true} recordSignOn={mockRecordSignOn} />);
 
         await user.click(screen.getByText('+ Add trainee'));
 
@@ -60,18 +60,18 @@ describe('TraineeAssignmentPanel', () => {
         expect(cancelButton).toBeDisabled();
     });
 
-    it('calls changeTrainee with the default trainee ID when confirmed', async () => {
+    it('calls recordSignOn with the default trainee ID when confirmed', async () => {
         const user = userEvent.setup();
         render(<TraineeAssignmentPanel {...defaultProps} />);
 
         await user.click(screen.getByText('+ Add trainee'));
         await user.click(screen.getByRole('button', { name: /confirm/i }));
 
-        expect(mockChangeTrainee).toHaveBeenCalledTimes(1);
-        expect(mockChangeTrainee).toHaveBeenCalledWith('1');
+        expect(mockRecordSignOn).toHaveBeenCalledTimes(1);
+        expect(mockRecordSignOn).toHaveBeenCalledWith('1');
     });
 
-    it('updates the selected trainee and calls changeTrainee with the new ID when confirmed', async () => {
+    it('updates the selected trainee and calls recordSignOn with the new ID when confirmed', async () => {
         const user = userEvent.setup();
         render(<TraineeAssignmentPanel {...defaultProps} />);
 
@@ -88,7 +88,7 @@ describe('TraineeAssignmentPanel', () => {
 
         await user.click(screen.getByRole('button', { name: /confirm/i }));
 
-        expect(mockChangeTrainee).toHaveBeenCalledTimes(1);
-        expect(mockChangeTrainee).toHaveBeenCalledWith('2');
+        expect(mockRecordSignOn).toHaveBeenCalledTimes(1);
+        expect(mockRecordSignOn).toHaveBeenCalledWith('2');
     });
 });

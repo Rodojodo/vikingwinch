@@ -1,10 +1,15 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { WinchTab } from './WinchTab.tsx';
 import { useWinchSession } from '../features/winch-ops/hooks/useWinchSession';
+import { getDayLog } from '../features/winch-ops/api/dataClient';
 
 vi.mock('../features/winch-ops/hooks/useWinchSession', () => ({
     useWinchSession: vi.fn(),
+}));
+
+vi.mock('../features/winch-ops/api/dataClient', () => ({
+    getDayLog: vi.fn(),
 }));
 
 vi.mock('../features/launch-ops/components/LaunchPanel', () => ({
@@ -32,15 +37,21 @@ vi.mock('../features/winch-ops/components/WinchSelectPanel', () => ({
 }));
 
 describe('WinchTab', () => {
-    it('renders LaunchPanel initially and toggles to SkylogValues', () => {
+    it('renders LaunchPanel initially and toggles to SkylogValues', async () => {
         vi.mocked(useWinchSession).mockReturnValue({
             state: { winchId: 1, squadron: 'sqn1' },
             derived: { leftLaunches: 10, rightLaunches: 15 }
         } as any);
 
-        render(<WinchTab squadronId="123 VGS" operatorSn="OFF-1001" winchId={null} onWinchSelect={vi.fn()} />);
+        vi.mocked(getDayLog).mockResolvedValue([
+            { id: 1, type: 'sign_on', operator_id: 'OFF-1001', squadron_id: 'sqn1', winch_id: 1, cable_check: 'OFF-1001', hours: 0, trainee: null, timestamp: null, left_drum: 0, right_drum: 0 }
+        ]);
+
+        render(<WinchTab tabId="1" squadronId="123 VGS" operatorSn="OFF-1001" winchId={1} onWinchSelect={vi.fn()} />);
         
-        expect(screen.getByTestId('launch-panel')).toBeInTheDocument();
+        await waitFor(() => {
+            expect(screen.getByTestId('launch-panel')).toBeInTheDocument();
+        });
         
         fireEvent.click(screen.getByText('Go to Skylog'));
         
@@ -59,7 +70,7 @@ describe('WinchTab', () => {
             derived: { leftLaunches: 10, rightLaunches: 15 }
         } as any);
 
-        render(<WinchTab squadronId="123 VGS" operatorSn="OFF-1001" winchId={null} onWinchSelect={vi.fn()} />);
+        render(<WinchTab tabId="1" squadronId="123 VGS" operatorSn="OFF-1001" winchId={null} onWinchSelect={vi.fn()} />);
         
         expect(screen.getByTestId('winch-select')).toBeInTheDocument();
         
