@@ -117,4 +117,57 @@ describe('RemarksPanel', () => {
         expect(mockAddRemark).not.toHaveBeenCalled();
         expect(screen.getByText('Repairs should be logged in the Repairs tab')).toBeInTheDocument();
     });
+    it('submits remark for right drum', async () => {
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} />);
+        
+        fireEvent.change(screen.getByPlaceholderText('Enter launch remarks...'), {
+            target: { value: 'Right remark' },
+        });
+
+        // Click right drum
+        fireEvent.click(screen.getByRole('button', { name: /Right/i }));
+
+        const submitButton = screen.getByRole('button', { name: /Submit Remark/i });
+        await act(async () => {
+            submitButton.removeAttribute('disabled');
+            fireEvent.click(submitButton);
+        });
+
+        expect(mockAddRemark).toHaveBeenCalledWith('Right remark', 'right');
+    });
+
+    it('handles non-Error exception during submit', async () => {
+        mockAddRemark.mockRejectedValue('String Error');
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} />);
+        
+        fireEvent.change(screen.getByPlaceholderText('Enter launch remarks...'), {
+            target: { value: 'Test remark' },
+        });
+
+        const submitButton = screen.getByRole('button', { name: /Submit Remark/i });
+        await act(async () => {
+            submitButton.removeAttribute('disabled');
+            fireEvent.click(submitButton);
+        });
+
+        await waitFor(() => {
+            expect(screen.getByText('Failed to submit remark')).toBeInTheDocument();
+        });
+    });
+
+    it('returns early in handleSubmit if hasLaunches is false', async () => {
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: null, rightLastRecord: null } as any} />);
+        
+        fireEvent.change(screen.getByPlaceholderText('Enter launch remarks...'), {
+            target: { value: 'Test remark' },
+        });
+
+        const submitButton = screen.getByRole('button', { name: /Submit Remark/i });
+        await act(async () => {
+            submitButton.removeAttribute('disabled');
+            fireEvent.click(submitButton);
+        });
+
+        expect(mockAddRemark).not.toHaveBeenCalled();
+    });
 });

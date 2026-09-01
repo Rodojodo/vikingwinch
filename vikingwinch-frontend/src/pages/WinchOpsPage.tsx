@@ -43,7 +43,6 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
     }, [squadronId]);
 
     const handleAddTab = () => {
-        if (availableWinches.length > 0 && tabs.length >= availableWinches.length) return;
         const newId = Date.now().toString();
         setTabs([...tabs, { id: newId, winchId: null }]);
         setActiveTabId(newId);

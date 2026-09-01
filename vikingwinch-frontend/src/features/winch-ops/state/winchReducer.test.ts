@@ -172,9 +172,39 @@ describe('winchReducer', () => {
     expect(result.rightHistory[0].remark).toBe('Right drum remark');
     expect(result.leftHistory).toEqual(initialState.leftHistory);
   });
-});
+
   it('handles FINISH_DAY', () => {
     const action: WinchAction = { type: 'FINISH_DAY', payload: {} as any };
     const result = winchReducer(initialState, action);
     expect(result.dayFinished).toBe(true);
+  });
+
+  it('processes ADD_REMARK and appends to existing remark', () => {
+    const state = {
+      ...initialState,
+      leftHistory: [
+        { id: 101, timestamp: '2026-08-30T09:15:00Z', remark: 'Initial remark', burn: false, launch_number: 101 },
+      ],
+    };
+
+    const action: WinchAction = {
+      type: 'ADD_REMARK',
+      payload: { drum: 'left', id: 101, remark: 'Second remark' }
+    };
+
+    const result = winchReducer(state, action);
+    expect(result.leftHistory[0].remark).toBe('Initial remark | Second remark');
+  });
+});
+
+  it('processes SET_SQUADRON and updates squadron', () => {
+    const action: WinchAction = { type: 'SET_SQUADRON', payload: '456 VGS' };
+    const result = winchReducer(initialState, action);
+    expect(result.squadron).toBe('456 VGS');
+  });
+
+  it('processes SET_OPERATOR and updates operatorSn', () => {
+    const action: WinchAction = { type: 'SET_OPERATOR', payload: 'OP-123' };
+    const result = winchReducer(initialState, action);
+    expect(result.operatorSn).toBe('OP-123');
   });

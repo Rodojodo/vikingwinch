@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { postLaunchToDb, removeLaunchFromDb, postDayLogToDb, postRemarkToDb, getOperatorsForSquadron, getWinch, getDayLog } from './dataClient.ts';
+import { postLaunchToDb, removeLaunchFromDb, postDayLogToDb, postRemarkToDb, getOperatorsForSquadron, getWinch, getDayLog, getWinchesForSquadron } from './dataClient.ts';
 import type { LaunchPayload, LaunchResponse, DayLogPayload, DayLogResponse, RemarkPayload } from '../types';
 
 const API_BASE_URL = 'http://127.0.0.1:8000';
@@ -371,5 +371,34 @@ describe('getDayLog', () => {
     const result = await getDayLog(1, '2026-09-01');
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(result).toStrictEqual(mockLogs);
+  });
+});
+
+describe('getWinchesForSquadron', () => {
+  const squadronId = '123 VGS';
+  
+  beforeEach(() => { vi.stubGlobal('fetch', vi.fn()); });
+  afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+
+  it('executes GET request and returns winches array', async () => {
+    const mockWinches = [{ id: 1, name: 'Winch 1' }];
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      text: async () => JSON.stringify(mockWinches),
+    } as Response);
+
+    const result = await getWinchesForSquadron(squadronId);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(result).toStrictEqual(mockWinches);
+  });
+
+  it('returns empty array if text is empty', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      text: async () => '',
+    } as Response);
+
+    const result = await getWinchesForSquadron(squadronId);
+    expect(result).toStrictEqual([]);
   });
 });
