@@ -44,7 +44,7 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ finishDay, isLoa
         setIsFetchingOperators(true);
         setLocalError(null);
 
-        getOperatorsForSquadron(state.squadron)
+        getOperatorsForSquadron(state.squadron, controller.signal)
             .then((data) => {
                 if (!controller.signal.aborted) {
                     setOperators(data);
@@ -83,9 +83,14 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ finishDay, isLoa
         }
     };
 
-    const handleDownloadLog = () => {
-        const hours = hoursStop ? parseFloat(hoursStop) : null;
-        exportLog(state, isNaN(hours as number) ? null : hours).catch(console.error);
+    const handleDownloadLog = async () => {
+        const parsedHours = hoursStop ? parseFloat(hoursStop) : null;
+        const validHours = typeof parsedHours === 'number' && !isNaN(parsedHours) ? parsedHours : null;
+        try {
+            await exportLog(state, validHours);
+        } catch (err) {
+            setLocalError(err instanceof Error ? err.message : 'Failed to download log');
+        }
     };
 
     return (

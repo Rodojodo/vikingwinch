@@ -25,7 +25,10 @@ vi.mock('../components/SkylogValues', () => ({
 
 describe('WinchTab', () => {
     it('renders LaunchPanel initially and toggles to SkylogValues', () => {
-        vi.mocked(useWinchSession).mockReturnValue({} as any);
+        vi.mocked(useWinchSession).mockReturnValue({
+            state: { winchId: 1, squadron: 'sqn1' },
+            derived: { leftLaunches: 10, rightLaunches: 15 }
+        } as any);
 
         render(<WinchTab />);
         

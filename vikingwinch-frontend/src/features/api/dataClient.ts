@@ -99,7 +99,7 @@ export const getOperatorsForSquadron = async (squadronId: string, signal?: Abort
     return JSON.parse(text) as OperatorRead[];
 }
 
-export const getWinch = async (winchId: number): Promise<any> => {
+export const getWinch = async (winchId: number): Promise<{ registration: string }> => {
     const response = await fetch(`${API_BASE_URL}/winches/${winchId}`, {
         method: 'GET',
         headers: {

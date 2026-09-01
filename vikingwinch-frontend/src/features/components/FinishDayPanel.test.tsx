@@ -29,7 +29,7 @@ describe('FinishDayPanel', () => {
         fireEvent.click(screen.getByRole('button', { name: /Finish Day/i }));
         
         expect(screen.getByText('Hours Stop')).toBeVisible();
-        expect(getOperatorsForSquadron).toHaveBeenCalledWith('sqn1');
+        expect(getOperatorsForSquadron).toHaveBeenCalledWith('sqn1', expect.any(AbortSignal));
     });
 
     it('submits correctly when fields are valid', async () => {

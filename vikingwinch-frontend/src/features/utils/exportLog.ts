@@ -51,19 +51,24 @@ export const exportLog = async (state: WinchLogState, hours: number | null): Pro
         sheet.getCell(CELLS.DATE).value = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear()}`;
 
         // Assuming we have these in state
-        sheet.getCell(CELLS.HOURS).value = hours || 0;
+        if (hours !== null) {
+            sheet.getCell(CELLS.HOURS).value = hours;
+        }
 
         const leftHistory = state.leftHistory;
         const rightHistory = state.rightHistory;
 
         // B/F
+        const getBroughtForward = (history: any[]) => {
+            const firstValid = history.find(h => h.launch_number !== null);
+            return firstValid ? firstValid.launch_number - 1 : '';
+        };
+
         if (leftHistory.length > 0) {
-            const firstLeftNum = leftHistory[0].launch_number;
-            sheet.getCell(CELLS.BF_LEFT).value = firstLeftNum !== null ? firstLeftNum - 1 : 0;
+            sheet.getCell(CELLS.BF_LEFT).value = getBroughtForward(leftHistory);
         }
         if (rightHistory.length > 0) {
-            const firstRightNum = rightHistory[0].launch_number;
-            sheet.getCell(CELLS.BF_RIGHT).value = firstRightNum !== null ? firstRightNum - 1 : 0;
+            sheet.getCell(CELLS.BF_RIGHT).value = getBroughtForward(rightHistory);
         }
 
         // Populate D14..D28 and E14..E28

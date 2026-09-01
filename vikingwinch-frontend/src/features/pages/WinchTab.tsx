@@ -23,7 +23,13 @@ export const WinchTab = () => {
             {page === 'launch' ? (
                 <LaunchPanel onViewSkylogValues={() => setPage('skylog')} session={session} />
             ) : (
-                <SkylogValues onBack={() => setPage('launch')} session={session} />
+                <SkylogValues 
+                    onBack={() => setPage('launch')} 
+                    winchId={session.state.winchId}
+                    squadron={session.state.squadron}
+                    leftLaunches={session.derived.leftLaunches}
+                    rightLaunches={session.derived.rightLaunches}
+                />
             )}
         </Box>
     );

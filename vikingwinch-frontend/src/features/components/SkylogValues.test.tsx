@@ -5,12 +5,14 @@ import SkylogValues from './SkylogValues';
 describe('SkylogValues', () => {
     it('renders and calls onBack correctly', () => {
         const mockOnBack = vi.fn();
-        const mockSession = {
-            derived: { leftLaunches: 10, rightLaunches: 15 },
-            state: { winchId: 1, squadron: 'sqn1' }
-        } as any;
 
-        render(<SkylogValues onBack={mockOnBack} session={mockSession} />);
+        render(<SkylogValues 
+            onBack={mockOnBack} 
+            winchId={1} 
+            squadron="sqn1" 
+            leftLaunches={10} 
+            rightLaunches={15} 
+        />);
         
         expect(screen.getByText('Winch 1 — sqn1')).toBeInTheDocument();
         expect(screen.getByText('10')).toBeInTheDocument(); // left launches

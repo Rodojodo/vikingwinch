@@ -1,17 +1,16 @@
 import { Box, Typography, Button } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import { useWinchSession } from '../hooks/useWinchSession';
 import { skylogCardStyle, skylogTotalCardStyle } from '../../themes/styles';
 
 interface SkylogValuesProps {
     onBack: () => void;
-    session: ReturnType<typeof useWinchSession>;
+    winchId: number;
+    squadron: string;
+    leftLaunches: number;
+    rightLaunches: number;
 }
 
-export const SkylogValues = ({ onBack, session }: SkylogValuesProps) => {
-    const { derived, state } = session;
-    const { leftLaunches, rightLaunches } = derived;
-    
+export const SkylogValues = ({ onBack, winchId, squadron, leftLaunches, rightLaunches }: SkylogValuesProps) => {
     const winchTotal = leftLaunches + rightLaunches;
 
     return (
@@ -61,7 +60,7 @@ export const SkylogValues = ({ onBack, session }: SkylogValuesProps) => {
                 </Typography>
                 
                 <Typography variant="body1" sx={{ color: '#94a3b8', fontSize: '16px', fontWeight: 500 }}>
-                    {`Winch ${state.winchId} — ${state.squadron}`}
+                    {`Winch ${winchId} — ${squadron}`}
                 </Typography>
             </Box>
 
