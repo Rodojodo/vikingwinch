@@ -6,21 +6,22 @@ import { useWinchSession } from '../features/winch-ops/hooks/useWinchSession';
 import { WinchSelectPanel } from '../features/winch-ops/components/WinchSelectPanel';
 
 interface WinchTabProps {
+    tabId: string; // <-- New prop
     squadronId: string;
     operatorSn: string;
     winchId: number | null;
-    onWinchSelect: (winchId: number) => void;
+    onWinchSelect: (tabId: string, winchId: number) => void; // <-- Update signature
 }
 
-export const WinchTab = ({ squadronId, operatorSn, winchId, onWinchSelect }: WinchTabProps) => {
+export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, onWinchSelect }: WinchTabProps) => {
     const [page, setPage] = useState<'launch' | 'skylog'>('launch');
     const session = useWinchSession(squadronId, operatorSn, winchId);
-
     useEffect(() => {
         if (session.state.winchId && session.state.winchId !== winchId) {
-            onWinchSelect(session.state.winchId);
+            // 2. Pass the tabId back up to the parent
+            onWinchSelect(tabId, session.state.winchId);
         }
-    }, [session.state.winchId, winchId, onWinchSelect]);
+    }, [session.state.winchId, winchId, tabId, onWinchSelect]);
 
     return (
         <Box sx={{

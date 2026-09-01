@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Tabs, Tab, IconButton, Typography, Button, AppBar, Toolbar } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
@@ -19,14 +19,27 @@ interface TabData {
 
 export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
     const { accounts, instance } = useMsal();
-    const operatorName = accounts[0]?.name || 'Unknown Operator';
+    const activeAccount = instance.getActiveAccount() || accounts[0];
+    const operatorName = activeAccount?.name || 'Unknown Operator';
 
     const [tabs, setTabs] = useState<TabData[]>([{ id: '1', winchId: null }]);
     const [activeTabId, setActiveTabId] = useState<string>('1');
     const [availableWinches, setAvailableWinches] = useState<WinchRead[]>([]);
     
     useEffect(() => {
-        getWinchesForSquadron(squadronId).then(setAvailableWinches).catch(console.error);
+        let isMounted = true;
+        getWinchesForSquadron(squadronId)
+            .then(data => {
+                if (isMounted) setAvailableWinches(data);
+            })
+            .catch(err => {
+                if (isMounted) {
+                    console.error("Failed to load winches:", err);
+                }
+            });
+        return () => {
+            isMounted = false;
+        };
     }, [squadronId]);
 
     const handleAddTab = () => {
@@ -40,10 +53,19 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
         e.stopPropagation();
         const newTabs = tabs.filter(t => t.id !== idToClose);
         setTabs(newTabs);
-        if (activeTabId === idToClose && newTabs.length > 0) {
+
+        if (newTabs.length === 0) {
+            setActiveTabId(''); // Clean up dirty state
+        } else if (activeTabId === idToClose) {
             setActiveTabId(newTabs[newTabs.length - 1].id);
         }
     };
+
+    const handleWinchSelect = useCallback((tabId: string, newWinchId: number) => {
+        setTabs(prevTabs =>
+            prevTabs.map(t => t.id === tabId ? { ...t, winchId: newWinchId } : t)
+        );
+    }, []);
 
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#0f172a' }}>
@@ -147,18 +169,23 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
             </Box>
             
             <Box sx={{ flexGrow: 1, position: 'relative', display: 'flex', flexDirection: 'column' }}>
-                {tabs.map((tab) => (
+                {tabs.length === 0 ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexGrow: 1 }}>
+                    <Typography color="#909eb4">No active winches. Click '+' to open a new tab.</Typography>
+                </Box>
+            ) : (
+                tabs.map((tab) => (
                     <Box key={tab.id} sx={{ display: activeTabId === tab.id ? 'flex' : 'none', flexDirection: 'column', flexGrow: 1 }}>
-                        <WinchTab 
-                            squadronId={squadronId} 
-                            operatorSn={operatorSn} 
-                            winchId={tab.winchId} 
-                            onWinchSelect={(winchId) => {
-                                setTabs(tabs.map(t => t.id === tab.id ? { ...t, winchId } : t));
-                            }} 
+                        <WinchTab
+                            tabId={tab.id}            // <-- Pass the tabId down
+                            squadronId={squadronId}
+                            operatorSn={operatorSn}
+                            winchId={tab.winchId}
+                            onWinchSelect={handleWinchSelect} // <-- Pass the stable reference directly! No arrow function.
                         />
                     </Box>
-                ))}
+                ))
+            )}
             </Box>
         </Box>
     );
