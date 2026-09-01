@@ -1,6 +1,6 @@
 import {useReducer, useState, useMemo, useCallback} from 'react';
 import type {DayLogPayload, DrumPosition, LaunchPayload, RemarkPayload} from '../types';
-import {postLaunchToDb, postRemarkToDb, postTraineeChangeToDb, removeLaunchFromDb} from '../api/dataClient';
+import {postLaunchToDb, postRemarkToDb, postDayLogToDb, removeLaunchFromDb} from '../api/dataClient';
 import { initialState, winchReducer } from '../state/winchReducer';
 
 export const useWinchSession = () => {
@@ -9,10 +9,12 @@ export const useWinchSession = () => {
     const [error, setError] = useState<string | null>(null);
 
     const derived = useMemo(() => {
-        const leftLaunches = state.leftHistory.length;
-        const rightLaunches = state.rightHistory.length;
-        const leftLastRecord = state.leftHistory[leftLaunches - 1];
-        const rightLastRecord = state.rightHistory[rightLaunches - 1];
+        const leftTotal = state.leftHistory.length;
+        const rightTotal = state.rightHistory.length;
+        const leftLaunches = state.leftHistory.filter(r => !r.burn).length;
+        const rightLaunches = state.rightHistory.filter(r => !r.burn).length;
+        const leftLastRecord = state.leftHistory[leftTotal - 1];
+        const rightLastRecord = state.rightHistory[rightTotal - 1];
         const leftLast = leftLastRecord?.timestamp ?? null;
         const rightLast = rightLastRecord?.timestamp ?? null;
 
@@ -28,6 +30,8 @@ export const useWinchSession = () => {
         }
 
         return {
+            leftTotal,
+            rightTotal,
             leftLaunches,
             rightLaunches,
             leftLast,
@@ -50,9 +54,7 @@ export const useWinchSession = () => {
                 burn,
             };
             const responseData = await postLaunchToDb(payload);
-            if (!burn) {
-                dispatch({ type: 'RECORD_LAUNCH', payload: responseData });
-            }
+            dispatch({ type: 'RECORD_LAUNCH', payload: responseData });
             return responseData;
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Launch execution failed');
@@ -94,7 +96,7 @@ export const useWinchSession = () => {
                 cable_check: null,
                 hours: null,
             };
-            const responseData = await postTraineeChangeToDb(payload, state.winchId);
+            const responseData = await postDayLogToDb(payload, state.winchId);
             dispatch({ type: 'CHANGE_TRAINEE', payload: responseData });
             return responseData;
         } catch (err) {
@@ -133,6 +135,30 @@ export const useWinchSession = () => {
         }
     }, [derived.leftLastRecord, derived.rightLastRecord, state.winchId]);
 
+    const finishDay = useCallback(async (cableCheck: string | null, hours: number | null) => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const payload: DayLogPayload = {
+                squadron_id: state.squadron,
+                winch_id: state.winchId,
+                operator_id: state.operatorSn,
+                trainee: state.traineeSn,
+                type: 'finish_day',
+                cable_check: cableCheck,
+                hours: hours,
+            };
+            const responseData = await postDayLogToDb(payload, state.winchId);
+            dispatch({ type: 'FINISH_DAY', payload: responseData });
+            return responseData;
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Finish day failed');
+            throw err;
+        } finally {
+            setIsLoading(false);
+        }
+    }, [state.squadron, state.winchId, state.operatorSn]);
+
     return {
         state,
         derived,
@@ -142,5 +168,6 @@ export const useWinchSession = () => {
         undoLaunch,
         changeTrainee,
         addRemark,
+        finishDay,
     };
 };

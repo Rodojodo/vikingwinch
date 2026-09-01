@@ -4,8 +4,10 @@ import type {DayLogResponse, LaunchResponse} from './api';
 
 export interface LaunchRecord {
   id: number;
+  launch_number: number | null;
   timestamp: string | null;
   remark: string | null;
+  burn: boolean;
 }
 
 
@@ -16,6 +18,7 @@ export interface WinchLogState {
   traineeSn: string | null;
   leftHistory: LaunchRecord[];
   rightHistory: LaunchRecord[];
+  dayFinished: boolean;
 }
 
 
@@ -23,8 +26,8 @@ export type WinchAction =
   | { type: 'RECORD_LAUNCH'; payload: LaunchResponse }
   | { type: 'UNDO_LAUNCH'; payload: { drum: DrumPosition } }
   | { type: 'CHANGE_TRAINEE'; payload: DayLogResponse }
-  | { type: 'ADD_REMARK'; payload: { drum: DrumPosition; id: number; remark: string | null }
-};
+  | { type: 'ADD_REMARK'; payload: { drum: DrumPosition; id: number; remark: string | null } }
+  | { type: 'FINISH_DAY'; payload: DayLogResponse };
 
 
 export interface Trainee {
@@ -34,6 +37,8 @@ export interface Trainee {
 
 
 export interface DerivedWinchState {
+  leftTotal: number;
+  rightTotal: number;
   leftLaunches: number;
   rightLaunches: number;
   leftLast: string | null;

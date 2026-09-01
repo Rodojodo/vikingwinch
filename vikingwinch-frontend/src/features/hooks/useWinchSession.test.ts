@@ -1,14 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useWinchSession } from './useWinchSession';
-import { postLaunchToDb, removeLaunchFromDb, postTraineeChangeToDb } from '../api/dataClient';
+import { postLaunchToDb, removeLaunchFromDb, postDayLogToDb } from '../api/dataClient';
 import { initialState } from '../state/winchReducer';
 import type { LaunchResponse, DayLogResponse } from '../types';
 
 vi.mock('../api/dataClient', () => ({
   postLaunchToDb: vi.fn(),
   removeLaunchFromDb: vi.fn(),
-  postTraineeChangeToDb: vi.fn(),
+  postDayLogToDb: vi.fn(),
   postRemarkToDb: vi.fn(),
 }));
 
@@ -46,8 +46,8 @@ describe('useWinchSession', () => {
 
     expect(result.current.state).toEqual(initialState);
     expect(result.current.derived).toEqual({
-      leftLaunches: 0,
-      rightLaunches: 0,
+      leftTotal: 0, leftLaunches: 0,
+      rightTotal: 0, rightLaunches: 0,
       leftLast: null,
       rightLast: null,
       lastDrum: null,
@@ -75,7 +75,7 @@ describe('useWinchSession', () => {
       burn: false,
     });
 
-    expect(result.current.state.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:15:00Z', remark: null }]);
+    expect(result.current.state.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:15:00Z', remark: null, burn: false, launch_number: 101 }]);
     expect(result.current.derived.leftLaunches).toBe(1);
     expect(result.current.derived.leftLast).toBe('2026-08-30T09:15:00Z');
     expect(result.current.derived.lastDrum).toBe('left');
@@ -92,24 +92,26 @@ describe('useWinchSession', () => {
       await result.current.executeLaunch('right', false);
     });
 
-    expect(result.current.state.rightHistory).toEqual([{ id: 102, timestamp: '2026-08-30T10:15:00Z', remark: null }]);
+    expect(result.current.state.rightHistory).toEqual([{ id: 102, timestamp: '2026-08-30T10:15:00Z', remark: null, burn: false, launch_number: 102 }]);
     expect(result.current.derived.rightLaunches).toBe(1);
     expect(result.current.derived.rightLast).toBe('2026-08-30T10:15:00Z');
     expect(result.current.derived.lastDrum).toBe('right');
   });
 
-  it('executes a burn launch, bypassing local state updates', async () => {
+  it('executes a burn launch and updates local state correctly', async () => {
     const mockResponse = createMockLaunchResponse('left', 103, '2026-08-30T11:00:00Z', true);
     vi.mocked(postLaunchToDb).mockResolvedValueOnce(mockResponse);
 
     const { result } = renderHook(() => useWinchSession());
-
+    
     await act(async () => {
       await result.current.executeLaunch('left', true);
     });
 
     expect(postLaunchToDb).toHaveBeenCalledWith(expect.objectContaining({ burn: true }));
-    expect(result.current.state.leftHistory).toHaveLength(0);
+    expect(result.current.state.leftHistory).toHaveLength(1);
+    expect(result.current.state.leftHistory[0].burn).toBe(true);
+    expect(result.current.derived.leftTotal).toBe(1);
     expect(result.current.derived.leftLaunches).toBe(0);
   });
 
@@ -136,7 +138,7 @@ describe('useWinchSession', () => {
     });
 
     expect(removeLaunchFromDb).toHaveBeenCalledWith(102);
-    expect(result.current.state.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:00:00Z', remark: null }]);
+    expect(result.current.state.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:00:00Z', remark: null, burn: false, launch_number: 101 }]);
     expect(result.current.derived.leftLaunches).toBe(1);
     expect(result.current.derived.leftLast).toBe('2026-08-30T09:00:00Z');
   });
@@ -211,7 +213,7 @@ describe('useWinchSession', () => {
   it('executes a successful trainee change, dispatching the update and returning the response', async () => {
     const traineeSn = 'TRN-5050';
     const mockResponse = createMockDayLogResponse(traineeSn, 501, '2026-08-30T12:00:00Z');
-    vi.mocked(postTraineeChangeToDb).mockResolvedValueOnce(mockResponse);
+    vi.mocked(postDayLogToDb).mockResolvedValueOnce(mockResponse);
 
     const { result } = renderHook(() => useWinchSession());
 
@@ -220,8 +222,8 @@ describe('useWinchSession', () => {
       responseData = await result.current.changeTrainee(traineeSn);
     });
 
-    expect(postTraineeChangeToDb).toHaveBeenCalledTimes(1);
-    expect(postTraineeChangeToDb).toHaveBeenCalledWith({
+    expect(postDayLogToDb).toHaveBeenCalledTimes(1);
+    expect(postDayLogToDb).toHaveBeenCalledWith({
       squadron_id: initialState.squadron,
       winch_id: initialState.winchId,
       operator_id: initialState.operatorSn,
@@ -238,7 +240,7 @@ describe('useWinchSession', () => {
 
   it('handles API rejection during changeTrainee, sets error state, and throws', async () => {
     const errorMessage = 'Trainee profile not found';
-    vi.mocked(postTraineeChangeToDb).mockRejectedValueOnce(new Error(errorMessage));
+    vi.mocked(postDayLogToDb).mockRejectedValueOnce(new Error(errorMessage));
 
     const { result } = renderHook(() => useWinchSession());
 
@@ -278,7 +280,7 @@ describe('useWinchSession', () => {
   });
 
   it('falls back to default error messages if changeTrainee throws a non-Error exception', async () => {
-    vi.mocked(postTraineeChangeToDb).mockRejectedValueOnce('Unexpected string exception');
+    vi.mocked(postDayLogToDb).mockRejectedValueOnce('Unexpected string exception');
     const { result } = renderHook(() => useWinchSession());
 
     await act(async () => {
@@ -362,3 +364,31 @@ describe('useWinchSession', () => {
     expect(result.current.error).toBe('Add remark failed');
   });
 });
+  describe('finishDay', () => {
+    it('calls API and dispatches FINISH_DAY on success', async () => {
+      const mockResponse = { id: 3 };
+      vi.mocked(postDayLogToDb).mockResolvedValue(mockResponse as any);
+      
+      const { result } = renderHook(() => useWinchSession());
+      
+      let response;
+      await act(async () => {
+        response = await result.current.finishDay('OP1', 12.5);
+      });
+      
+      expect(postDayLogToDb).toHaveBeenCalled();
+      expect(response).toEqual(mockResponse);
+    });
+
+    it('handles finishDay error', async () => {
+      vi.mocked(postDayLogToDb).mockRejectedValue(new Error('API error'));
+      
+      const { result } = renderHook(() => useWinchSession());
+      
+      await act(async () => {
+        await expect(result.current.finishDay('OP1', 12.5)).rejects.toThrow('API error');
+      });
+      
+      expect(result.current.error).toBe('API error');
+    });
+  });

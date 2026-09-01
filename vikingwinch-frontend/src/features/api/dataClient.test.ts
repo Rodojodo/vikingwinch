@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { postLaunchToDb, removeLaunchFromDb, postTraineeChangeToDb, postRemarkToDb, getOperatorsForSquadron } from '../api/dataClient';
+import { postLaunchToDb, removeLaunchFromDb, postDayLogToDb, postRemarkToDb, getOperatorsForSquadron, getWinch, getDayLog } from '../api/dataClient';
 import type { LaunchPayload, LaunchResponse, DayLogPayload, DayLogResponse, RemarkPayload } from '../types';
 
 const API_BASE_URL = 'http://127.0.0.1:8000';
@@ -205,7 +205,7 @@ describe('postTraineeChangeToDb', () => {
       json: async () => mockDayLogResponse,
     } as Response);
 
-    const result = await postTraineeChangeToDb(mockDayLogPayload, targetWinchId);
+    const result = await postDayLogToDb(mockDayLogPayload, targetWinchId);
 
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(fetch).toHaveBeenCalledWith(`${API_BASE_URL}/winch/${targetWinchId}/day_log`, {
@@ -227,7 +227,7 @@ describe('postTraineeChangeToDb', () => {
       json: async () => ({ detail: 'Invalid log sequence' }),
     } as unknown as Response);
 
-    await expect(postTraineeChangeToDb(mockDayLogPayload, targetWinchId)).rejects.toThrow(
+    await expect(postDayLogToDb(mockDayLogPayload, targetWinchId)).rejects.toThrow(
       'Invalid log sequence'
     );
   });
@@ -333,14 +333,43 @@ describe('getOperatorsForSquadron', () => {
     expect(result).toStrictEqual([]);
   });
 
-  it('returns empty array and logs error on catch', async () => {
+  it('throws error on fetch failure', async () => {
     vi.mocked(fetch).mockRejectedValue(new Error('Network fail'));
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const result = await getOperatorsForSquadron(squadronId);
+    await expect(getOperatorsForSquadron(squadronId)).rejects.toThrow('Network fail');
+  });
+});
 
-    expect(consoleSpy).toHaveBeenCalledWith('Failed to fetch operators:', expect.any(Error));
-    expect(result).toStrictEqual([]);
-    consoleSpy.mockRestore();
+describe('getWinch', () => {
+  beforeEach(() => { vi.stubGlobal('fetch', vi.fn()); });
+  afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+
+  it('executes GET request and returns winch object', async () => {
+    const mockWinch = { id: 1, registration: 'W1' };
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      json: async () => mockWinch,
+    } as Response);
+
+    const result = await getWinch(1);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(result).toStrictEqual(mockWinch);
+  });
+});
+
+describe('getDayLog', () => {
+  beforeEach(() => { vi.stubGlobal('fetch', vi.fn()); });
+  afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+
+  it('executes GET request and returns day logs array', async () => {
+    const mockLogs = [{ id: 1, type: 'sign_on' }];
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      json: async () => mockLogs,
+    } as Response);
+
+    const result = await getDayLog(1, '2026-09-01');
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(result).toStrictEqual(mockLogs);
   });
 });

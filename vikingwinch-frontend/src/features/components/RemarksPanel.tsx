@@ -15,7 +15,8 @@ export const RemarksPanel: React.FC<RemarksPanelProps> = ({ addRemark, isLoading
     const [remark, setRemark] = useState<string>('');
     const [drum, setDrum] = useState<DrumPosition>('left');
 
-    const hasLaunches = drum === 'left' ? derived.leftLaunches > 0 : derived.rightLaunches > 0;
+    const targetRecord = drum === 'left' ? derived.leftLastRecord : derived.rightLastRecord;
+    const hasLaunches = !!targetRecord;
 
     const [localError, setLocalError] = useState<string | null>(null);
 

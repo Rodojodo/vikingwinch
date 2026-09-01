@@ -7,14 +7,15 @@ export const initialState: WinchLogState = {
     traineeSn: null,
     leftHistory: [],
     rightHistory: [],
+    dayFinished: false,
 };
 
 
 export const winchReducer = (state: WinchLogState, action: WinchAction): WinchLogState => {
     switch (action.type) {
         case 'RECORD_LAUNCH': {
-            const {drum, timestamp, id} = action.payload;
-            const record: LaunchRecord = {id, timestamp, remark: null};
+            const {drum, timestamp, id, launch_number, burn} = action.payload;
+            const record: LaunchRecord = {id, launch_number, timestamp, remark: null, burn};
 
             if (drum === 'left') {
                 return {...state, leftHistory: [...state.leftHistory, record]};
@@ -48,6 +49,10 @@ export const winchReducer = (state: WinchLogState, action: WinchAction): WinchLo
                 return { ...state, leftHistory: updateHistory(state.leftHistory) };
             }
             return { ...state, rightHistory: updateHistory(state.rightHistory) };
+        }
+
+        case 'FINISH_DAY': {
+            return {...state, dayFinished: true };
         }
         default:
             return state;
