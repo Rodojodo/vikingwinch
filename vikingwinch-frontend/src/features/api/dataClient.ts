@@ -83,7 +83,7 @@ export const postRemarkToDb = async (payload: RemarkPayload): Promise<LaunchResp
     return response.json();
 }
 
-export const getOperatorsForSquadron = async (squadronId: string): Promise<any[]> => {
+export const getOperatorsForSquadron = async (squadronId: string): Promise<OperatorResponse> => {
     try {
         const response = await fetch(`${API_BASE_URL}/squadrons/${squadronId}/operators`, {
             method: 'GET',
@@ -96,7 +96,7 @@ export const getOperatorsForSquadron = async (squadronId: string): Promise<any[]
         
         const text = await response.text();
         if (!text) return [];
-        return JSON.parse(text);
+        return JSON.parse(text) as OperatorRead[];
     } catch (error) {
         console.error("Failed to fetch operators:", error);
         return [];
