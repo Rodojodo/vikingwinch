@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { postLaunchToDb, removeLaunchFromDb, postDayLogToDb, postRemarkToDb, getOperatorsForSquadron } from '../api/dataClient';
+import { postLaunchToDb, removeLaunchFromDb, postDayLogToDb, postRemarkToDb, getOperatorsForSquadron, getWinch, getDayLog } from '../api/dataClient';
 import type { LaunchPayload, LaunchResponse, DayLogPayload, DayLogResponse, RemarkPayload } from '../types';
 
 const API_BASE_URL = 'http://127.0.0.1:8000';
@@ -342,5 +342,39 @@ describe('getOperatorsForSquadron', () => {
     expect(consoleSpy).toHaveBeenCalledWith('Failed to fetch operators:', expect.any(Error));
     expect(result).toStrictEqual([]);
     consoleSpy.mockRestore();
+  });
+});
+
+describe('getWinch', () => {
+  beforeEach(() => { vi.stubGlobal('fetch', vi.fn()); });
+  afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+
+  it('executes GET request and returns winch object', async () => {
+    const mockWinch = { id: 1, registration: 'W1' };
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      json: async () => mockWinch,
+    } as Response);
+
+    const result = await getWinch(1);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(result).toStrictEqual(mockWinch);
+  });
+});
+
+describe('getDayLog', () => {
+  beforeEach(() => { vi.stubGlobal('fetch', vi.fn()); });
+  afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+
+  it('executes GET request and returns day logs array', async () => {
+    const mockLogs = [{ id: 1, type: 'sign_on' }];
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      json: async () => mockLogs,
+    } as Response);
+
+    const result = await getDayLog(1, '2026-09-01');
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(result).toStrictEqual(mockLogs);
   });
 });

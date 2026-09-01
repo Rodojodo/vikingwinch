@@ -364,3 +364,31 @@ describe('useWinchSession', () => {
     expect(result.current.error).toBe('Add remark failed');
   });
 });
+  describe('finishDay', () => {
+    it('calls API and dispatches FINISH_DAY on success', async () => {
+      const mockResponse = { id: 3 };
+      vi.mocked(postDayLogToDb).mockResolvedValue(mockResponse as any);
+      
+      const { result } = renderHook(() => useWinchSession());
+      
+      let response;
+      await act(async () => {
+        response = await result.current.finishDay('OP1', 12.5);
+      });
+      
+      expect(postDayLogToDb).toHaveBeenCalled();
+      expect(response).toEqual(mockResponse);
+    });
+
+    it('handles finishDay error', async () => {
+      vi.mocked(postDayLogToDb).mockRejectedValue(new Error('API error'));
+      
+      const { result } = renderHook(() => useWinchSession());
+      
+      await act(async () => {
+        await expect(result.current.finishDay('OP1', 12.5)).rejects.toThrow('API error');
+      });
+      
+      expect(result.current.error).toBe('API error');
+    });
+  });

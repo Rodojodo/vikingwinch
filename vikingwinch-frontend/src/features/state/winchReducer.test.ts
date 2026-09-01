@@ -166,3 +166,8 @@ describe('winchReducer', () => {
     expect(result.leftHistory).toEqual(initialState.leftHistory);
   });
 });
+  it('handles FINISH_DAY', () => {
+    const action: WinchAction = { type: 'FINISH_DAY', payload: {} as any };
+    const result = winchReducer(initialState, action);
+    expect(result.dayFinished).toBe(true);
+  });

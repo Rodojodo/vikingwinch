@@ -72,10 +72,6 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ finishDay, isLoa
         setLocalError(null);
         
         const hours = hoursStop ? parseFloat(hoursStop) : null;
-        if (hoursStop && isNaN(hours as number)) {
-            setLocalError('Hours stop must be a valid number');
-            return;
-        }
 
         try {
             await finishDay(cableCheckBy || null, hours);
