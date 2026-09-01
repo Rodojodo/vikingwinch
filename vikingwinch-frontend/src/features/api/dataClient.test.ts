@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { postLaunchToDb, removeLaunchFromDb, postTraineeChangeToDb, postRemarkToDb, getOperatorsForSquadron } from '../api/dataClient';
+import { postLaunchToDb, removeLaunchFromDb, postDayLogToDb, postRemarkToDb, getOperatorsForSquadron } from '../api/dataClient';
 import type { LaunchPayload, LaunchResponse, DayLogPayload, DayLogResponse, RemarkPayload } from '../types';
 
 const API_BASE_URL = 'http://127.0.0.1:8000';
@@ -205,7 +205,7 @@ describe('postTraineeChangeToDb', () => {
       json: async () => mockDayLogResponse,
     } as Response);
 
-    const result = await postTraineeChangeToDb(mockDayLogPayload, targetWinchId);
+    const result = await postDayLogToDb(mockDayLogPayload, targetWinchId);
 
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(fetch).toHaveBeenCalledWith(`${API_BASE_URL}/winch/${targetWinchId}/day_log`, {
@@ -227,7 +227,7 @@ describe('postTraineeChangeToDb', () => {
       json: async () => ({ detail: 'Invalid log sequence' }),
     } as unknown as Response);
 
-    await expect(postTraineeChangeToDb(mockDayLogPayload, targetWinchId)).rejects.toThrow(
+    await expect(postDayLogToDb(mockDayLogPayload, targetWinchId)).rejects.toThrow(
       'Invalid log sequence'
     );
   });

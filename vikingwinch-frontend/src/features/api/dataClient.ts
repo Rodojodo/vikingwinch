@@ -51,7 +51,7 @@ export const removeLaunchFromDb = async (launchId: number): Promise<void> =>{
 }
 
 
-export const postTraineeChangeToDb = async (payload: DayLogPayload, winchId: number): Promise<DayLogResponse> =>{
+export const postDayLogToDb = async (payload: DayLogPayload, winchId: number): Promise<DayLogResponse> =>{
     const response = await fetch(`${API_BASE_URL}/winch/${winchId}/day_log`, {
         method: 'POST',
         headers: {
