@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import '../App.css'
-
-import { WinchTab } from './WinchTab.tsx';
+import { WinchOpsPage } from './WinchOpsPage';
 
 function App() {
+    const [operatorSn] = useState('OFF-1001');
+    const [squadronId] = useState('123 VGS');
+
     return (
-        <WinchTab />
+        <WinchOpsPage squadronId={squadronId} operatorSn={operatorSn} />
     );
 }
 

@@ -28,7 +28,9 @@ export type WinchAction =
   | { type: 'CHANGE_TRAINEE'; payload: DayLogResponse }
   | { type: 'ADD_REMARK'; payload: { drum: DrumPosition; id: number; remark: string | null } }
   | { type: 'FINISH_DAY'; payload: DayLogResponse }
-  | { type: 'SET_WINCH_ID'; payload: number };
+  | { type: 'SET_WINCH_ID'; payload: number }
+  | { type: 'SET_SQUADRON'; payload: string }
+  | { type: 'SET_OPERATOR'; payload: string };
 
 
 export interface Trainee {

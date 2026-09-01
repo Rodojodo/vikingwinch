@@ -61,7 +61,8 @@ describe('exportLog', () => {
                 { launch_number: null, burn: true }
             ],
             rightHistory: [
-                { launch_number: 20, burn: false }
+                { launch_number: 20, burn: false },
+                { launch_number: null, burn: true }
             ]
         } as any;
 
@@ -73,5 +74,52 @@ describe('exportLog', () => {
         expect(fileSaver.saveAs).toHaveBeenCalled();
         const blobArg = vi.mocked(fileSaver.saveAs).mock.calls[0][0];
         expect(blobArg).toBeInstanceOf(Blob);
+    });
+
+    it('throws error if winchId is null', async () => {
+        const mockState = { winchId: null } as any;
+        await expect(exportLog(mockState, 5.5)).rejects.toThrow("No winch selected");
+    });
+
+    it('throws custom error if export process fails', async () => {
+        const mockState = { winchId: 1 } as any;
+        await expect(exportLog(mockState, 5.5)).rejects.toThrow("Log export failed. Please check your connection and try again.");
+    });
+
+
+    it('exports log correctly when histories are empty and handles unknown operators', async () => {
+        const mockState = {
+            squadron: 'sqn1',
+            winchId: 1,
+            leftHistory: [],
+            rightHistory: []
+        } as any;
+
+        // Give a log with unknown operator and no trainee
+        vi.mocked(getDayLog).mockResolvedValueOnce([
+            { type: 'sign_on', operator_id: 'UNKNOWN_OP', trainee: null } as any
+        ]);
+        
+        await exportLog(mockState, 5.5);
+        
+        expect(fileSaver.saveAs).toHaveBeenCalled();
+    });
+
+    it('handles null hours and brought forward when all launch numbers are null', async () => {
+        const mockState = {
+            squadron: 'sqn1',
+            winchId: 1,
+            leftHistory: [
+                { launch_number: null, burn: true }
+            ],
+            rightHistory: [
+                { launch_number: null, burn: true }
+            ]
+        } as any;
+
+        // pass hours as null
+        await exportLog(mockState, null);
+        
+        expect(fileSaver.saveAs).toHaveBeenCalled();
     });
 });

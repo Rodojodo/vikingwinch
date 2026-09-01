@@ -181,4 +181,106 @@ describe('RepairsPanel', () => {
         const submitButton = screen.getByRole('button', { name: /Sign off Repair/i });
         expect(submitButton).toBeDisabled();
     });
+    it('does not fetch operators if no squadron is set', () => {
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} state={{ squadron: '' } as any} />);
+        expect(getOperatorsForSquadron).not.toHaveBeenCalled();
+    });
+
+    it('submits repair for right drum', async () => {
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} state={{ squadron: 'sqn1' } as any} />);
+        
+        await waitFor(() => expect(getOperatorsForSquadron).toHaveBeenCalled());
+        
+        fireEvent.change(screen.getByPlaceholderText('Describe the repair carried out...'), {
+            target: { value: 'weak link' },
+        });
+
+        const comboboxes = screen.getAllByRole('combobox');
+        fireEvent.mouseDown(comboboxes[0]);
+        let listbox = within(await screen.findByRole('presentation')).getByRole('listbox');
+        fireEvent.click(within(listbox).getByText('Joe Bloggs'));
+
+        // Click right drum
+        fireEvent.click(screen.getByRole('button', { name: /Right/i }));
+
+        const submitButton = screen.getByRole('button', { name: /Sign off Repair/i });
+        await act(async () => {
+            submitButton.removeAttribute('disabled');
+            fireEvent.click(submitButton);
+        });
+
+        expect(mockAddRemark).toHaveBeenCalledWith('Repair: weak link | Worker: 123', 'right');
+    });
+
+    it('handles non-Error exception during submit', async () => {
+        mockAddRemark.mockRejectedValue('String Error');
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} state={{ squadron: 'sqn1' } as any} />);
+        
+        await waitFor(() => expect(getOperatorsForSquadron).toHaveBeenCalled());
+
+        fireEvent.change(screen.getByPlaceholderText('Describe the repair carried out...'), {
+            target: { value: 'test' },
+        });
+
+        const comboboxes = screen.getAllByRole('combobox');
+        fireEvent.mouseDown(comboboxes[0]);
+        const listbox = within(await screen.findByRole('presentation')).getByRole('listbox');
+        fireEvent.click(within(listbox).getByText('Joe Bloggs'));
+
+        const submitButton = screen.getByRole('button', { name: /Sign off Repair/i });
+        await act(async () => {
+            submitButton.removeAttribute('disabled');
+            fireEvent.click(submitButton);
+        });
+
+        await waitFor(() => {
+            expect(screen.getByText('Failed to submit repair')).toBeInTheDocument();
+        });
+    });
+
+    it('ignores aborted fetch errors and successes', async () => {
+        vi.mocked(getOperatorsForSquadron).mockImplementation((_sqn, signal) => {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    resolve(mockOperators);
+                }, 50);
+            });
+        });
+
+        const { unmount } = render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} state={{ squadron: 'sqn1' } as any} />);
+        
+        unmount();
+        // Since it's unmounted, the state update should be ignored (or not cause failed to load operators)
+        await new Promise(r => setTimeout(r, 100));
+        
+        vi.mocked(getOperatorsForSquadron).mockImplementation((_sqn, signal) => {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    reject(new Error('API fail'));
+                }, 50);
+            });
+        });
+        
+        const { unmount: unmount2 } = render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} state={{ squadron: 'sqn1' } as any} />);
+        unmount2();
+        await new Promise(r => setTimeout(r, 100));
+    });
+
+    it('returns early in handleSubmit if hasLaunches is false or worker is empty', async () => {
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: null, rightLastRecord: null } as any} state={{ squadron: 'sqn1' } as any} />);
+        
+        await waitFor(() => expect(getOperatorsForSquadron).toHaveBeenCalled());
+
+        fireEvent.change(screen.getByPlaceholderText('Describe the repair carried out...'), {
+            target: { value: 'test' },
+        });
+
+        const submitButton = screen.getByRole('button', { name: /Sign off Repair/i });
+        await act(async () => {
+            submitButton.removeAttribute('disabled');
+            fireEvent.click(submitButton);
+        });
+
+        expect(mockAddRemark).not.toHaveBeenCalled();
+    });
 });

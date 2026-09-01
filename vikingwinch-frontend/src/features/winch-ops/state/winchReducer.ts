@@ -54,8 +54,17 @@ export const winchReducer = (state: WinchLogState, action: WinchAction): WinchLo
         case 'FINISH_DAY': {
             return {...state, dayFinished: true };
         }
+
         case 'SET_WINCH_ID': {
             return {...state, winchId: action.payload};
+        }
+
+        case 'SET_SQUADRON': {
+            return {...state, squadron: action.payload};
+        }
+
+        case 'SET_OPERATOR': {
+            return {...state, operatorSn: action.payload};
         }
         default:
             return state;
