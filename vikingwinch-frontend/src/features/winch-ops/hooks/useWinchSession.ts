@@ -1,12 +1,20 @@
-import {useReducer, useState, useMemo, useCallback} from 'react';
+import {useReducer, useState, useMemo, useCallback, useEffect} from 'react';
 import type {DayLogPayload, DrumPosition, LaunchPayload, RemarkPayload} from '../types';
 import {postLaunchToDb, postRemarkToDb, postDayLogToDb, removeLaunchFromDb} from '../api/dataClient';
 import { initialState, winchReducer } from '../state/winchReducer';
 
-export const useWinchSession = () => {
-    const [state, dispatch] = useReducer(winchReducer, initialState);
+export const useWinchSession = (squadronId: string, operatorSn: string, initialWinchId: number | null = null) => {
+    const [state, dispatch] = useReducer(winchReducer, {
+        ...initialState,
+        winchId: initialWinchId,
+    });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        dispatch({ type: 'SET_SQUADRON', payload: squadronId });
+        dispatch({ type: 'SET_OPERATOR', payload: operatorSn });
+    }, [squadronId, operatorSn]);
 
     const derived = useMemo(() => {
         const leftTotal = state.leftHistory.length;

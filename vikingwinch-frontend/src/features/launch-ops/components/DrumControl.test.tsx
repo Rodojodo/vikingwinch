@@ -89,4 +89,15 @@ describe('DrumControl', () => {
         expect(screen.getByText('Left Drum').closest('button')).toBeDisabled();
         expect(screen.getByRole('button', { name: /Burn Left/i })).toBeDisabled();
     });
+
+    it('applies animation styles and combination of used/resetting correctly', () => {
+        const { rerender } = render(<DrumControl {...defaultProps} currentAnim="animFadeScale 0.6s" />);
+        expect(screen.getByText('Left Drum')).toBeInTheDocument();
+        
+        rerender(<DrumControl {...defaultProps} isResetting={true} isUsed={true} />);
+        expect(screen.getByText('Left Drum')).toBeInTheDocument();
+
+        rerender(<DrumControl {...defaultProps} isUsed={true} isResetting={false} />);
+        expect(screen.getByText('Left Drum')).toBeInTheDocument();
+    });
 });
