@@ -24,7 +24,7 @@ export const WinchTab = ({ squadronId, operatorSn, winchId, onWinchSelect }: Win
 
     return (
         <Box sx={{
-            height: '100%',
+            flexGrow: 1,
             background: 'radial-gradient(circle at top right, #1e1b4b, #0f172a)',
             backgroundAttachment: 'fixed',
             display: 'flex',

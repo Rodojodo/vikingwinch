@@ -121,9 +121,9 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
                 </IconButton>
             </Box>
             
-            <Box sx={{ flexGrow: 1, position: 'relative' }}>
+            <Box sx={{ flexGrow: 1, position: 'relative', display: 'flex', flexDirection: 'column' }}>
                 {tabs.map((tab) => (
-                    <Box key={tab.id} sx={{ display: activeTabId === tab.id ? 'block' : 'none', height: '100%' }}>
+                    <Box key={tab.id} sx={{ display: activeTabId === tab.id ? 'flex' : 'none', flexDirection: 'column', flexGrow: 1 }}>
                         <WinchTab 
                             squadronId={squadronId} 
                             operatorSn={operatorSn} 
