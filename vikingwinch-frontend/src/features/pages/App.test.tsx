@@ -2,13 +2,13 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import App from './App';
 
-vi.mock('./LaunchPanel', () => ({
-    default: () => <div data-testid="launch-panel-mock" />
+vi.mock('./WinchTab', () => ({
+    default: () => <div data-testid="winch-tab-mock" />
 }));
 
 describe('App', () => {
-    it('renders LaunchPanel inside a Box', () => {
+    it('renders WinchTab', () => {
         render(<App />);
-        expect(screen.getByTestId('launch-panel-mock')).toBeInTheDocument();
+        expect(screen.getByTestId('winch-tab-mock')).toBeInTheDocument();
     });
 });
