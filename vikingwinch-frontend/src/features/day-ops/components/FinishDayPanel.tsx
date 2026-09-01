@@ -155,7 +155,7 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ finishDay, isLoa
                                     {isFetchingOperators ? 'Loading...' : 'Select...'}
                                 </MenuItem>
                                 {operators.map(op => (
-                                    <MenuItem key={op.sn} value={op.sn}>
+                                    <MenuItem key={op.service_no} value={op.service_no}>
                                         {op.name}
                                     </MenuItem>
                                 ))}

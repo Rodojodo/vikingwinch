@@ -20,10 +20,10 @@ const TRAINEES: Trainee[] = [
 
 type TraineeAssignmentPanelProps = {
   isLoading: boolean;
-  changeTrainee: (traineeSn: string) => Promise<DayLogResponse>;
+  recordSignOn: (traineeSn: string) => Promise<DayLogResponse>;
 };
 
-export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({isLoading, changeTrainee}) => {
+export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({isLoading, recordSignOn}) => {
     const [isExpanded, setIsExpanded] = useState<boolean>(false);
     const [focusedTraineeId, setFocusedTraineeId] = useState<string>('1');
 
@@ -120,7 +120,7 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({i
                 <Button
                     variant="contained"
                     fullWidth
-                    onClick={() => changeTrainee(focusedTraineeId)}
+                    onClick={() => recordSignOn(focusedTraineeId)}
                     sx={{
                         backgroundColor: '#2970ff',
                         textTransform: 'none',

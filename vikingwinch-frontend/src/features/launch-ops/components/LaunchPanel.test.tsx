@@ -21,7 +21,7 @@ vi.mock('./WinchDetailsSticker.tsx', () => ({
 describe('LaunchPanel', () => {
     const mockExecuteLaunch = vi.fn().mockResolvedValue(undefined);
     const mockUndoLaunch = vi.fn().mockResolvedValue(undefined);
-    const mockChangeTrainee = vi.fn();
+    const mockRecordSignOn = vi.fn();
     const mockAddRemark = vi.fn();
 
     beforeEach(() => {
@@ -38,7 +38,7 @@ describe('LaunchPanel', () => {
             isLoading: false,
             executeLaunch: mockExecuteLaunch,
             undoLaunch: mockUndoLaunch,
-            changeTrainee: mockChangeTrainee,
+            recordSignOn: mockRecordSignOn,
             addRemark: mockAddRemark,
             state: { squadron: 'sqn1', winchNum: 42 },
             error: null
