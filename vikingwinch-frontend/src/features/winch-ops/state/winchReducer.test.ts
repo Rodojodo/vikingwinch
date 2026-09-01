@@ -34,6 +34,13 @@ describe('winchReducer', () => {
     expect(result).toEqual(initialState);
   });
 
+  it('processes SET_WINCH_ID and updates winchId', () => {
+    const action: WinchAction = { type: 'SET_WINCH_ID', payload: 42 };
+    const result = winchReducer(initialState, action);
+
+    expect(result.winchId).toBe(42);
+  });
+
   it('processes RECORD_LAUNCH for the left drum and appends to leftHistory', () => {
     const payload = createLaunchPayload('left', 101, '2026-08-30T09:15:00Z');
     const action: WinchAction = { type: 'RECORD_LAUNCH', payload };

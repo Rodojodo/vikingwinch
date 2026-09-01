@@ -23,6 +23,14 @@ vi.mock('../features/day-ops/components/SkylogValues', () => ({
     ),
 }));
 
+vi.mock('../features/winch-ops/components/WinchSelectPanel', () => ({
+    WinchSelectPanel: ({ onSelectWinch }: any) => (
+        <div data-testid="winch-select">
+            <button onClick={() => onSelectWinch(1)}>Select Winch</button>
+        </div>
+    ),
+}));
+
 describe('WinchTab', () => {
     it('renders LaunchPanel initially and toggles to SkylogValues', () => {
         vi.mocked(useWinchSession).mockReturnValue({
@@ -41,5 +49,22 @@ describe('WinchTab', () => {
         fireEvent.click(screen.getByText('Go back'));
         
         expect(screen.getByTestId('launch-panel')).toBeInTheDocument();
+    });
+
+    it('renders WinchSelectPanel initially if winchId is null', () => {
+        const setWinchIdMock = vi.fn();
+        vi.mocked(useWinchSession).mockReturnValue({
+            state: { winchId: null, squadron: 'sqn1' },
+            setWinchId: setWinchIdMock,
+            derived: { leftLaunches: 10, rightLaunches: 15 }
+        } as any);
+
+        render(<WinchTab />);
+        
+        expect(screen.getByTestId('winch-select')).toBeInTheDocument();
+        
+        fireEvent.click(screen.getByText('Select Winch'));
+        
+        expect(setWinchIdMock).toHaveBeenCalledWith(1);
     });
 });

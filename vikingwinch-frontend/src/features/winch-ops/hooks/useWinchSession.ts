@@ -46,6 +46,7 @@ export const useWinchSession = () => {
         setIsLoading(true);
         setError(null);
         try {
+            if (!state.winchId) throw new Error("No winch selected");
             const payload: LaunchPayload = {
                 squadron_id: state.squadron,
                 winch_id: state.winchId,
@@ -87,6 +88,7 @@ export const useWinchSession = () => {
         setIsLoading(true);
         setError(null);
         try {
+            if (!state.winchId) throw new Error("No winch selected");
             const payload: DayLogPayload = {
                 squadron_id: state.squadron,
                 winch_id: state.winchId,
@@ -111,6 +113,7 @@ export const useWinchSession = () => {
         setIsLoading(true);
         setError(null);
         try {
+            if (!state.winchId) throw new Error("No winch selected");
             const targetRecord = drum === 'left' ? derived.leftLastRecord : derived.rightLastRecord;
             if (!targetRecord) {
                 throw new Error(`No launch recorded on ${drum} drum.`);
@@ -139,6 +142,7 @@ export const useWinchSession = () => {
         setIsLoading(true);
         setError(null);
         try {
+            if (!state.winchId) throw new Error("No winch selected");
             const payload: DayLogPayload = {
                 squadron_id: state.squadron,
                 winch_id: state.winchId,
@@ -159,6 +163,10 @@ export const useWinchSession = () => {
         }
     }, [state.squadron, state.winchId, state.operatorSn]);
 
+    const setWinchId = useCallback((id: number) => {
+        dispatch({ type: 'SET_WINCH_ID', payload: id });
+    }, []);
+
     return {
         state,
         derived,
@@ -169,5 +177,6 @@ export const useWinchSession = () => {
         changeTrainee,
         addRemark,
         finishDay,
+        setWinchId,
     };
 };

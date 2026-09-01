@@ -54,3 +54,9 @@ export interface OperatorRead {
 export interface OperatorResponse {
   operators: OperatorRead[]
 }
+
+export interface WinchRead {
+  id: number;
+  registration: string;
+  squadron_id: string;
+}

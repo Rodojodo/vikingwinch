@@ -1,4 +1,4 @@
-import type {DayLogPayload, DayLogResponse, LaunchPayload, LaunchResponse, RemarkPayload, OperatorRead} from '../types';
+import type {DayLogPayload, DayLogResponse, LaunchPayload, LaunchResponse, RemarkPayload, OperatorRead, WinchRead} from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
 
@@ -99,7 +99,23 @@ export const getOperatorsForSquadron = async (squadronId: string, signal?: Abort
     return JSON.parse(text) as OperatorRead[];
 }
 
-export const getWinch = async (winchId: number): Promise<{ registration: string }> => {
+export const getWinchesForSquadron = async (squadronId: string, signal?: AbortSignal): Promise<WinchRead[]> => {
+    const response = await fetch(`${API_BASE_URL}/squadrons/${squadronId}/winches`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+        },
+        signal,
+    });
+
+    await handleApiError(response);
+    
+    const text = await response.text();
+    if (!text) return [];
+    return JSON.parse(text) as WinchRead[];
+}
+
+export const getWinch = async (winchId: number): Promise<WinchRead> => {
     const response = await fetch(`${API_BASE_URL}/winches/${winchId}`, {
         method: 'GET',
         headers: {

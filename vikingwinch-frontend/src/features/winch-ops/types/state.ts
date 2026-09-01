@@ -13,7 +13,7 @@ export interface LaunchRecord {
 
 export interface WinchLogState {
   squadron: string;
-  winchId: number;
+  winchId: number | null;
   operatorSn: string;
   traineeSn: string | null;
   leftHistory: LaunchRecord[];
@@ -27,7 +27,8 @@ export type WinchAction =
   | { type: 'UNDO_LAUNCH'; payload: { drum: DrumPosition } }
   | { type: 'CHANGE_TRAINEE'; payload: DayLogResponse }
   | { type: 'ADD_REMARK'; payload: { drum: DrumPosition; id: number; remark: string | null } }
-  | { type: 'FINISH_DAY'; payload: DayLogResponse };
+  | { type: 'FINISH_DAY'; payload: DayLogResponse }
+  | { type: 'SET_WINCH_ID'; payload: number };
 
 
 export interface Trainee {

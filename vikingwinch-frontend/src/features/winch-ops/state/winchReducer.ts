@@ -2,7 +2,7 @@ import type { WinchAction, WinchLogState, LaunchRecord } from '../types';
 
 export const initialState: WinchLogState = {
     squadron: '123 VGS',
-    winchId: 1,
+    winchId: null,
     operatorSn: 'OFF-1001',
     traineeSn: null,
     leftHistory: [],
@@ -53,6 +53,9 @@ export const winchReducer = (state: WinchLogState, action: WinchAction): WinchLo
 
         case 'FINISH_DAY': {
             return {...state, dayFinished: true };
+        }
+        case 'SET_WINCH_ID': {
+            return {...state, winchId: action.payload};
         }
         default:
             return state;

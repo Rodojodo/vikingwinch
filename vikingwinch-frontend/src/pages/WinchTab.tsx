@@ -3,6 +3,7 @@ import { Box } from '@mui/material';
 import { LaunchPanel } from '../features/launch-ops/components/LaunchPanel';
 import { SkylogValues } from '../features/day-ops/components/SkylogValues';
 import { useWinchSession } from '../features/winch-ops/hooks/useWinchSession';
+import { WinchSelectPanel } from '../features/winch-ops/components/WinchSelectPanel';
 
 export const WinchTab = () => {
     const [page, setPage] = useState<'launch' | 'skylog'>('launch');
@@ -20,7 +21,12 @@ export const WinchTab = () => {
             pt: 12,
             position: 'relative'
         }}>
-            {page === 'launch' ? (
+            {!session.state.winchId ? (
+                <WinchSelectPanel 
+                    squadronId={session.state.squadron}
+                    onSelectWinch={session.setWinchId}
+                />
+            ) : page === 'launch' ? (
                 <LaunchPanel onViewSkylogValues={() => setPage('skylog')} session={session} />
             ) : (
                 <SkylogValues 

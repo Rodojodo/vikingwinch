@@ -18,6 +18,7 @@ const CELLS = {
 };
 
 export const exportLog = async (state: WinchLogState, hours: number | null): Promise<void> => {
+    if (!state.winchId) throw new Error("No winch selected");
     try {
         // Fetch external data concurrently
         const today = new Date();
