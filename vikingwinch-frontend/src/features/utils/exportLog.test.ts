@@ -29,24 +29,25 @@ vi.mock('exceljs', () => {
 });
 
 // Mock fetch for the template
-global.fetch = vi.fn();
+vi.stubGlobal("fetch", vi.fn());
 
 describe('exportLog', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.stubGlobal('fetch', vi.fn());
         vi.mocked(getWinch).mockResolvedValue({ registration: 'REG123' });
         vi.mocked(getDayLog).mockResolvedValue([
-            { type: 'sign_on', operator_id: 'OP1', trainee: 'TR1' },
-            { type: 'sign_on', operator_id: 'OP2', trainee: null }
+            { type: 'sign_on', operator_id: 'OP1', trainee: 'TR1' } as any,
+            { type: 'sign_on', operator_id: 'OP2', trainee: null } as any
         ]);
         vi.mocked(getOperatorsForSquadron).mockResolvedValue([
-            { sn: 'OP1', name: 'Operator One' },
-            { sn: 'OP2', name: 'Operator Two' },
-            { sn: 'TR1', name: 'Trainee One' }
+            { sn: 'OP1', name: 'Operator One', squadron_id: 'sqn1' },
+            { sn: 'OP2', name: 'Operator Two', squadron_id: 'sqn1' },
+            { sn: 'TR1', name: 'Trainee One', squadron_id: 'sqn1' }
         ]);
-        
+
         const mockArrayBuffer = new ArrayBuffer(8);
-        (global.fetch as any).mockResolvedValue({
+        (globalThis.fetch as any).mockResolvedValue({
             arrayBuffer: () => Promise.resolve(mockArrayBuffer)
         });
     });

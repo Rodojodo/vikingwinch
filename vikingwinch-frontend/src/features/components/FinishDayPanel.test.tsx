@@ -18,7 +18,7 @@ describe('FinishDayPanel', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        vi.mocked(getOperatorsForSquadron).mockResolvedValue([{ sn: 'OP1', name: 'Operator 1' }]);
+        vi.mocked(getOperatorsForSquadron).mockResolvedValue([{ sn: 'OP1', name: 'Operator 1', squadron_id: 'sqn1' }]);
     });
 
     it('renders Finish Day button and toggles panel', () => {
@@ -45,7 +45,7 @@ describe('FinishDayPanel', () => {
         
         // Select an operator (Cable Check By)
         fireEvent.mouseDown(screen.getByRole('combobox'));
-        const listbox = await screen.findByRole('listbox');
+        await screen.findByRole('listbox');
         fireEvent.click(screen.getByText('Operator 1'));
 
         const submitBtns = screen.getAllByRole('button', { name: 'Finish Day' });

@@ -1,4 +1,4 @@
-import type {DayLogPayload, DayLogResponse, LaunchPayload, LaunchResponse, RemarkPayload} from '../types';
+import type {DayLogPayload, DayLogResponse, LaunchPayload, LaunchResponse, RemarkPayload, OperatorRead} from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
 
@@ -83,24 +83,20 @@ export const postRemarkToDb = async (payload: RemarkPayload): Promise<LaunchResp
     return response.json();
 }
 
-export const getOperatorsForSquadron = async (squadronId: string): Promise<OperatorResponse> => {
-    try {
-        const response = await fetch(`${API_BASE_URL}/squadrons/${squadronId}/operators`, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-            },
-        });
+export const getOperatorsForSquadron = async (squadronId: string, signal?: AbortSignal): Promise<OperatorRead[]> => {
+    const response = await fetch(`${API_BASE_URL}/squadrons/${squadronId}/operators`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+        },
+        signal,
+    });
 
-        await handleApiError(response);
-        
-        const text = await response.text();
-        if (!text) return [];
-        return JSON.parse(text) as OperatorRead[];
-    } catch (error) {
-        console.error("Failed to fetch operators:", error);
-        return [];
-    }
+    await handleApiError(response);
+    
+    const text = await response.text();
+    if (!text) return [];
+    return JSON.parse(text) as OperatorRead[];
 }
 
 export const getWinch = async (winchId: number): Promise<any> => {

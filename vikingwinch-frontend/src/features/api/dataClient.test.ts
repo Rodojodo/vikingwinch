@@ -333,15 +333,10 @@ describe('getOperatorsForSquadron', () => {
     expect(result).toStrictEqual([]);
   });
 
-  it('returns empty array and logs error on catch', async () => {
+  it('throws error on fetch failure', async () => {
     vi.mocked(fetch).mockRejectedValue(new Error('Network fail'));
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    const result = await getOperatorsForSquadron(squadronId);
-
-    expect(consoleSpy).toHaveBeenCalledWith('Failed to fetch operators:', expect.any(Error));
-    expect(result).toStrictEqual([]);
-    consoleSpy.mockRestore();
+    await expect(getOperatorsForSquadron(squadronId)).rejects.toThrow('Network fail');
   });
 });
 

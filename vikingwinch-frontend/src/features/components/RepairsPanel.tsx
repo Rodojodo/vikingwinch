@@ -24,7 +24,8 @@ export const RepairsPanel: React.FC<RepairsPanelProps> = ({ addRemark, isLoading
     const [localError, setLocalError] = useState<string | null>(null);
     const [isFetchingOperators, setIsFetchingOperators] = useState(false);
 
-    const hasLaunches = drum === 'left' ? derived.leftLaunches > 0 : derived.rightLaunches > 0;
+    const targetRecord = drum === 'left' ? derived.leftLastRecord : derived.rightLastRecord;
+    const hasLaunches = !!targetRecord;
 
     useEffect(() => {
         if (!state.squadron) return;
@@ -33,7 +34,7 @@ export const RepairsPanel: React.FC<RepairsPanelProps> = ({ addRemark, isLoading
         setIsFetchingOperators(true);
         setLocalError(null);
 
-        getOperatorsForSquadron(state.squadron)
+        getOperatorsForSquadron(state.squadron, controller.signal)
             .then((data) => {
                 if (!controller.signal.aborted) {
                     setOperators(data);
@@ -165,7 +166,7 @@ export const RepairsPanel: React.FC<RepairsPanelProps> = ({ addRemark, isLoading
                     variant="contained"
                     sx={{ backgroundColor: '#3b5f99', textTransform: 'none', borderRadius: 2 }}
                 >
-                    {isLoading ? 'Submitting...' : 'Sign as Supervisor'}
+                    {isLoading ? 'Submitting...' : (supervisor === 'none' ? 'Sign off Repair' : 'Sign as Supervisor')}
                 </Button>
             </Box>
         </Box>
