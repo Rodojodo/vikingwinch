@@ -38,7 +38,7 @@ describe('WinchTab', () => {
             derived: { leftLaunches: 10, rightLaunches: 15 }
         } as any);
 
-        render(<WinchTab />);
+        render(<WinchTab squadronId="123 VGS" operatorSn="OFF-1001" winchId={null} onWinchSelect={vi.fn()} />);
         
         expect(screen.getByTestId('launch-panel')).toBeInTheDocument();
         
@@ -59,7 +59,7 @@ describe('WinchTab', () => {
             derived: { leftLaunches: 10, rightLaunches: 15 }
         } as any);
 
-        render(<WinchTab />);
+        render(<WinchTab squadronId="123 VGS" operatorSn="OFF-1001" winchId={null} onWinchSelect={vi.fn()} />);
         
         expect(screen.getByTestId('winch-select')).toBeInTheDocument();
         

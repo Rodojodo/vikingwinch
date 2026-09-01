@@ -3,8 +3,13 @@ import type {DayLogPayload, DrumPosition, LaunchPayload, RemarkPayload} from '..
 import {postLaunchToDb, postRemarkToDb, postDayLogToDb, removeLaunchFromDb} from '../api/dataClient';
 import { initialState, winchReducer } from '../state/winchReducer';
 
-export const useWinchSession = () => {
-    const [state, dispatch] = useReducer(winchReducer, initialState);
+export const useWinchSession = (squadronId: string, operatorSn: string, initialWinchId: number | null = null) => {
+    const [state, dispatch] = useReducer(winchReducer, {
+        ...initialState,
+        squadron: squadronId,
+        operatorSn: operatorSn,
+        winchId: initialWinchId,
+    });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
