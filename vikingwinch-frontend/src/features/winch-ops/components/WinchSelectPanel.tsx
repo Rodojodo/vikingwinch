@@ -46,7 +46,7 @@ export const WinchSelectPanel = ({ squadronId, onSelectWinch }: WinchSelectPanel
             maxWidth: 540,
             position: 'relative'
         }}>
-            <Typography variant="h5" fontWeight="bold">
+            <Typography variant="h2" sx={{ fontSize: '32px', fontWeight: 700, letterSpacing: '-0.5px', mb: 1, fontFamily: '"Outfit", sans-serif' }}>
                 Select a Winch
             </Typography>
 
