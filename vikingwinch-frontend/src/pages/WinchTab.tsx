@@ -5,6 +5,7 @@ import { SkylogValues } from '../features/day-ops/components/SkylogValues';
 import { useWinchSession } from '../features/winch-ops/hooks/useWinchSession';
 import { WinchSelectPanel } from '../features/winch-ops/components/WinchSelectPanel';
 import { SignOnPanel } from '../features/winch-ops/components/SignOnPanel';
+import { DailyInspectionPanel } from '../features/winch-ops/components/DailyInspectionPanel';
 import { getDayLog } from '../features/winch-ops/api/dataClient';
 
 interface WinchTabProps {
@@ -18,7 +19,7 @@ interface WinchTabProps {
 export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, onWinchSelect }: WinchTabProps) => {
     const [page, setPage] = useState<'launch' | 'skylog'>('launch');
     const [needsSignOn, setNeedsSignOn] = useState<boolean | null>(null);
-    const [alreadyInspected, setAlreadyInspected] = useState(false);
+    const [alreadyInspected, setAlreadyInspected] = useState<boolean | null>(null);
     const [lastOperatorSn, setLastOperatorSn] = useState<string | null>(null);
     const [lastTraineeSn, setLastTraineeSn] = useState<string | null>(null);
     
@@ -26,7 +27,6 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, onWinchSelect
     
     useEffect(() => {
         if (session.state.winchId && session.state.winchId !== winchId) {
-            // 2. Pass the tabId back up to the parent
             onWinchSelect(tabId, session.state.winchId);
         }
     }, [session.state.winchId, winchId, tabId, onWinchSelect]);
@@ -34,6 +34,7 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, onWinchSelect
     useEffect(() => {
         if (!session.state.winchId) {
             setNeedsSignOn(null);
+            setAlreadyInspected(null);
             return;
         }
 
@@ -47,9 +48,10 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, onWinchSelect
 
                 const logs = await getDayLog(session.state.winchId!, todayStr);
                 const signOnLogs = logs.filter(l => l.type === 'sign_on');
+                const diLogs = logs.filter(l => l.type === 'di');
                 
-                // If there are logs today, maybe it's been inspected
-                setAlreadyInspected(logs.length > 0);
+                const hasDiToday = diLogs.length > 0;
+                setAlreadyInspected(hasDiToday);
                 
                 if (signOnLogs.length > 0) {
                     const lastLog = signOnLogs[signOnLogs.length - 1];
@@ -58,8 +60,6 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, onWinchSelect
                     // Bypass if they were the last person to sign on today
                     if (lastLog.operator_id === operatorSn) {
                         setNeedsSignOn(false);
-                        // Make sure trainee state matches what was in DB?
-                        // Actually, just skip sign on panel.
                     } else {
                         setNeedsSignOn(true);
                     }
@@ -70,7 +70,7 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, onWinchSelect
                 }
             } catch (err) {
                 console.error("Failed to fetch day logs", err);
-                // default to sign on if error
+                setAlreadyInspected(false);
                 setNeedsSignOn(true);
             }
         };
@@ -95,12 +95,15 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, onWinchSelect
                     squadronId={session.state.squadron}
                     onSelectWinch={session.setWinchId}
                 />
-            ) : needsSignOn === null ? (
-                null // Loading state, or just wait
+            ) : alreadyInspected === null || needsSignOn === null ? null : !alreadyInspected ? (
+                <DailyInspectionPanel
+                    session={session}
+                    onComplete={() => setAlreadyInspected(true)}
+                />
             ) : needsSignOn ? (
                 <SignOnPanel 
                     session={session} 
-                    alreadyInspected={alreadyInspected}
+                    alreadyInspected={alreadyInspected as boolean}
                     lastOperatorSn={lastOperatorSn}
                     lastTraineeSn={lastTraineeSn}
                     onComplete={() => setNeedsSignOn(false)} 
