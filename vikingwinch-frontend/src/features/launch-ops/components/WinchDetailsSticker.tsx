@@ -5,7 +5,7 @@ import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 interface WinchDetailsStickerProps {
     isRecentLaunch: boolean;
     squadron: string;
-    winchId: number;
+    winchId: number | null;
 }
 
 export const WinchDetailsSticker = ({ isRecentLaunch, squadron, winchId }: WinchDetailsStickerProps) => {

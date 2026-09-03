@@ -44,7 +44,8 @@ describe('WinchTab', () => {
         } as any);
 
         vi.mocked(getDayLog).mockResolvedValue([
-            { id: 1, type: 'sign_on', operator_id: 'OFF-1001', squadron_id: 'sqn1', winch_id: 1, cable_check: 'OFF-1001', hours: 0, trainee: null, timestamp: null, left_drum: 0, right_drum: 0 }
+            { id: 1, type: 'di', operator_id: 'OFF-1001', squadron_id: 'sqn1', winch_id: 1, cable_check: 'OFF-1001', hours: 0, trainee: null, timestamp: null },
+            { id: 2, type: 'sign_on', operator_id: 'OFF-1001', squadron_id: 'sqn1', winch_id: 1, cable_check: 'OFF-1001', hours: 0, trainee: null, timestamp: null }
         ]);
 
         render(<WinchTab tabId="1" squadronId="123 VGS" operatorSn="OFF-1001" winchId={1} onWinchSelect={vi.fn()} />);

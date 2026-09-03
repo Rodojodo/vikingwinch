@@ -7,12 +7,11 @@ import { useWinchSession } from '../hooks/useWinchSession.ts';
 interface SignOnPanelProps {
     session: ReturnType<typeof useWinchSession>;
     onComplete: () => void;
-    alreadyInspected: boolean;
     lastOperatorSn: string | null;
     lastTraineeSn: string | null;
 }
 
-export const SignOnPanel: React.FC<SignOnPanelProps> = ({ session, onComplete, alreadyInspected, lastOperatorSn, lastTraineeSn }) => {
+export const SignOnPanel: React.FC<SignOnPanelProps> = ({ session, onComplete, lastOperatorSn, lastTraineeSn }) => {
     const { state, recordSignOn, isLoading } = session;
     const [operators, setOperators] = useState<OperatorRead[]>([]);
     const [selectedTraineeSn, setSelectedTraineeSn] = useState<string>('');
@@ -79,11 +78,9 @@ export const SignOnPanel: React.FC<SignOnPanelProps> = ({ session, onComplete, a
                 Current operator: {currentOperatorText}
             </Typography>
 
-            {alreadyInspected && (
-                <Typography sx={{ color: '#f8fafc', mb: 4 }}>
-                    This winch has already been inspected today.
-                </Typography>
-            )}
+            <Typography sx={{ color: '#f8fafc', mb: 4 }}>
+                This winch has already been inspected today.
+            </Typography>
 
             <Paper elevation={0} sx={{
                 width: '100%',

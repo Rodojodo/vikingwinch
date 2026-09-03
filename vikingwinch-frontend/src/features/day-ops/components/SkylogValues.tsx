@@ -4,7 +4,7 @@ import { skylogCardStyle, skylogTotalCardStyle } from '../../../themes/styles.ts
 
 interface SkylogValuesProps {
     onBack: () => void;
-    winchId: number;
+    winchId: number | null;
     squadron: string;
     leftLaunches: number;
     rightLaunches: number;

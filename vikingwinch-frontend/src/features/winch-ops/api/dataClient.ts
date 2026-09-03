@@ -136,3 +136,25 @@ export const getDayLog = async (winchId: number, day: string): Promise<DayLogRes
     await handleApiError(response);
     return response.json();
 }
+
+export const getWinchDrums = async (winchId: number): Promise<{left_drum: number | null, right_drum: number | null}> => {
+    const response = await fetch(`${API_BASE_URL}/winch/${winchId}/drums`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+        },
+    });
+    await handleApiError(response);
+    return response.json();
+}
+
+export const getWinchHours = async (winchId: number): Promise<{hours: number | null}> => {
+    const response = await fetch(`${API_BASE_URL}/winch/${winchId}/hours`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+        },
+    });
+    await handleApiError(response);
+    return response.json();
+}
