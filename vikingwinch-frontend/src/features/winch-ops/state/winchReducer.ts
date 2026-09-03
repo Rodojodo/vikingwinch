@@ -1,9 +1,9 @@
 import type { WinchAction, WinchLogState, LaunchRecord } from '../types';
 
 export const initialState: WinchLogState = {
-    squadron: '123 VGS',
+    squadron: null,
     winchId: null,
-    operatorSn: 'OFF-1001',
+    operatorSn: null,
     traineeSn: null,
     leftHistory: [],
     rightHistory: [],
