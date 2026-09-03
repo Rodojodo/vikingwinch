@@ -3,9 +3,6 @@ name: Backend Tests with Coverage
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-    paths:
-      - 'backend/**'
-      - '.github/workflows/backend-ci.yml'
 
 jobs:
   backend-test:
