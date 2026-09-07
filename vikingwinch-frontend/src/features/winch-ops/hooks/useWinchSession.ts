@@ -1,13 +1,10 @@
 import {useReducer, useState, useMemo, useCallback, useEffect} from 'react';
 import type {DayLogPayload, DrumPosition, LaunchPayload, RemarkPayload} from '../types';
 import {postLaunchToDb, postRemarkToDb, postDayLogToDb, removeLaunchFromDb} from '../api/dataClient';
-import { initialState, winchReducer } from '../state/winchReducer';
+import { createInitialState, winchReducer } from '../state/winchReducer';
 
 export const useWinchSession = (squadronId: string, operatorSn: string, initialWinchId: number | null = null) => {
-    const [state, dispatch] = useReducer(winchReducer, {
-        ...initialState,
-        winchId: initialWinchId,
-    });
+    const [state, dispatch] = useReducer(winchReducer, createInitialState(squadronId, operatorSn, initialWinchId));
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -82,6 +79,7 @@ export const useWinchSession = (squadronId: string, operatorSn: string, initialW
         setIsLoading(true);
         setError(null);
         try {
+            if (!state.winchId) throw new Error("No winch selected");
             await removeLaunchFromDb(targetRecord.id);
             dispatch({ type: 'UNDO_LAUNCH', payload: { drum } });
         } catch (err) {
@@ -92,7 +90,7 @@ export const useWinchSession = (squadronId: string, operatorSn: string, initialW
         }
     }, [derived.leftLastRecord, derived.rightLastRecord]);
 
-    const recordSignOn = useCallback(async (traineeSn: string) => {
+    const recordSignOn = useCallback(async (traineeSn: string | null) => {
         setIsLoading(true);
         setError(null);
         try {

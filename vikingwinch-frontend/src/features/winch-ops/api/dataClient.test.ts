@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { postLaunchToDb, removeLaunchFromDb, postDayLogToDb, postRemarkToDb, getOperatorsForSquadron, getWinch, getDayLog, getWinchesForSquadron } from './dataClient.ts';
+import { postLaunchToDb, removeLaunchFromDb, postDayLogToDb, postRemarkToDb, getOperatorsForSquadron, getWinch, getDayLog, getWinchesForSquadron, getWinchDrums, getWinchHours } from './dataClient.ts';
 import type { LaunchPayload, LaunchResponse, DayLogPayload, DayLogResponse, RemarkPayload } from '../types';
 
 const API_BASE_URL = 'http://127.0.0.1:8000';
@@ -373,6 +373,39 @@ describe('getDayLog', () => {
     expect(result).toStrictEqual(mockLogs);
   });
 });
+
+describe('getWinchDrums', () => {
+        beforeEach(() => { vi.stubGlobal('fetch', vi.fn()); });
+        afterEach(() => { vi.unstubAllGlobals(); });
+        it('fetches winch drums data correctly', async () => {
+            const mockData = { left_drum: 10, right_drum: 20 };
+            vi.mocked(fetch).mockResolvedValue({
+                ok: true,
+                json: async () => mockData
+            } as any);
+
+            const result = await getWinchDrums(1);
+            expect(result).toEqual(mockData);
+            expect(fetch).toHaveBeenCalledWith(`${API_BASE_URL}/winch/1/drums`, expect.any(Object));
+        });
+    });
+
+    describe('getWinchHours', () => {
+        beforeEach(() => { vi.stubGlobal('fetch', vi.fn()); });
+        afterEach(() => { vi.unstubAllGlobals(); });
+        it('fetches winch hours data correctly', async () => {
+            const mockData = { hours: 100.5 };
+            vi.mocked(fetch).mockResolvedValue({
+                ok: true,
+                json: async () => mockData
+            } as any);
+
+            const result = await getWinchHours(1);
+            expect(result).toEqual(mockData);
+            expect(fetch).toHaveBeenCalledWith(`${API_BASE_URL}/winch/1/hours`, expect.any(Object));
+        });
+    });
+
 
 describe('getWinchesForSquadron', () => {
   const squadronId = '123 VGS';

@@ -31,7 +31,7 @@ interface LaunchPanelProps {
 }
 
 export const LaunchPanel = ({ onViewSkylogValues, session }: LaunchPanelProps) => {
-    const { derived, isLoading, executeLaunch, undoLaunch, recordSignOn, addRemark, state } = session;
+    const { derived, isLoading, error, executeLaunch, undoLaunch, recordSignOn, addRemark, state } = session;
     
     const { leftTotal, rightTotal, leftLaunches, rightLaunches, leftLast, rightLast } = derived;
 
@@ -136,6 +136,12 @@ export const LaunchPanel = ({ onViewSkylogValues, session }: LaunchPanelProps) =
                 />
             </Box>
 
+            {error && (
+                <Typography color="error" variant="body2" sx={{ textAlign: 'center', mb: 2 }}>
+                    {error}
+                </Typography>
+            )}
+            
             <Stack direction="row" spacing={3} sx={{ width: '100%', justifyContent: 'center' }}>
                 <DrumControl
                     drumType="left"

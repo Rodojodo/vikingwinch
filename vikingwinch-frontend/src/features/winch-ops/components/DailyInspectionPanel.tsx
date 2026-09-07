@@ -15,6 +15,7 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ sess
     const [hours, setHours] = useState<string>('');
     const [isFetching, setIsFetching] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const handleRetrieveData = async () => {
         if (!state.winchId) return;
@@ -25,6 +26,7 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ sess
             if (drums.right_drum !== null && drums.right_drum !== undefined) setRightDrum(drums.right_drum.toString());
         } catch (e) {
             console.error("Failed to fetch drums", e);
+            setError("Failed to retrieve drum totals.");
         }
         
         try {
@@ -32,6 +34,7 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ sess
             if (h.hours !== null && h.hours !== undefined) setHours(h.hours.toString());
         } catch (e) {
             console.error("Failed to fetch hours", e);
+            setError("Failed to retrieve winch hours.");
         }
         setIsFetching(false);
     };
@@ -40,6 +43,7 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ sess
         if (!state.winchId || !state.squadron || !state.operatorSn) return;
         setIsSubmitting(true);
         try {
+            const parsedHours = hours ? parseFloat(hours) : null;
             await postDayLogToDb({
                 squadron_id: state.squadron,
                 winch_id: state.winchId,
@@ -47,11 +51,12 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ sess
                 trainee: null,
                 type: 'di',
                 cable_check: null,
-                hours: hours ? parseFloat(hours) : null,
+                hours: (parsedHours !== null && !isNaN(parsedHours)) ? parsedHours : null,
             }, state.winchId);
             onComplete();
         } catch (e) {
             console.error("Failed to sign DI", e);
+            setError("Failed to submit Daily Inspection.");
         } finally {
             setIsSubmitting(false);
         }
@@ -72,6 +77,11 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ sess
             width: '100%',
             maxWidth: 480
         }}>
+            {error && (
+                <Typography color="error" variant="body2" sx={{ textAlign: 'center', p: 1, backgroundColor: 'rgba(239, 68, 68, 0.1)', mb: 2, borderRadius: 2, width: '100%' }}>
+                    {error}
+                </Typography>
+            )}
             <Typography variant="h4" sx={{ fontWeight: 700, mb: 3 }}>
                 Winch {state.winchId}
             </Typography>

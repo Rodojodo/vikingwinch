@@ -15,6 +15,7 @@ export const SignOnPanel: React.FC<SignOnPanelProps> = ({ session, onComplete, l
     const { state, recordSignOn, isLoading } = session;
     const [operators, setOperators] = useState<OperatorRead[]>([]);
     const [selectedTraineeSn, setSelectedTraineeSn] = useState<string>('');
+    const [error, setError] = useState<string | null>(null);
     const [isFetching, setIsFetching] = useState(false);
 
     useEffect(() => {
@@ -37,11 +38,13 @@ export const SignOnPanel: React.FC<SignOnPanelProps> = ({ session, onComplete, l
     }, [state.squadron]);
 
     const handleSignOn = async () => {
+        setError(null);
         try {
-            await recordSignOn(selectedTraineeSn || null as any);
+            await recordSignOn(selectedTraineeSn || null);
             onComplete();
         } catch (e) {
             console.error("Sign on failed", e);
+            setError("Failed to record sign-on.");
         }
     };
 
@@ -70,6 +73,11 @@ export const SignOnPanel: React.FC<SignOnPanelProps> = ({ session, onComplete, l
             width: '100%',
             maxWidth: 480
         }}>
+            {error && (
+                <Typography color="error" variant="body2" sx={{ textAlign: 'center', p: 1, backgroundColor: 'rgba(239, 68, 68, 0.1)', mb: 2, borderRadius: 2, width: '100%' }}>
+                    {error}
+                </Typography>
+            )}
             <Typography variant="h3" sx={{ fontWeight: 700, mb: 3 }}>
                 Winch {state.winchId}
             </Typography>

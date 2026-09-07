@@ -1,14 +1,14 @@
 import type { WinchAction, WinchLogState, LaunchRecord } from '../types';
 
-export const initialState: WinchLogState = {
-    squadron: '123 VGS',
-    winchId: null,
-    operatorSn: 'OFF-1001',
+export const createInitialState = (squadron: string, operatorSn: string, winchId: number | null = null): WinchLogState => ({
+    squadron,
+    winchId,
+    operatorSn,
     traineeSn: null,
     leftHistory: [],
     rightHistory: [],
     dayFinished: false,
-};
+});
 
 
 export const winchReducer = (state: WinchLogState, action: WinchAction): WinchLogState => {
