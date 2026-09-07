@@ -86,7 +86,7 @@ describe('App', () => {
         expect(screen.getByText('999 VGS - Test Operator')).toBeInTheDocument();
     });
     
-    it('handles Graph API error gracefully and stays in loading state', async () => {
+    it('handles Graph API error gracefully and shows error message', async () => {
         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         mockUseMsal.mockReturnValue({
             instance: { acquireTokenSilent: vi.fn().mockResolvedValue({ accessToken: 'token123' }) },
@@ -102,8 +102,27 @@ describe('App', () => {
             expect(consoleSpy).toHaveBeenCalledWith("Failed to load user profile:", expect.any(Error));
         });
         
-        expect(screen.getByText('Loading profile...')).toBeInTheDocument();
+        expect(screen.getByText('Failed to load user profile.')).toBeInTheDocument();
+        expect(screen.getByText('Return to Login')).toBeInTheDocument();
         
         consoleSpy.mockRestore();
+    });
+
+    it('renders WinchOpsPage with fallbacks when graph data is missing', async () => {
+        mockUseMsal.mockReturnValue({
+            instance: { acquireTokenSilent: vi.fn().mockResolvedValue({ accessToken: 'token123' }) },
+            accounts: [{ name: 'Test User' }],
+            inProgress: 'none'
+        });
+
+        vi.mocked(getUserDepartment).mockResolvedValue({});
+
+        render(<App />);
+        
+        await waitFor(() => {
+            expect(screen.getByTestId('winch-ops-page')).toBeInTheDocument();
+        });
+        
+        expect(screen.getByText('Unknown Squadron - Unknown Operator')).toBeInTheDocument();
     });
 });

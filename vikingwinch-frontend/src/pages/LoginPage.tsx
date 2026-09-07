@@ -6,10 +6,14 @@ import winchLogo from '../assets/SkylaunchWinchPixel.png';
 
 export const LoginPage: React.FC = () => {
     const {instance} = useMsal();
-
+    const [error, setError] = React.useState<string | null>(null);
 
     const handleLogin = async () => {
-        instance.loginRedirect({scopes: ["User.Read"]}).catch(console.error);
+        setError(null);
+        instance.loginRedirect({scopes: ["User.Read"]}).catch((err) => {
+            console.error(err);
+            setError("Failed to initiate login. Please try again.");
+        });
     };
 
 
@@ -88,6 +92,12 @@ export const LoginPage: React.FC = () => {
                         Welcome back. Please sign in with your Microsoft account to continue to the winch operations
                         dashboard.
                     </Typography>
+
+                    {error && (
+                        <Typography color="error" sx={{ mb: 3, textAlign: 'center' }}>
+                            {error}
+                        </Typography>
+                    )}
 
                     <Button
                         variant="contained"
