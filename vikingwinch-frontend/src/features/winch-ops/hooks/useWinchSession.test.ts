@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useWinchSession } from './useWinchSession.ts';
 import { postLaunchToDb, removeLaunchFromDb, postDayLogToDb } from '../api/dataClient';
-import { initialState } from '../state/winchReducer';
+import { createInitialState } from '../state/winchReducer';
 import type { LaunchResponse, DayLogResponse } from '../types';
 
 vi.mock('../api/dataClient', () => ({
@@ -20,9 +20,9 @@ describe('useWinchSession', () => {
   const createMockLaunchResponse = (drum: 'left' | 'right', id: number, timestamp: string, burn: boolean = false): LaunchResponse => ({
     id,
     launch_number: id,
-    squadron_id: initialState.squadron,
+    squadron_id: '123 VGS',
     winch_id: 1,
-    operator_id: initialState.operatorSn,
+    operator_id: 'OFF-1001',
     drum,
     burn,
     timestamp,
@@ -31,9 +31,9 @@ describe('useWinchSession', () => {
 
   const createMockDayLogResponse = (trainee: string, id: number, timestamp: string): DayLogResponse => ({
     id,
-    squadron_id: initialState.squadron,
+    squadron_id: '123 VGS',
     winch_id: 1,
-    operator_id: initialState.operatorSn,
+    operator_id: 'OFF-1001',
     trainee,
     type: 'sign_on',
     cable_check: null,
@@ -44,7 +44,7 @@ describe('useWinchSession', () => {
   it('initializes with default state, empty derived properties, and no error', () => {
     const { result } = renderHook(() => useWinchSession("123 VGS", "OFF-1001"));
 
-    expect(result.current.state).toEqual(initialState);
+    expect(result.current.state).toEqual(createInitialState('123 VGS', 'OFF-1001'));
     expect(result.current.derived).toEqual({
       leftTotal: 0, leftLaunches: 0,
       rightTotal: 0, rightLaunches: 0,
@@ -69,9 +69,9 @@ describe('useWinchSession', () => {
 
     expect(postLaunchToDb).toHaveBeenCalledTimes(1);
     expect(postLaunchToDb).toHaveBeenCalledWith({
-      squadron_id: initialState.squadron,
+      squadron_id: '123 VGS',
       winch_id: 1,
-      operator_id: initialState.operatorSn,
+      operator_id: 'OFF-1001',
       drum: 'left',
       burn: false,
     });
@@ -233,9 +233,9 @@ describe('useWinchSession', () => {
 
     expect(postDayLogToDb).toHaveBeenCalledTimes(1);
     expect(postDayLogToDb).toHaveBeenCalledWith({
-      squadron_id: initialState.squadron,
+      squadron_id: '123 VGS',
       winch_id: 1,
-      operator_id: initialState.operatorSn,
+      operator_id: 'OFF-1001',
       trainee: traineeSn,
       type: 'sign_on',
       cable_check: null,
@@ -466,18 +466,4 @@ describe('useWinchSession', () => {
       await expect(result.current.executeLaunch('left', false)).rejects.toThrow("No winch selected");
     });
   });
-
-  it('throws error if winchId is null when undoLaunch is called', async () => {
-    const { result } = renderHook(() => useWinchSession("123 VGS", "OFF-1001"));
-    // We need to bypass the local leftHistory length check, which happens first
-    // Actually undoLaunch check is: 
-    // const history = drum === 'left' ? state.leftHistory : state.rightHistory;
-    // if (history.length === 0) { throw new Error(...); }
-    // if (!state.winchId) throw new Error("No winch selected");
-    // So we need history to have an item but winchId to be null.
-    // We can't easily populate history without winchId, unless we dispatch directly, or we can just mock it.
-    // wait, if winchId is null, but we dispatch manually? We can't dispatch.
-    // Let's just pass this for now.
-  });
-
 });

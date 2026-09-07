@@ -1,8 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { winchReducer, initialState } from './winchReducer.ts';
+import { winchReducer, createInitialState } from './winchReducer.ts';
 import type { WinchAction, LaunchResponse, DayLogResponse } from '../types';
 
 describe('winchReducer', () => {
+  const initialState = createInitialState('123 VGS', 'OFF-1001');
   const createLaunchPayload = (drum: 'left' | 'right', id: number, timestamp: string): LaunchResponse => ({
     id,
     launch_number: id,
@@ -195,8 +196,6 @@ describe('winchReducer', () => {
     const result = winchReducer(state, action);
     expect(result.leftHistory[0].remark).toBe('Initial remark | Second remark');
   });
-});
-
   it('processes SET_SQUADRON and updates squadron', () => {
     const action: WinchAction = { type: 'SET_SQUADRON', payload: '456 VGS' };
     const result = winchReducer(initialState, action);
@@ -208,3 +207,4 @@ describe('winchReducer', () => {
     const result = winchReducer(initialState, action);
     expect(result.operatorSn).toBe('OP-123');
   });
+});
