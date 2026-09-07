@@ -79,6 +79,7 @@ export const useWinchSession = (squadronId: string, operatorSn: string, initialW
         setIsLoading(true);
         setError(null);
         try {
+            if (!state.winchId) throw new Error("No winch selected");
             await removeLaunchFromDb(targetRecord.id);
             dispatch({ type: 'UNDO_LAUNCH', payload: { drum } });
         } catch (err) {
@@ -89,7 +90,7 @@ export const useWinchSession = (squadronId: string, operatorSn: string, initialW
         }
     }, [derived.leftLastRecord, derived.rightLastRecord]);
 
-    const recordSignOn = useCallback(async (traineeSn: string) => {
+    const recordSignOn = useCallback(async (traineeSn: string | null) => {
         setIsLoading(true);
         setError(null);
         try {

@@ -14,7 +14,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - 'vikingwinch-frontend/**'
+
       - name: Setup Node.js
+        if: steps.filter.outputs.frontend == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -22,7 +30,9 @@ jobs:
           cache-dependency-path: vikingwinch-frontend/package-lock.json
 
       - name: Install dependencies
+        if: steps.filter.outputs.frontend == 'true'
         run: npm ci
 
       - name: Run Vitest
+        if: steps.filter.outputs.frontend == 'true'
         run: npx vitest run --coverage
