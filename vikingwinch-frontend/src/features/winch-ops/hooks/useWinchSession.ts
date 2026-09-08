@@ -57,7 +57,7 @@ export const useWinchSession = (squadronId: string, operatorSn: string, initialW
                 winch_id: state.winchId,
                 operator_sn: state.operatorSn,
                 drum,
-                burn,
+                is_burn: burn,
             };
             const responseData = await postLaunchToDb(payload);
             dispatch({ type: 'RECORD_LAUNCH', payload: responseData });

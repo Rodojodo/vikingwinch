@@ -49,7 +49,7 @@ CREATE TABLE day_log (
   operator_sn VARCHAR(20) NOT NULL,
   trainee VARCHAR(20) NULL,
   cable_check VARCHAR(20) NULL,
-  hours FLOAT NOT NULL,
+  hours FLOAT NULL,
 
 
   PRIMARY KEY (id),

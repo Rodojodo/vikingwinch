@@ -69,7 +69,7 @@ export const postDayLogToDb = async (payload: DayLogPayload, winchId: number): P
 
 
 export const postRemarkToDb = async (payload: RemarkPayload): Promise<LaunchResponse> => {
-    const response = await fetch(`${API_BASE_URL}/remarks`, {
+    const response = await fetch(`${API_BASE_URL}/launches/remarks`, {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
