@@ -1,4 +1,4 @@
-from sqlalchemy import String, Integer, TIMESTAMP, Enum
+from sqlalchemy import String, Integer, TIMESTAMP, Enum, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column
 from datetime import datetime
 
@@ -6,7 +6,13 @@ from models.base import Base
 
 class Launch(Base):
     __tablename__ = "launches"
-    launch_number: Mapped[int] = mapped_column(Integer, primary_key=True)
+    
+    __table_args__ = (
+        UniqueConstraint('winch_id', 'drum', 'launch_number', name='uix_winch_drum_launch_number'),
+    )
+    
+    launch_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    launch_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
     squadron_id: Mapped[str] = mapped_column(String(50), nullable=False)
     winch_id: Mapped[int] = mapped_column(Integer, nullable=False)
     drum: Mapped[str] = mapped_column(Enum('left', 'right'), nullable=False)

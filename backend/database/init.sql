@@ -22,7 +22,8 @@ CREATE TABLE operators (
 
 
 CREATE TABLE launches (
-  launch_number INT NOT NULL AUTO_INCREMENT,
+  launch_id INT NOT NULL AUTO_INCREMENT,
+  launch_number INT NULL,
   winch_id INT NOT NULL,
   drum ENUM('left', 'right') NOT NULL,
   `timestamp` TIMESTAMP NOT NULL,
@@ -30,7 +31,8 @@ CREATE TABLE launches (
   remarks TEXT NULL,
   operator_id VARCHAR(20) NULL,
   
-  PRIMARY KEY (launch_number),
+  PRIMARY KEY (launch_id),
+  UNIQUE KEY `uix_winch_drum_launch_number` (winch_id, drum, launch_number),
   CONSTRAINT launches_operator_id_fkey FOREIGN KEY (operator_id) REFERENCES operators (service_no) ON UPDATE CASCADE,
   CONSTRAINT launches_squadron_id_fkey FOREIGN KEY (squadron_id) REFERENCES squadrons (id),
   CONSTRAINT launches_winch_id_fkey FOREIGN KEY (winch_id) REFERENCES winches (id) ON UPDATE CASCADE ON DELETE RESTRICT
@@ -87,12 +89,12 @@ INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_l
 ('OFF-4001', 'e5f6a7b8-c9d0-1e2f-3a4b-5c6d7e8f9a0b', 'Joe Bloggs', '321 VGS', 'instructor');
 
 -- 4. POPULATE LAUNCHES
--- (The launch_number column will auto-increment automatically)
-INSERT INTO launches (winch_id, drum, `timestamp`, squadron_id, remarks, operator_id) VALUES 
-(1, 'left', '2026-06-06 09:15:00', '123 VGS', 'PLF', 'SGT-2005'),
-(1, 'right', '2026-06-06 09:30:00', '123 VGS', '', 'OFF-1002'),
-(1, 'left', '2026-06-06 10:05:00', '123 VGS', '', 'OFF-1002'),
-(3, 'right', '2026-06-06 11:00:00', '231 VGS', '', 'OFF-4001');
+-- (The launch_id column will auto-increment automatically)
+INSERT INTO launches (launch_number, winch_id, drum, `timestamp`, squadron_id, remarks, operator_id) VALUES 
+(1, 1, 'left', '2026-06-06 09:15:00', '123 VGS', 'PLF', 'SGT-2005'),
+(1, 1, 'right', '2026-06-06 09:30:00', '123 VGS', '', 'OFF-1002'),
+(2, 1, 'left', '2026-06-06 10:05:00', '123 VGS', '', 'OFF-1002'),
+(1, 3, 'right', '2026-06-06 11:00:00', '231 VGS', '', 'OFF-4001');
 
 -- 5. POPULATE DAY_LOG
 -- (The id column will auto-increment automatically)

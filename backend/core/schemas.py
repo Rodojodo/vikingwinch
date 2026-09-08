@@ -36,23 +36,23 @@ class LaunchCreate(BaseModel):
     winch_id: int
     operator_id: str
     drum: Literal["left", "right"]
+    is_burn: bool = False
 
 
 class RemarkCreate(BaseModel):
-    winch_id: int
-    drum: Literal["left", "right"]
+    launch_id: int
     remark: str
 
 
 class RepairCreate(BaseModel):
-    winch_id: int
-    drum: Literal["left", "right"]
+    launch_id: int
     repair: str
     supervisor_id: str
 
 
 class LaunchRead(ORMModel):
-    launch_number: int
+    launch_id: int
+    launch_number: int | None
     squadron_id: str
     winch_id: int
     drum: Literal["left", "right"]

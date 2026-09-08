@@ -21,10 +21,23 @@ async def create_launch(
         winch_id=payload.winch_id,
         operator_id=payload.operator_id,
         drum=payload.drum,
+        is_burn=payload.is_burn,
     )
     # add_launch only flushes; the route owns the transaction boundary.
     await db.commit()
     return launch
+
+
+@router.delete("/{launch_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_launch(
+    launch_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    launch = await launch_repo.delete_launch(db, launch_id)
+    if not launch:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Launch not found")
+    await db.commit()
+    return None
 
 
 @router.post("/remarks", response_model=LaunchRead)
@@ -34,7 +47,7 @@ async def add_remark(
 ):
     try:
         return await launch_repo.add_remark_to_launch(
-            db, payload.winch_id, payload.drum, payload.remark
+            db, payload.launch_id, payload.remark
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
@@ -47,7 +60,7 @@ async def add_repair(
 ):
     try:
         return await launch_repo.add_repair_to_launch(
-            db, payload.winch_id, payload.drum, payload.repair, payload.supervisor_id
+            db, payload.launch_id, payload.repair, payload.supervisor_id
         )
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
