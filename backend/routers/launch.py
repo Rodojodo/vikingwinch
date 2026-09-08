@@ -19,7 +19,7 @@ async def create_launch(
         db,
         squadron_id=payload.squadron_id,
         winch_id=payload.winch_id,
-        operator_id=payload.operator_id,
+        operator_sn=payload.operator_sn,
         drum=payload.drum,
         is_burn=payload.is_burn,
     )

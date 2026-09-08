@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from models.launch import Launch
 
 
-async def add_launch(db_session: AsyncSession, squadron_id: str, winch_id: int, operator_id: str, drum: Literal['left', 'right'], is_burn: bool = False):
+async def add_launch(db_session: AsyncSession, squadron_id: str, winch_id: int, operator_sn: str, drum: Literal['left', 'right'], is_burn: bool = False):
     from sqlalchemy.exc import IntegrityError
     import asyncio
     
@@ -28,7 +28,7 @@ async def add_launch(db_session: AsyncSession, squadron_id: str, winch_id: int, 
                 drum = drum,
                 launch_number = launch_num,
                 timestamp = datetime.now(timezone.utc),
-                operator_id = operator_id,
+                operator_sn = operator_sn,
                 remarks = None
             )
             db_session.add(new_launch)
@@ -48,7 +48,7 @@ async def add_launch(db_session: AsyncSession, squadron_id: str, winch_id: int, 
             drum = drum,
             launch_number = None,
             timestamp = datetime.now(timezone.utc),
-            operator_id = operator_id,
+            operator_sn = operator_sn,
             remarks = None
         )
         db_session.add(new_launch)

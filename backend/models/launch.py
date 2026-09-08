@@ -17,6 +17,6 @@ class Launch(Base):
     winch_id: Mapped[int] = mapped_column(Integer, nullable=False)
     drum: Mapped[str] = mapped_column(Enum('left', 'right'), nullable=False)
     timestamp: Mapped[datetime | None] = mapped_column(TIMESTAMP, nullable=True)
-    operator_id: Mapped[str] = mapped_column(String(20), nullable=False)
+    operator_sn: Mapped[str] = mapped_column(String(20), nullable=False)
     remarks : Mapped[str | None] = mapped_column(String, nullable=True)
 

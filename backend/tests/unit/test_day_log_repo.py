@@ -14,7 +14,7 @@ def make_day_log(**overrides) -> Day_Log:
         timestamp=datetime.now(timezone.utc),
         left_drum=123,
         right_drum=123,
-        operator_id="12345678",
+        operator_sn="12345678",
         trainee=None,
         cable_check="12345678",
         hours=100.5
@@ -218,7 +218,7 @@ async def test_add_day_log_success(db_session):
         type="sign_on",
         left_drum=12,
         right_drum=12,
-        operator_id="OFF-1002",
+        operator_sn="OFF-1002",
         cable_check="SGT-2005",
         hours=10.5
     )
