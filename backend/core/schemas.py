@@ -29,6 +29,9 @@ class DrumValuesRead(BaseModel):
     right_drum: int | None
 
 
+class WinchHoursRead(BaseModel):
+    hours: float
+
 # --- Launches ---
 
 class LaunchCreate(BaseModel):

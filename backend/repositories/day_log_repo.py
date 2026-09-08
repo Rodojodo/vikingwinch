@@ -28,3 +28,12 @@ async def get_drum_values(db: AsyncSession, winch_id: int):
     log = result.first()
     return log
 
+
+async def get_winch_hours(db: AsyncSession, winch_id: int):
+    stmt = (select(Day_Log.hours)
+            .where(Day_Log.winch_id == winch_id, Day_Log.hours.isnot(None))
+            .order_by(Day_Log.timestamp.desc())
+            .limit(1)
+            )
+    result = await db.execute(stmt)
+    return result.scalars().first()

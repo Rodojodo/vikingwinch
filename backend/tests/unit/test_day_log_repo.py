@@ -182,3 +182,24 @@ async def test_get_drum_values_returns_none_when_no_records_for_winch(db_session
 
 
 
+
+@pytest.mark.asyncio
+async def test_get_winch_hours_success(db_session):
+    from repositories.day_log_repo import get_winch_hours
+    db_session.add_all([
+        make_day_log(winch_id=1, hours=100.0, timestamp=datetime(2026, 6, 6, 9, 15, 0)),
+        make_day_log(winch_id=1, hours=105.5, timestamp=datetime(2026, 6, 6, 10, 15, 0)),
+    ])
+    await db_session.commit()
+    result = await get_winch_hours(db_session, 1)
+    assert result == 105.5
+
+@pytest.mark.asyncio
+async def test_get_winch_hours_returns_none_when_no_records(db_session):
+    from repositories.day_log_repo import get_winch_hours
+    db_session.add_all([
+        make_day_log(winch_id=2, hours=111.1, timestamp=datetime(2026, 6, 6, 9, 15, 0)),
+    ])
+    await db_session.commit()
+    result = await get_winch_hours(db_session, 1)
+    assert result is None

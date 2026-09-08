@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.session import get_db
 from repositories import day_log_repo
-from core.schemas import DayLogRead, DrumValuesRead
+from core.schemas import DayLogRead, DrumValuesRead, WinchHoursRead
 
 router = APIRouter(prefix="/winch/{winch_id}", tags=["day-log"])
 
@@ -33,3 +33,18 @@ async def get_drum_values(
             detail="No day-log entries for this winch",
         )
     return DrumValuesRead(left_drum=row.left_drum, right_drum=row.right_drum)
+
+
+@router.get("/hours", response_model=WinchHoursRead)
+async def get_winch_hours(
+    winch_id: int,
+    db: AsyncSession = Depends(get_db),
+):
+    """Most recent hours reading for a winch."""
+    hours = await day_log_repo.get_winch_hours(db, winch_id)
+    if hours is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No day-log entries for this winch",
+        )
+    return WinchHoursRead(hours=hours)
