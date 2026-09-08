@@ -4,10 +4,10 @@ services:
     container_name: vgs_mysql_mock
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-localdev_root}
-      MYSQL_DATABASE: ${DB_NAME:-vgs_management}
-      MYSQL_USER: ${DB_USER:-vgs_api}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-localdev_api}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
     ports:
       - "3306:3306"
     volumes:
@@ -22,11 +22,11 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DB_USER: ${DB_USER:-vgs_api}
-      DB_PASSWORD: ${DB_PASSWORD:-localdev_api}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
       DB_HOST: db
       DB_PORT: 3306
-      DB_NAME: ${DB_NAME:-vgs_management}
+      DB_NAME: ${DB_NAME}
     depends_on:
       - db
 
