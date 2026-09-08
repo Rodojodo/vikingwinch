@@ -105,7 +105,7 @@ export const exportLog = async (state: WinchLogState, hours: number | null): Pro
         const signOns = dayLogs.filter(log => log.type === 'sign_on');
         for (let i = 0; i < Math.min(signOns.length, 5); i++) {
             const log = signOns[i];
-            const operatorName = getName(log.operator_id);
+            const operatorName = getName(log.operator_sn);
             const traineeName = getName(log.trainee);
 
             let cellValue = operatorName;

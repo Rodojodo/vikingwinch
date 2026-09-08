@@ -22,7 +22,7 @@ describe('useWinchSession', () => {
     launch_number: id,
     squadron_id: '123 VGS',
     winch_id: 1,
-    operator_id: 'OFF-1001',
+    operator_sn: 'OFF-1001',
     drum,
     burn,
     timestamp,
@@ -33,7 +33,7 @@ describe('useWinchSession', () => {
     id,
     squadron_id: '123 VGS',
     winch_id: 1,
-    operator_id: 'OFF-1001',
+    operator_sn: 'OFF-1001',
     trainee,
     type: 'sign_on',
     cable_check: null,
@@ -71,7 +71,7 @@ describe('useWinchSession', () => {
     expect(postLaunchToDb).toHaveBeenCalledWith({
       squadron_id: '123 VGS',
       winch_id: 1,
-      operator_id: 'OFF-1001',
+      operator_sn: 'OFF-1001',
       drum: 'left',
       burn: false,
     });
@@ -235,7 +235,7 @@ describe('useWinchSession', () => {
     expect(postDayLogToDb).toHaveBeenCalledWith({
       squadron_id: '123 VGS',
       winch_id: 1,
-      operator_id: 'OFF-1001',
+      operator_sn: 'OFF-1001',
       trainee: traineeSn,
       type: 'sign_on',
       cable_check: null,
@@ -444,8 +444,8 @@ describe('useWinchSession', () => {
 
 
   it('handles lastDrum calculation when timestamps are null or missing', async () => {
-    vi.mocked(postLaunchToDb).mockResolvedValueOnce({ id: 101, launch_number: 101, squadron_id: '123 VGS', winch_id: 1, operator_id: 'OFF-1001', drum: 'left', burn: false, timestamp: null, remark: null } as any);
-    vi.mocked(postLaunchToDb).mockResolvedValueOnce({ id: 102, launch_number: 102, squadron_id: '123 VGS', winch_id: 1, operator_id: 'OFF-1001', drum: 'right', burn: false, timestamp: null, remark: null } as any);
+    vi.mocked(postLaunchToDb).mockResolvedValueOnce({ id: 101, launch_number: 101, squadron_id: '123 VGS', winch_id: 1, operator_sn: 'OFF-1001', drum: 'left', burn: false, timestamp: null, remark: null } as any);
+    vi.mocked(postLaunchToDb).mockResolvedValueOnce({ id: 102, launch_number: 102, squadron_id: '123 VGS', winch_id: 1, operator_sn: 'OFF-1001', drum: 'right', burn: false, timestamp: null, remark: null } as any);
     
     const { result } = renderHook(() => useWinchSession("123 VGS", "OFF-1001"));
     act(() => { result.current.setWinchId(1); });
