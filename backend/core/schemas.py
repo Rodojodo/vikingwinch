@@ -24,6 +24,17 @@ class DayLogRead(ORMModel):
     hours: float
 
 
+class DayLogCreate(BaseModel):
+    squadron_id: str
+    type: Literal["finish_day", "di", "sign_on"]
+    left_drum: int | None = None
+    right_drum: int | None = None
+    operator_id: str
+    trainee: str | None = None
+    cable_check: str | None = None
+    hours: float
+
+
 class DrumValuesRead(BaseModel):
     left_drum: int | None
     right_drum: int | None

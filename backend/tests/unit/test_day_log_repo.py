@@ -203,3 +203,27 @@ async def test_get_winch_hours_returns_none_when_no_records(db_session):
     await db_session.commit()
     result = await get_winch_hours(db_session, 1)
     assert result is None
+
+@pytest.mark.asyncio
+async def test_add_day_log_success(db_session):
+    from repositories.day_log_repo import add_day_log
+    from core.schemas import DayLogCreate
+    
+    
+    
+    await db_session.commit()
+
+    payload = DayLogCreate(
+        squadron_id="123 VGS",
+        type="sign_on",
+        left_drum=12,
+        right_drum=12,
+        operator_id="OFF-1002",
+        cable_check="SGT-2005",
+        hours=10.5
+    )
+
+    log = await add_day_log(db_session, 1, payload)
+    assert log.id is not None
+    assert log.winch_id == 1
+    assert log.hours == 10.5

@@ -37,3 +37,21 @@ async def get_winch_hours(db: AsyncSession, winch_id: int):
             )
     result = await db.execute(stmt)
     return result.scalars().first()
+
+async def add_day_log(db: AsyncSession, winch_id: int, payload):
+    from datetime import timezone
+    new_log = Day_Log(
+        squadron_id=payload.squadron_id,
+        winch_id=winch_id,
+        type=payload.type,
+        timestamp=datetime.now(timezone.utc),
+        left_drum=payload.left_drum,
+        right_drum=payload.right_drum,
+        operator_id=payload.operator_id,
+        trainee=payload.trainee,
+        cable_check=payload.cable_check,
+        hours=payload.hours
+    )
+    db.add(new_log)
+    await db.flush()
+    return new_log
