@@ -18,9 +18,9 @@ class DayLogRead(ORMModel):
     timestamp: datetime | None
     left_drum: int | None
     right_drum: int | None
-    operator_id: str
+    operator_sn: str
     trainee: str | None
-    cable_check: str
+    cable_check: str | None
     hours: float
 
 
@@ -29,7 +29,7 @@ class DayLogCreate(BaseModel):
     type: Literal["finish_day", "di", "sign_on"]
     left_drum: int | None = None
     right_drum: int | None = None
-    operator_id: str
+    operator_sn: str
     trainee: str | None = None
     cable_check: str | None = None
     hours: float
@@ -48,7 +48,7 @@ class WinchHoursRead(BaseModel):
 class LaunchCreate(BaseModel):
     squadron_id: str
     winch_id: int
-    operator_id: str
+    operator_sn: str
     drum: Literal["left", "right"]
     is_burn: bool = False
 
@@ -71,7 +71,7 @@ class LaunchRead(ORMModel):
     winch_id: int
     drum: Literal["left", "right"]
     timestamp: datetime | None
-    operator_id: str
+    operator_sn: str
     remarks: str | None
 
 

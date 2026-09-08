@@ -47,7 +47,7 @@ async def add_day_log(db: AsyncSession, winch_id: int, payload):
         timestamp=datetime.now(timezone.utc),
         left_drum=payload.left_drum,
         right_drum=payload.right_drum,
-        operator_id=payload.operator_id,
+        operator_sn=payload.operator_sn,
         trainee=payload.trainee,
         cable_check=payload.cable_check,
         hours=payload.hours
