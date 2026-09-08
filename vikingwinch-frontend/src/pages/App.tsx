@@ -3,7 +3,7 @@ import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from '@azure/
 import '../App.css'
 import { WinchOpsPage } from './WinchOpsPage';
 import { LoginPage } from './LoginPage';
-import { getUserDepartment } from '../features/auth/api/graphAPI';
+import { getUserDepartment, getUserProfile } from '../features/auth/api/graphAPI';
 
 function App() {
     const { instance, accounts, inProgress } = useMsal();
@@ -22,8 +22,27 @@ function App() {
 
                     const graphData = await getUserDepartment(tokenResponse.accessToken);
                     console.log("Graph API User Data Response:", graphData);
+
+                    let profileData = null;
+                    try {
+                        profileData = await getUserProfile(tokenResponse.accessToken);
+                        console.log("Graph API User Profile Response:", profileData);
+                    } catch (profileErr) {
+                        console.warn("Failed to fetch user profile (e.g., 404 Not Found), falling back to v1.0 data:", profileErr);
+                    }
                     
-                    setOperatorSn(graphData.displayName || 'Unknown Operator');
+                    let employeeId = null;
+                    if (profileData?.positions && Array.isArray(profileData.positions)) {
+                        for (const pos of profileData.positions) {
+                            if (pos.detail?.employeeId) {
+                                employeeId = pos.detail.employeeId;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Fallback for testing: check graphData.employeeId from the v1.0/me endpoint
+                    setOperatorSn(employeeId || graphData.employeeId || graphData.displayName || 'Unknown Operator');
                     setSquadronId(graphData.department || 'Unknown Squadron');
                 } catch (err) {
                     console.error("Failed to load user profile:", err);

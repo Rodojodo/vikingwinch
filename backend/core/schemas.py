@@ -21,7 +21,7 @@ class DayLogRead(ORMModel):
     operator_sn: str
     trainee: str | None
     cable_check: str | None
-    hours: float
+    hours: float | None
 
 
 class DayLogCreate(BaseModel):
@@ -32,7 +32,7 @@ class DayLogCreate(BaseModel):
     operator_sn: str
     trainee: str | None = None
     cable_check: str | None = None
-    hours: float
+    hours: float | None = None
 
 
 class DrumValuesRead(BaseModel):

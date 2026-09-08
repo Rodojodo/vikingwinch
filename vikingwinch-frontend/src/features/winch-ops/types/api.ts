@@ -5,14 +5,14 @@ export interface LaunchPayload {
   winch_id: number;
   operator_sn: string;
   drum: DrumPosition;
-  burn: boolean;
+  is_burn: boolean;
 }
 
 export interface LaunchResponse extends LaunchPayload {
-  id: number;
-  launch_number: number;
+  launch_id: number;
+  launch_number: number | null;
   timestamp: string | null;
-  remark: string | null;
+  remarks: string | null;
 }
 
 export type DayLogType = 'finish_day' | 'di' | 'sign_on';

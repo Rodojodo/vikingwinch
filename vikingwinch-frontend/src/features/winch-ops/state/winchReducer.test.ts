@@ -5,15 +5,15 @@ import type { WinchAction, LaunchResponse, DayLogResponse } from '../types';
 describe('winchReducer', () => {
   const initialState = createInitialState('123 VGS', 'OFF-1001');
   const createLaunchPayload = (drum: 'left' | 'right', id: number, timestamp: string): LaunchResponse => ({
-    id,
+    launch_id: id,
     launch_number: id,
     squadron_id: '123 VGS',
     winch_id: 1,
     operator_sn: 'OFF-1001',
     drum,
-    burn: false,
+    is_burn: false,
     timestamp,
-    remark: null,
+    remarks: null,
   });
 
   const createDayLogPayload = (trainee: string): DayLogResponse => ({
