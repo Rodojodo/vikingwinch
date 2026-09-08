@@ -15,5 +15,22 @@ services:
       # Automates DDL execution on first initialization
       - ./backend/database/init.sql:/docker-entrypoint-initdb.d/init.sql
 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: vgs_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      DB_USER: ${DB_USER:-vgs_api}
+      DB_PASSWORD: ${DB_PASSWORD:-localdev_api}
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-vgs_management}
+    depends_on:
+      - db
+
 volumes:
   mysql_data:
