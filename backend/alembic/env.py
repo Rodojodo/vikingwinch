@@ -25,12 +25,24 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 target_metadata = Base.metadata
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # Set database URL dynamically from environment variables
-DB_USER = os.getenv("DB_USER", "vgs_api")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "localdev_api")
-DB_NAME = os.getenv("DB_NAME", "vgs_management")
-DB_HOST = os.getenv("DB_HOST", "127.0.0.1")
-DB_PORT = os.getenv("DB_PORT", "3306")
+DB_USER = os.environ["DB_USER"]
+DB_NAME = os.environ["DB_NAME"]
+DB_HOST = os.environ["DB_HOST"]
+DB_PORT = os.environ["DB_PORT"]
+ENVIRONMENT = os.environ.get("ENVIRONMENT", "local")
+
+if ENVIRONMENT == "production":
+    from azure.identity import DefaultAzureCredential
+    credential = DefaultAzureCredential()
+    DB_PASSWORD = credential.get_token("https://ossrdbms-aad.database.windows.net/.default").token
+else:
+    DB_PASSWORD = os.environ["DB_PASSWORD"]
+
 DATABASE_URL = f"mysql+asyncmy://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 config.set_main_option("sqlalchemy.url", DATABASE_URL)
 
