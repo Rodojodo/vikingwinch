@@ -16,18 +16,18 @@ describe('postLaunchToDb', () => {
     winch_id: 1,
     operator_sn: 'OFF-1001',
     drum: 'left',
-    burn: false,
+    is_burn: false,
   };
 
   const mockResponse: LaunchResponse = {
-    id: 101,
+    launch_id: 101,
     launch_number: 42,
     squadron_id: '123 VGS',
     winch_id: 1,
     operator_sn: 'OFF-1001',
     drum: 'left',
-    burn: false,
-    remark: null,
+    is_burn: false,
+    remarks: null,
     timestamp: '2026-08-30T10:00:00Z',
   };
 
@@ -241,14 +241,14 @@ describe('postRemarkToDb', () => {
   };
 
   const mockResponse: LaunchResponse = {
-    id: 101,
+    launch_id: 101,
     launch_number: 42,
     squadron_id: '123 VGS',
     winch_id: 1,
     operator_sn: 'OFF-1001',
     drum: 'left',
-    burn: false,
-    remark: 'Cable drop early',
+    is_burn: false,
+    remarks: 'Cable drop early',
     timestamp: '2026-08-30T10:00:00Z',
   };
 
@@ -270,7 +270,7 @@ describe('postRemarkToDb', () => {
     const result = await postRemarkToDb(mockPayload);
 
     expect(fetch).toHaveBeenCalledTimes(1);
-    expect(fetch).toHaveBeenCalledWith(`${API_BASE_URL}/remarks`, {
+    expect(fetch).toHaveBeenCalledWith(`${API_BASE_URL}/launches/remarks`, {
       method: 'POST',
       headers: {
         'Accept': 'application/json',

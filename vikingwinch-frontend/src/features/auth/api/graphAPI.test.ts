@@ -27,7 +27,7 @@ describe('getUserDepartment', () => {
 
     const [url, options] = fetchMock.mock.calls[0];
 
-    expect(url).toBe('https://graph.microsoft.com/v1.0/me?$select=displayName,department');
+    expect(url).toBe('https://graph.microsoft.com/v1.0/me?$select=displayName,department,employeeId');
     expect(options?.method).toBe('GET');
     expect(options?.headers).toBeInstanceOf(Headers);
     expect((options?.headers as Headers).get('Authorization')).toBe(`Bearer ${mockToken}`);

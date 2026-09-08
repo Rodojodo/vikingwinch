@@ -18,15 +18,15 @@ describe('useWinchSession', () => {
   });
 
   const createMockLaunchResponse = (drum: 'left' | 'right', id: number, timestamp: string, burn: boolean = false): LaunchResponse => ({
-    id,
-    launch_number: id,
+    launch_id: id,
+    launch_number: burn ? null : id,
     squadron_id: '123 VGS',
     winch_id: 1,
     operator_sn: 'OFF-1001',
     drum,
-    burn,
+    is_burn: burn,
     timestamp,
-    remark: null,
+    remarks: null,
   });
 
   const createMockDayLogResponse = (trainee: string, id: number, timestamp: string): DayLogResponse => ({
@@ -73,7 +73,7 @@ describe('useWinchSession', () => {
       winch_id: 1,
       operator_sn: 'OFF-1001',
       drum: 'left',
-      burn: false,
+      is_burn: false,
     });
 
     expect(result.current.state.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:15:00Z', remark: null, burn: false, launch_number: 101 }]);
@@ -111,7 +111,7 @@ describe('useWinchSession', () => {
       await result.current.executeLaunch('left', true);
     });
 
-    expect(postLaunchToDb).toHaveBeenCalledWith(expect.objectContaining({ burn: true }));
+    expect(postLaunchToDb).toHaveBeenCalledWith(expect.objectContaining({ is_burn: true }));
     expect(result.current.state.leftHistory).toHaveLength(1);
     expect(result.current.state.leftHistory[0].burn).toBe(true);
     expect(result.current.derived.leftTotal).toBe(1);
@@ -444,8 +444,8 @@ describe('useWinchSession', () => {
 
 
   it('handles lastDrum calculation when timestamps are null or missing', async () => {
-    vi.mocked(postLaunchToDb).mockResolvedValueOnce({ id: 101, launch_number: 101, squadron_id: '123 VGS', winch_id: 1, operator_sn: 'OFF-1001', drum: 'left', burn: false, timestamp: null, remark: null } as any);
-    vi.mocked(postLaunchToDb).mockResolvedValueOnce({ id: 102, launch_number: 102, squadron_id: '123 VGS', winch_id: 1, operator_sn: 'OFF-1001', drum: 'right', burn: false, timestamp: null, remark: null } as any);
+    vi.mocked(postLaunchToDb).mockResolvedValueOnce({ launch_id: 101, launch_number: 101, squadron_id: '123 VGS', winch_id: 1, operator_sn: 'OFF-1001', drum: 'left', is_burn: false, timestamp: null, remarks: null } as any);
+    vi.mocked(postLaunchToDb).mockResolvedValueOnce({ launch_id: 102, launch_number: 102, squadron_id: '123 VGS', winch_id: 1, operator_sn: 'OFF-1001', drum: 'right', is_burn: false, timestamp: null, remarks: null } as any);
     
     const { result } = renderHook(() => useWinchSession("123 VGS", "OFF-1001"));
     act(() => { result.current.setWinchId(1); });
