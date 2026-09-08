@@ -105,7 +105,7 @@ describe('DailyInspectionPanel', () => {
         expect(postDayLogToDb).toHaveBeenCalledWith({
             squadron_id: 'sqn1',
             winch_id: 42,
-            operator_id: 'OP1',
+            operator_sn: 'OP1',
             trainee: null,
             type: 'di',
             cable_check: null,

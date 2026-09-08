@@ -47,7 +47,7 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ sess
             await postDayLogToDb({
                 squadron_id: state.squadron,
                 winch_id: state.winchId,
-                operator_id: state.operatorSn,
+                operator_sn: state.operatorSn,
                 trainee: null,
                 type: 'di',
                 cable_check: null,

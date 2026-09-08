@@ -22,16 +22,18 @@ CREATE TABLE operators (
 
 
 CREATE TABLE launches (
-  launch_number INT NOT NULL AUTO_INCREMENT,
+  launch_id INT NOT NULL AUTO_INCREMENT,
+  launch_number INT NULL,
   winch_id INT NOT NULL,
   drum ENUM('left', 'right') NOT NULL,
   `timestamp` TIMESTAMP NOT NULL,
   squadron_id VARCHAR(50) NOT NULL,
   remarks TEXT NULL,
-  operator_id VARCHAR(20) NULL,
+  operator_sn VARCHAR(20) NULL,
   
-  PRIMARY KEY (launch_number),
-  CONSTRAINT launches_operator_id_fkey FOREIGN KEY (operator_id) REFERENCES operators (service_no) ON UPDATE CASCADE,
+  PRIMARY KEY (launch_id),
+  UNIQUE KEY `uix_winch_drum_launch_number` (winch_id, drum, launch_number),
+  CONSTRAINT launches_operator_sn_fkey FOREIGN KEY (operator_sn) REFERENCES operators (service_no) ON UPDATE CASCADE,
   CONSTRAINT launches_squadron_id_fkey FOREIGN KEY (squadron_id) REFERENCES squadrons (id),
   CONSTRAINT launches_winch_id_fkey FOREIGN KEY (winch_id) REFERENCES winches (id) ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB;
@@ -44,14 +46,14 @@ CREATE TABLE day_log (
   `timestamp` TIMESTAMP NULL,
   left_drum INT NULL,
   right_drum INT NULL,
-  operator_id VARCHAR(20) NOT NULL,
+  operator_sn VARCHAR(20) NOT NULL,
   trainee VARCHAR(20) NULL,
-  cable_check VARCHAR(20) NOT NULL,
+  cable_check VARCHAR(20) NULL,
   hours FLOAT NOT NULL,
 
 
   PRIMARY KEY (id),
-  CONSTRAINT day_log_operator_id_fkey FOREIGN KEY (operator_id) REFERENCES operators (service_no) ON UPDATE CASCADE,
+  CONSTRAINT day_log_operator_sn_fkey FOREIGN KEY (operator_sn) REFERENCES operators (service_no) ON UPDATE CASCADE,
   CONSTRAINT day_log_trainee_fkey FOREIGN KEY (trainee) REFERENCES operators (service_no),
   CONSTRAINT day_log_cable_check_fkey FOREIGN KEY (cable_check) REFERENCES operators (service_no),
   CONSTRAINT day_log_squadron_id_fkey FOREIGN KEY (squadron_id) REFERENCES squadrons (id),
@@ -87,16 +89,16 @@ INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_l
 ('OFF-4001', 'e5f6a7b8-c9d0-1e2f-3a4b-5c6d7e8f9a0b', 'Joe Bloggs', '321 VGS', 'instructor');
 
 -- 4. POPULATE LAUNCHES
--- (The launch_number column will auto-increment automatically)
-INSERT INTO launches (winch_id, drum, `timestamp`, squadron_id, remarks, operator_id) VALUES 
-(1, 'left', '2026-06-06 09:15:00', '123 VGS', 'PLF', 'SGT-2005'),
-(1, 'right', '2026-06-06 09:30:00', '123 VGS', '', 'OFF-1002'),
-(1, 'left', '2026-06-06 10:05:00', '123 VGS', '', 'OFF-1002'),
-(3, 'right', '2026-06-06 11:00:00', '231 VGS', '', 'OFF-4001');
+-- (The launch_id column will auto-increment automatically)
+INSERT INTO launches (launch_number, winch_id, drum, `timestamp`, squadron_id, remarks, operator_sn) VALUES 
+(1, 1, 'left', '2026-06-06 09:15:00', '123 VGS', 'PLF', 'SGT-2005'),
+(1, 1, 'right', '2026-06-06 09:30:00', '123 VGS', '', 'OFF-1002'),
+(2, 1, 'left', '2026-06-06 10:05:00', '123 VGS', '', 'OFF-1002'),
+(1, 3, 'right', '2026-06-06 11:00:00', '231 VGS', '', 'OFF-4001');
 
 -- 5. POPULATE DAY_LOG
 -- (The id column will auto-increment automatically)
-INSERT INTO day_log (squadron_id, winch_id, `type`, `timestamp`, left_drum, right_drum, operator_id, trainee, cable_check, hours) VALUES 
+INSERT INTO day_log (squadron_id, winch_id, `type`, `timestamp`, left_drum, right_drum, operator_sn, trainee, cable_check, hours) VALUES 
 ('123 VGS', 1, 'di', '2026-06-06 08:00:00', 0, 0, 'OFF-1002', NULL, 'OFF-1001', 0.0),
 ('123 VGS', 1, 'sign_on', '2026-06-06 08:30:00', 12, 12, 'SGT-2005', 'CDT-3042', 'OFF-1002', 2.5),
 ('123 VGS', 1, 'finish_day', '2026-06-06 16:30:00', 25, 22, 'OFF-1001', NULL, 'OFF-1002', 6.2);

@@ -37,8 +37,8 @@ describe('exportLog', () => {
         vi.stubGlobal('fetch', vi.fn());
         vi.mocked(getWinch).mockResolvedValue({ registration: 'REG123' });
         vi.mocked(getDayLog).mockResolvedValue([
-            { type: 'sign_on', operator_id: 'OP1', trainee: 'TR1' } as any,
-            { type: 'sign_on', operator_id: 'OP2', trainee: null } as any
+            { type: 'sign_on', operator_sn: 'OP1', trainee: 'TR1' } as any,
+            { type: 'sign_on', operator_sn: 'OP2', trainee: null } as any
         ]);
         vi.mocked(getOperatorsForSquadron).mockResolvedValue([
             { sn: 'OP1', name: 'Operator One', squadron_id: 'sqn1' },
@@ -97,7 +97,7 @@ describe('exportLog', () => {
 
         // Give a log with unknown operator and no trainee
         vi.mocked(getDayLog).mockResolvedValueOnce([
-            { type: 'sign_on', operator_id: 'UNKNOWN_OP', trainee: null } as any
+            { type: 'sign_on', operator_sn: 'UNKNOWN_OP', trainee: null } as any
         ]);
         
         await exportLog(mockState, 5.5);

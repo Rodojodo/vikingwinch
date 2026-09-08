@@ -55,7 +55,7 @@ export const useWinchSession = (squadronId: string, operatorSn: string, initialW
             const payload: LaunchPayload = {
                 squadron_id: state.squadron,
                 winch_id: state.winchId,
-                operator_id: state.operatorSn,
+                operator_sn: state.operatorSn,
                 drum,
                 burn,
             };
@@ -98,7 +98,7 @@ export const useWinchSession = (squadronId: string, operatorSn: string, initialW
             const payload: DayLogPayload = {
                 squadron_id: state.squadron,
                 winch_id: state.winchId,
-                operator_id: state.operatorSn,
+                operator_sn: state.operatorSn,
                 trainee: traineeSn,
                 type: 'sign_on',
                 cable_check: null,
@@ -152,7 +152,7 @@ export const useWinchSession = (squadronId: string, operatorSn: string, initialW
             const payload: DayLogPayload = {
                 squadron_id: state.squadron,
                 winch_id: state.winchId,
-                operator_id: state.operatorSn,
+                operator_sn: state.operatorSn,
                 trainee: state.traineeSn,
                 type: 'finish_day',
                 cable_check: cableCheck,

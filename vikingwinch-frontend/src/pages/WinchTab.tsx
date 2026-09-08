@@ -54,7 +54,7 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, onWinchSelect
                 
                 if (signOnLogs.length > 0) {
                     const lastLog = signOnLogs[signOnLogs.length - 1];
-                    setLastOperatorSn(lastLog.operator_id);
+                    setLastOperatorSn(lastLog.operator_sn);
                     setLastTraineeSn(lastLog.trainee);
                 } else {
                     setLastOperatorSn(null);
@@ -63,7 +63,7 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, onWinchSelect
 
                 if (!hasDiToday) {
                     setView('inspection');
-                } else if (signOnLogs.length === 0 || signOnLogs[signOnLogs.length - 1].operator_id !== operatorSn) {
+                } else if (signOnLogs.length === 0 || signOnLogs[signOnLogs.length - 1].operator_sn !== operatorSn) {
                     setView('sign_on');
                 } else {
                     setView('launch');
