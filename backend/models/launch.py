@@ -1,8 +1,14 @@
-from sqlalchemy import String, Integer, TIMESTAMP, Enum, UniqueConstraint, Text, ForeignKey
+from sqlalchemy import Integer, TIMESTAMP, Enum, UniqueConstraint, Text, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
 
 from models.base import Base
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .squadron import Squadron
+    from .winch import Winch
+    from .operator import Operator
 
 class Launch(Base):
     __tablename__ = "launches"
