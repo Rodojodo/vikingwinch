@@ -169,3 +169,14 @@ export const getWinchHours = async (winchId: number): Promise<{hours: number | n
     await handleApiError(response);
     return response.json();
 }
+
+export const getBroughtForward = async (winchId: number, day: string): Promise<{left: number | null, right: number | null}> => {
+    const response = await fetch(`${API_BASE_URL}/launches/brought_forward?winch_id=${winchId}&day=${day}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+        },
+    });
+    await handleApiError(response);
+    return response.json();
+}

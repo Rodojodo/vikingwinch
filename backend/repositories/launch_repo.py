@@ -113,3 +113,22 @@ async def get_launches_from_date(db: AsyncSession, winch_id: int, day: date):
     result = await db.execute(stmt)
     day_log = result.scalars().all()
     return day_log
+
+async def get_brought_forward(db: AsyncSession, winch_id: int, current_day: date):
+    start_of_day = datetime.combine(current_day, time.min)
+    
+    stmt_left = (select(Launch.launch_number)
+                 .where(Launch.winch_id == winch_id, Launch.drum == 'left', Launch.launch_number.isnot(None), Launch.timestamp < start_of_day)
+                 .order_by(Launch.timestamp.desc())
+                 .limit(1))
+    result_left = await db.execute(stmt_left)
+    left_bf = result_left.scalars().first()
+
+    stmt_right = (select(Launch.launch_number)
+                  .where(Launch.winch_id == winch_id, Launch.drum == 'right', Launch.launch_number.isnot(None), Launch.timestamp < start_of_day)
+                  .order_by(Launch.timestamp.desc())
+                  .limit(1))
+    result_right = await db.execute(stmt_right)
+    right_bf = result_right.scalars().first()
+
+    return {"left": left_bf, "right": right_bf}

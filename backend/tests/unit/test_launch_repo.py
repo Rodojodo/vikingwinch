@@ -293,3 +293,31 @@ async def test_delete_launch_success(db_session):
     stmt = select(Launch).where(Launch.launch_id == launch.launch_id)
     res = await db_session.execute(stmt)
     assert res.scalars().first() is None
+
+
+@pytest.mark.asyncio
+async def test_get_brought_forward(db_session):
+    """Test retrieving brought forward values for a winch."""
+    squadron = Squadron(id="123 VGS")
+    winch = Winch(id=1, registration="EF 34 GH", squadron_id="123 VGS")
+    
+    from repositories.launch_repo import get_brought_forward
+    db_session.add_all([squadron, winch])
+    
+    # Add historical launches for previous days
+    db_session.add_all(
+        [
+            make_launch(launch_number=10, timestamp=datetime(2026, 6, 4, 8, 0, 0), drum="left"),
+            make_launch(launch_number=11, timestamp=datetime(2026, 6, 5, 8, 0, 0), drum="left"),
+            make_launch(launch_number=None, timestamp=datetime(2026, 6, 5, 9, 0, 0), drum="left"), # burn
+            make_launch(launch_number=5, timestamp=datetime(2026, 6, 4, 12, 30, 0), drum="right"),
+            make_launch(winch_id=2, launch_number=100, timestamp=datetime(2026, 6, 5, 10, 0, 0), drum="left"),  # Different winch
+        ]
+    )
+    await db_session.commit()
+
+    # Get brought forward for current day (2026, 6, 6)
+    result = await get_brought_forward(db_session, 1, date(2026, 6, 6))
+
+    # Expect last valid left is 11, right is 5
+    assert result == {"left": 11, "right": 5}
