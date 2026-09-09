@@ -148,7 +148,7 @@ describe('WinchOpsPage', () => {
         expect(tabs).toHaveLength(2);
         
         // Second tab is active. Close the second tab
-        const closeBtn2 = tabs[1].querySelector('button')!;
+        const closeBtn2 = tabs[1].querySelector('[role="button"]')!;
         fireEvent.click(closeBtn2);
         
         expect(screen.getAllByRole('tab')).toHaveLength(1);
@@ -253,7 +253,7 @@ describe('WinchOpsPage', () => {
         
         // Tab 1 is inactive because Tab 2 was added and made active
         const tabs = screen.getAllByRole('tab');
-        const closeBtn1 = tabs[0].querySelector('button')!;
+        const closeBtn1 = tabs[0].querySelector('[role="button"]')!;
         fireEvent.click(closeBtn1);
         
         expect(screen.getAllByRole('tab')).toHaveLength(1);
