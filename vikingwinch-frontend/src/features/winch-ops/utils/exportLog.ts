@@ -17,6 +17,19 @@ const CELLS = {
     OPERATOR_START_ROW: 31,
 };
 
+
+const formatUKTime = (timestampStr: string): string => {
+    // Append Z to parse the naive database timestamp as UTC
+    const d = new Date(timestampStr.endsWith('Z') ? timestampStr : timestampStr + 'Z');
+    if (isNaN(d.getTime())) return '';
+    return new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Europe/London',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    }).format(d);
+};
+
 export const exportLog = async (state: WinchLogState): Promise<void> => {
     if (!state.winchId) throw new Error("No winch selected");
     try {
@@ -58,8 +71,7 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
         if (diLog) {
             sheet.getCell('D12').value = getName(diLog.operator_sn);
             if (diLog.timestamp) {
-                const d = new Date(diLog.timestamp);
-                sheet.getCell('F12').value = isNaN(d.getTime()) ? '' : `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+                sheet.getCell('F12').value = formatUKTime(diLog.timestamp);
             }
         }
 
@@ -157,10 +169,7 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
 
             sheet.getCell(`F${CELLS.OPERATOR_START_ROW + i}`).value = cellValue;
             if (log.timestamp) {
-                const d = new Date(log.timestamp);
-                if (!isNaN(d.getTime())) {
-                    sheet.getCell(`I${CELLS.OPERATOR_START_ROW + i}`).value = `${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
-                }
+                sheet.getCell(`I${CELLS.OPERATOR_START_ROW + i}`).value = formatUKTime(log.timestamp);
             }
             sheet.getCell(`K${CELLS.OPERATOR_START_ROW + i}`).value = cellValue;
         }
