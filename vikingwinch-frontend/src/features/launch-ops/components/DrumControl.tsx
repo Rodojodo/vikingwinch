@@ -1,11 +1,30 @@
 import { Box, Stack, Typography, Chip, Button } from '@mui/material';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import { LaunchButton } from './LaunchButton.tsx';
-import type { DrumPosition } from '../../types';
+import type { DrumPosition } from '../../winch-ops/types';
+import { useEffect, useState } from 'react';
+
+function formatTimeAgo(timestamp: string | number | Date): string {
+    const time = new Date(timestamp).getTime();
+    if (isNaN(time)) return '';
+
+    const diffMs = Date.now() - time;
+    if (diffMs < 60000) return 'Just now';
+
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 60) return `${diffMins} min${diffMins === 1 ? '' : 's'} ago`;
+
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
+}
 
 interface DrumControlProps {
     drumType: DrumPosition;
     launches: number;
+    lastLaunch?: string | number | null;
     isLoading: boolean;
     isUsed: boolean;
     isResetting: boolean;
@@ -18,6 +37,7 @@ interface DrumControlProps {
 export const DrumControl = ({
     drumType,
     launches,
+    lastLaunch,
     isLoading,
     isUsed,
     isResetting,
@@ -26,6 +46,13 @@ export const DrumControl = ({
     onBurn,
     onUndo
 }: DrumControlProps) => {
+    // Force re-render every minute so relative time updates automatically
+    const [, setTick] = useState(0);
+    useEffect(() => {
+        if (!lastLaunch) return;
+        const interval = setInterval(() => setTick(t => t + 1), 60000);
+        return () => clearInterval(interval);
+    }, [lastLaunch]);
 
     // Capitalize label
     const label = drumType === 'left' ? 'Left Drum' : 'Right Drum';
@@ -147,7 +174,7 @@ export const DrumControl = ({
             </Button>
 
             <Typography sx={{ color: '#94a3b8', textAlign: 'center', fontSize: '14px', mt: 1, fontFamily: 'monospace', fontWeight: 500 }}>
-                {launches === 0 ? 'Not yet launched' : `${launches} recorded`}
+                {launches === 0 ? 'Not yet launched' : (lastLaunch ? `Last launch: ${formatTimeAgo(lastLaunch)}` : '')}
             </Typography>
         </Stack>
     );
