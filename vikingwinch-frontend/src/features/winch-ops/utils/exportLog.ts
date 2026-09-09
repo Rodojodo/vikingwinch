@@ -88,6 +88,7 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
 
         let lastLeftNumber: number | string = bf.left ?? 0;
         let lastRightNumber: number | string = bf.right ?? 0;
+        let seenOperators = new Set<string>();
 
         for (let i = 0; i < 15; i++) {
             const leftLaunch = leftHistory[i];
@@ -99,10 +100,12 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
             const remarksCell = sheet.getCell(`H${CELLS.LAUNCH_START_ROW + i}`);
             const repairsCell = sheet.getCell(`K${CELLS.LAUNCH_START_ROW + i}`);
             const supervisorCell = sheet.getCell(`L${CELLS.LAUNCH_START_ROW + i}`);
+            const toolCheckCell = sheet.getCell(`M${CELLS.LAUNCH_START_ROW + i}`);
 
             let leftOp = null;
             let rightOp = null;
             
+            let toolCheckInitials = new Set<string>();
             let remarksCombined: string[] = [];
             let repairsCombined: string[] = [];
             let supervisorsCombined: string[] = [];
@@ -114,7 +117,9 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
                 let match;
                 while ((match = repairRegex.exec(text)) !== null) {
                     repairsCombined.push(`${drumStr}: ${match[1]}`);
-                    supervisorsCombined.push(getName(match[2]) || match[2]);
+                    const supervisorName = getName(match[2]) || match[2];
+                    supervisorsCombined.push(supervisorName);
+                    toolCheckInitials.add(getInitials(supervisorName));
                 }
                 text = text.replace(repairRegex, '').trim();
                 text = text.replace(/^,|,$/g, '').trim();
@@ -133,6 +138,10 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
                     }
                 }
                 leftOp = leftLaunch.operator_sn ? getName(leftLaunch.operator_sn) : null;
+                if (leftLaunch.operator_sn && !seenOperators.has(leftLaunch.operator_sn)) {
+                    seenOperators.add(leftLaunch.operator_sn);
+                    if (leftOp) toolCheckInitials.add(getInitials(leftOp));
+                }
                 processRemark('D1', leftLaunch.remark);
             } else {
                 leftCell.value = rightLaunch ? lastLeftNumber : null;
@@ -148,6 +157,10 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
                     }
                 }
                 rightOp = rightLaunch.operator_sn ? getName(rightLaunch.operator_sn) : null;
+                if (rightLaunch.operator_sn && !seenOperators.has(rightLaunch.operator_sn)) {
+                    seenOperators.add(rightLaunch.operator_sn);
+                    if (rightOp) toolCheckInitials.add(getInitials(rightOp));
+                }
                 processRemark('D2', rightLaunch.remark);
             } else {
                 rightCell.value = leftLaunch ? lastRightNumber : null;
@@ -161,6 +174,7 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
             remarksCell.value = remarksCombined.join(' | ') || null;
             repairsCell.value = repairsCombined.join(' | ') || null;
             supervisorCell.value = supervisorsCombined.join(' / ') || null;
+            toolCheckCell.value = Array.from(toolCheckInitials).join(' / ') || null;
         }
 
         const signOns = dayLogs.filter(log => log.type === 'sign_on');
