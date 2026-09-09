@@ -201,6 +201,7 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
                             squadronId={squadronId}
                             operatorSn={operatorSn}
                             winchId={tab.winchId}
+                            openWinchIds={tabs.map(t => t.winchId).filter((id): id is number => id !== null)}
                             onWinchSelect={handleWinchSelect} // <-- Pass the stable reference directly! No arrow function.
                         />
                     </Box>

@@ -6,3 +6,6 @@
 vikingwinch-frontend/coverage/*
 /backend/.coverage
 __pycache__/
+/.agent/skills/*
+/_bmad/*
+/_bmad-output/*

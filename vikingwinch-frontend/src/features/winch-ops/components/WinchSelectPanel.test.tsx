@@ -19,7 +19,7 @@ describe('WinchSelectPanel', () => {
         // Return a promise that doesn't resolve immediately to check the loading state
         vi.mocked(getWinchesForSquadron).mockReturnValue(new Promise(() => {}));
         
-        render(<WinchSelectPanel squadronId={squadronId} onSelectWinch={mockOnSelectWinch} />);
+        render(<WinchSelectPanel squadronId={squadronId} openWinchIds={[]} onSelectWinch={mockOnSelectWinch} />);
         
         expect(screen.getByRole('progressbar')).toBeInTheDocument();
     });
@@ -31,7 +31,7 @@ describe('WinchSelectPanel', () => {
         ];
         vi.mocked(getWinchesForSquadron).mockResolvedValue(mockWinches);
 
-        render(<WinchSelectPanel squadronId={squadronId} onSelectWinch={mockOnSelectWinch} />);
+        render(<WinchSelectPanel squadronId={squadronId} openWinchIds={[]} onSelectWinch={mockOnSelectWinch} />);
 
         // Wait for loading to finish and buttons to appear
         const btn1 = await screen.findByRole('button', { name: 'Winch 1' });
@@ -47,7 +47,7 @@ describe('WinchSelectPanel', () => {
     it('displays an error message when API call fails', async () => {
         vi.mocked(getWinchesForSquadron).mockRejectedValue(new Error('API error'));
 
-        render(<WinchSelectPanel squadronId={squadronId} onSelectWinch={mockOnSelectWinch} />);
+        render(<WinchSelectPanel squadronId={squadronId} openWinchIds={[]} onSelectWinch={mockOnSelectWinch} />);
 
         const errorMsg = await screen.findByText('Failed to load winches');
         expect(errorMsg).toBeInTheDocument();
@@ -56,9 +56,28 @@ describe('WinchSelectPanel', () => {
     it('displays a message when no winches are returned', async () => {
         vi.mocked(getWinchesForSquadron).mockResolvedValue([]);
 
-        render(<WinchSelectPanel squadronId={squadronId} onSelectWinch={mockOnSelectWinch} />);
+        render(<WinchSelectPanel squadronId={squadronId} openWinchIds={[]} onSelectWinch={mockOnSelectWinch} />);
 
         const emptyMsg = await screen.findByText('No winches available for this squadron.');
         expect(emptyMsg).toBeInTheDocument();
+    });
+
+    it('filters out winches that are already open', async () => {
+        const mockWinches = [
+            { id: 1, squadron: squadronId, status: 'serviceable' },
+            { id: 2, squadron: squadronId, status: 'serviceable' }
+        ];
+        vi.mocked(getWinchesForSquadron).mockResolvedValue(mockWinches);
+
+        // Winch 1 is open
+        render(<WinchSelectPanel squadronId={squadronId} openWinchIds={[1]} onSelectWinch={mockOnSelectWinch} />);
+
+        // Winch 2 should appear
+        const btn2 = await screen.findByRole('button', { name: 'Winch 2' });
+        expect(btn2).toBeInTheDocument();
+
+        // Winch 1 should NOT appear
+        const btn1 = screen.queryByRole('button', { name: 'Winch 1' });
+        expect(btn1).not.toBeInTheDocument();
     });
 });

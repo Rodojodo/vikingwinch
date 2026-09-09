@@ -29,7 +29,7 @@ vi.mock('../features/day-ops/components/SkylogValues', () => ({
 }));
 
 vi.mock('../features/winch-ops/components/WinchSelectPanel', () => ({
-    WinchSelectPanel: ({ onSelectWinch }: any) => (
+    WinchSelectPanel: ({ onSelectWinch, openWinchIds }: any) => (
         <div data-testid="winch-select">
             <button onClick={() => onSelectWinch(1)}>Select Winch</button>
         </div>
@@ -48,7 +48,7 @@ describe('WinchTab', () => {
             { id: 2, type: 'sign_on', operator_sn: 'OFF-1001', squadron_id: 'sqn1', winch_id: 1, cable_check: 'OFF-1001', hours: 0, trainee: null, timestamp: null }
         ]);
 
-        render(<WinchTab tabId="1" squadronId="123 VGS" operatorSn="OFF-1001" winchId={1} onWinchSelect={vi.fn()} />);
+        render(<WinchTab tabId="1" squadronId="123 VGS" operatorSn="OFF-1001" winchId={1} openWinchIds={[]} onWinchSelect={vi.fn()} />);
         
         await waitFor(() => {
             expect(screen.getByTestId('launch-panel')).toBeInTheDocument();
@@ -71,7 +71,7 @@ describe('WinchTab', () => {
             derived: { leftLaunches: 10, rightLaunches: 15 }
         } as any);
 
-        render(<WinchTab tabId="1" squadronId="123 VGS" operatorSn="OFF-1001" winchId={null} onWinchSelect={vi.fn()} />);
+        render(<WinchTab tabId="1" squadronId="123 VGS" operatorSn="OFF-1001" winchId={null} openWinchIds={[]} onWinchSelect={vi.fn()} />);
         
         expect(screen.getByTestId('winch-select')).toBeInTheDocument();
         
