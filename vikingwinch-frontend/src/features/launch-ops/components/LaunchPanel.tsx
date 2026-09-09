@@ -146,6 +146,7 @@ export const LaunchPanel = ({ onViewSkylogValues, session }: LaunchPanelProps) =
                 <DrumControl
                     drumType="left"
                     launches={leftLaunches}
+                    lastLaunch={leftLast}
                     isLoading={isLoading}
                     isUsed={leftUsed}
                     isResetting={isResetting}
@@ -158,6 +159,7 @@ export const LaunchPanel = ({ onViewSkylogValues, session }: LaunchPanelProps) =
                 <DrumControl
                     drumType="right"
                     launches={rightLaunches}
+                    lastLaunch={rightLast}
                     isLoading={isLoading}
                     isUsed={rightUsed}
                     isResetting={isResetting}

@@ -23,26 +23,28 @@ describe('DrumControl', () => {
         vi.clearAllMocks();
     });
 
-    it('renders correctly for left drum', () => {
-        render(<DrumControl {...defaultProps} drumType="left" />);
+    it('renders correctly for left drum with relative time', () => {
+        const recentDate = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+        render(<DrumControl {...defaultProps} drumType="left" launches={5} lastLaunch={recentDate} />);
         expect(screen.getByText('Left Drum')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Burn Left/i })).toBeInTheDocument();
         expect(screen.getByText('− Undo Left')).toBeInTheDocument();
         expect(screen.getByText('5 launches')).toBeInTheDocument();
-        expect(screen.getByText('5 recorded')).toBeInTheDocument();
+        expect(screen.getByText(/Last launch: 5 mins ago/i)).toBeInTheDocument();
     });
 
-    it('renders correctly for right drum', () => {
-        render(<DrumControl {...defaultProps} drumType="right" launches={2} />);
+    it('renders correctly for right drum with relative time', () => {
+        const recentDate = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+        render(<DrumControl {...defaultProps} drumType="right" launches={2} lastLaunch={recentDate} />);
         expect(screen.getByText('Right Drum')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: /Burn Right/i })).toBeInTheDocument();
         expect(screen.getByText('− Undo Right')).toBeInTheDocument();
         expect(screen.getByText('2 launches')).toBeInTheDocument();
-        expect(screen.getByText('2 recorded')).toBeInTheDocument();
+        expect(screen.getByText(/Last launch: 2 hours ago/i)).toBeInTheDocument();
     });
 
     it('renders placeholder text when launches is 0', () => {
-        render(<DrumControl {...defaultProps} launches={0} />);
+        render(<DrumControl {...defaultProps} launches={0} lastLaunch={null} />);
         expect(screen.getByText('Not yet launched')).toBeInTheDocument();
         // Undo should be disabled when there are 0 launches
         expect(screen.getByText('− Undo Left').closest('button')).toBeDisabled();
