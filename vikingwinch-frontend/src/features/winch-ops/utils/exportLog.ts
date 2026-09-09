@@ -90,17 +90,36 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
         let lastRightNumber: number | string = bf.right ?? 0;
         let seenOperators = new Set<string>();
 
-        for (let i = 0; i < 15; i++) {
+        const maxLaunches = Math.max(15, leftHistory.length, rightHistory.length);
+        const totalRows = Math.min(35, maxLaunches);
+
+        for (let i = 0; i < totalRows; i++) {
             const leftLaunch = leftHistory[i];
             const rightLaunch = rightHistory[i];
 
-            const leftCell = sheet.getCell(`D${CELLS.LAUNCH_START_ROW + i}`);
-            const rightCell = sheet.getCell(`E${CELLS.LAUNCH_START_ROW + i}`);
-            const initialsCell = sheet.getCell(`G${CELLS.LAUNCH_START_ROW + i}`);
-            const remarksCell = sheet.getCell(`H${CELLS.LAUNCH_START_ROW + i}`);
-            const repairsCell = sheet.getCell(`K${CELLS.LAUNCH_START_ROW + i}`);
-            const supervisorCell = sheet.getCell(`L${CELLS.LAUNCH_START_ROW + i}`);
-            const toolCheckCell = sheet.getCell(`M${CELLS.LAUNCH_START_ROW + i}`);
+            let currentSheet;
+            let currentRow;
+            
+            if (i < 15) {
+                currentSheet = workbook.worksheets[0];
+                currentRow = 14 + i;
+            } else {
+                currentSheet = workbook.worksheets[1];
+                currentRow = 8 + (i - 15);
+                
+                if (i === 15) {
+                    currentSheet.getCell('D3').value = lastLeftNumber;
+                    currentSheet.getCell('E3').value = lastRightNumber;
+                }
+            }
+
+            const leftCell = currentSheet.getCell(`D${currentRow}`);
+            const rightCell = currentSheet.getCell(`E${currentRow}`);
+            const initialsCell = currentSheet.getCell(`G${currentRow}`);
+            const remarksCell = currentSheet.getCell(`H${currentRow}`);
+            const repairsCell = currentSheet.getCell(`K${currentRow}`);
+            const supervisorCell = currentSheet.getCell(`L${currentRow}`);
+            const toolCheckCell = currentSheet.getCell(`M${currentRow}`);
 
             let leftOp = null;
             let rightOp = null;
