@@ -23,26 +23,29 @@ function App() {
                     const graphData = await getUserDepartment(tokenResponse.accessToken);
                     console.log("Graph API User Data Response:", graphData);
 
-                    let profileData = null;
-                    try {
-                        profileData = await getUserProfile(tokenResponse.accessToken);
-                        console.log("Graph API User Profile Response:", profileData);
-                    } catch (profileErr) {
-                        console.warn("Failed to fetch user profile (e.g., 404 Not Found), falling back to v1.0 data:", profileErr);
-                    }
-                    
-                    let employeeId = null;
-                    if (profileData?.positions && Array.isArray(profileData.positions)) {
-                        for (const pos of profileData.positions) {
-                            if (pos.detail?.employeeId) {
-                                employeeId = pos.detail.employeeId;
-                                break;
+                    let employeeId = graphData.employeeId || null;
+
+                    if (!employeeId) {
+                        let profileData = null;
+                        try {
+                            profileData = await getUserProfile(tokenResponse.accessToken);
+                            console.log("Graph API User Profile Response:", profileData);
+                        } catch (profileErr) {
+                            console.warn("Failed to fetch user profile (e.g., 404 Not Found), falling back to v1.0 data:", profileErr);
+                        }
+                        
+                        if (profileData?.positions && Array.isArray(profileData.positions)) {
+                            for (const pos of profileData.positions) {
+                                if (pos.detail?.employeeId) {
+                                    employeeId = pos.detail.employeeId;
+                                    break;
+                                }
                             }
                         }
                     }
                     
                     // Fallback for testing: check graphData.employeeId from the v1.0/me endpoint
-                    setOperatorSn(employeeId || graphData.employeeId || graphData.displayName || 'Unknown Operator');
+                    setOperatorSn(employeeId || graphData.displayName || 'Unknown Operator');
                     setSquadronId(graphData.department || 'Unknown Squadron');
                 } catch (err) {
                     console.error("Failed to load user profile:", err);
