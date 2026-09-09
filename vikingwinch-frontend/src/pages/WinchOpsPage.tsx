@@ -122,9 +122,30 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
                                     <Typography sx={{ textTransform: 'none', mr: 2, fontWeight: activeTabId === tab.id ? 500 : 400, color: 'inherit' }}>
                                         {tab.winchId ? `Winch ${tab.winchId}` : 'New Winch'}
                                     </Typography>
-                                    <IconButton size="small" onClick={(e) => handleCloseTab(e, tab.id)} sx={{ p: 0.25, color: 'inherit', '&:hover': { color: '#f7f9fb', bgcolor: 'rgba(255,255,255,0.1)' } }}>
+                                    <Box 
+                                        component="span"
+                                        role="button"
+                                        tabIndex={0}
+                                        onClick={(e) => handleCloseTab(e, tab.id)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                                e.preventDefault();
+                                                handleCloseTab(e as any, tab.id);
+                                            }
+                                        }}
+                                        sx={{ 
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            p: 0.25, 
+                                            borderRadius: '50%',
+                                            cursor: 'pointer',
+                                            color: 'inherit', 
+                                            '&:hover': { color: '#f7f9fb', bgcolor: 'rgba(255,255,255,0.1)' } 
+                                        }}
+                                    >
                                         <CloseIcon sx={{ width: 14, height: 14 }} />
-                                    </IconButton>
+                                    </Box>
                                 </Box>
                             } 
                             sx={{
