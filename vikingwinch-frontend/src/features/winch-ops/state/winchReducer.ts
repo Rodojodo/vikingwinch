@@ -66,6 +66,27 @@ export const winchReducer = (state: WinchLogState, action: WinchAction): WinchLo
         case 'SET_OPERATOR': {
             return {...state, operatorSn: action.payload};
         }
+
+        case 'HYDRATE_LAUNCHES': {
+            const leftHistory: LaunchRecord[] = [];
+            const rightHistory: LaunchRecord[] = [];
+            
+            for (const launch of action.payload) {
+                const record: LaunchRecord = {
+                    id: launch.launch_id,
+                    launch_number: launch.launch_number,
+                    timestamp: launch.timestamp,
+                    remark: launch.remarks,
+                    burn: launch.launch_number === null
+                };
+                if (launch.drum === 'left') {
+                    leftHistory.push(record);
+                } else {
+                    rightHistory.push(record);
+                }
+            }
+            return { ...state, leftHistory, rightHistory };
+        }
         default:
             return state;
     }
