@@ -15,10 +15,11 @@ interface WinchTabProps {
     squadronId: string;
     operatorSn: string;
     winchId: number | null;
+    openWinchIds: number[];
     onWinchSelect: (tabId: string, winchId: number) => void;
 }
 
-export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, onWinchSelect }: WinchTabProps) => {
+export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, openWinchIds, onWinchSelect }: WinchTabProps) => {
     const [view, setView] = useState<TabView>('loading');
     const [lastOperatorSn, setLastOperatorSn] = useState<string | null>(null);
     const [lastTraineeSn, setLastTraineeSn] = useState<string | null>(null);
@@ -89,6 +90,7 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, onWinchSelect
                     <WinchSelectPanel
                         squadronId={session.state.squadron}
                         onSelectWinch={session.setWinchId}
+                        openWinchIds={openWinchIds}
                     />
                 );
             case 'inspection':

@@ -5,10 +5,11 @@ import type { WinchRead } from "../types";
 
 interface WinchSelectPanelProps {
     squadronId: string;
+    openWinchIds: number[];
     onSelectWinch: (winchId: number) => void;
 }
 
-export const WinchSelectPanel = ({ squadronId, onSelectWinch }: WinchSelectPanelProps) => {
+export const WinchSelectPanel = ({ squadronId, openWinchIds, onSelectWinch }: WinchSelectPanelProps) => {
     const [winches, setWinches] = useState<WinchRead[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -28,6 +29,8 @@ export const WinchSelectPanel = ({ squadronId, onSelectWinch }: WinchSelectPanel
         
         fetchWinches();
     }, [squadronId]);
+
+    const availableWinches = winches.filter(winch => !openWinchIds.includes(winch.id));
 
     return (
         <Box sx={{
@@ -54,11 +57,11 @@ export const WinchSelectPanel = ({ squadronId, onSelectWinch }: WinchSelectPanel
                 <CircularProgress color="inherit" />
             ) : error ? (
                 <Typography color="error">{error}</Typography>
-            ) : winches.length === 0 ? (
+            ) : availableWinches.length === 0 ? (
                 <Typography>No winches available for this squadron.</Typography>
             ) : (
                 <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 2, width: '100%', justifyContent: 'center' }}>
-                    {winches.map(winch => (
+                    {availableWinches.map(winch => (
                         <Button
                             key={winch.id}
                             variant="outlined"
