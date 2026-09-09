@@ -6,7 +6,7 @@ import { useWinchSession } from '../features/winch-ops/hooks/useWinchSession';
 import { WinchSelectPanel } from '../features/winch-ops/components/WinchSelectPanel';
 import { SignOnPanel } from '../features/winch-ops/components/SignOnPanel';
 import { DailyInspectionPanel } from '../features/winch-ops/components/DailyInspectionPanel';
-import { getDayLog } from '../features/winch-ops/api/dataClient';
+import { getDayLog, getLaunches } from '../features/winch-ops/api/dataClient';
 import type { TabView } from '../features/winch-ops/types/index'
 
 
@@ -47,7 +47,12 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, openWinchIds,
                 const localDate = new Date(todayDate.getTime() - (offset * 60 * 1000));
                 const todayStr = localDate.toISOString().split('T')[0];
 
-                const logs = await getDayLog(session.state.winchId!, todayStr);
+                const [logs, launches] = await Promise.all([
+                    getDayLog(session.state.winchId!, todayStr),
+                    getLaunches(session.state.winchId!, todayStr)
+                ]);
+
+                session.hydrateLaunches(launches);
                 const signOnLogs = logs.filter(l => l.type === 'sign_on');
                 const diLogs = logs.filter(l => l.type === 'di');
                 
