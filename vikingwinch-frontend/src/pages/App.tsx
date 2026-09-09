@@ -21,7 +21,6 @@ function App() {
                     });
 
                     const graphData = await getUserDepartment(tokenResponse.accessToken);
-                    console.log("Graph API User Data Response:", graphData);
 
                     let employeeId = graphData.employeeId || null;
 
