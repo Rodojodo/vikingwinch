@@ -70,9 +70,7 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
 
         if (diLog) {
             sheet.getCell('D12').value = getName(diLog.operator_sn);
-            if (diLog.timestamp) {
-                sheet.getCell('F12').value = formatUKTime(diLog.timestamp);
-            }
+            sheet.getCell('F12').value = getName(diLog.operator_sn); // Signature is just the name for now
         }
 
         if (finishLog) {
@@ -87,6 +85,9 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
         sheet.getCell(CELLS.BF_RIGHT).value = bf.right ?? '';
 
         const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase();
+
+        let lastLeftNumber: number | string = bf.left ?? 0;
+        let lastRightNumber: number | string = bf.right ?? 0;
 
         for (let i = 0; i < 15; i++) {
             const leftLaunch = leftHistory[i];
@@ -124,26 +125,32 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
 
             if (leftLaunch) {
                 if (leftLaunch.launch_number == null && leftLaunch.burn) {
-                    leftCell.value = '---';
+                    leftCell.value = lastLeftNumber;
                 } else {
                     leftCell.value = leftLaunch.launch_number;
+                    if (typeof leftLaunch.launch_number === 'number') {
+                        lastLeftNumber = leftLaunch.launch_number;
+                    }
                 }
                 leftOp = leftLaunch.operator_sn ? getName(leftLaunch.operator_sn) : null;
                 processRemark('D1', leftLaunch.remark);
             } else {
-                leftCell.value = null;
+                leftCell.value = rightLaunch ? lastLeftNumber : null;
             }
 
             if (rightLaunch) {
                 if (rightLaunch.launch_number == null && rightLaunch.burn) {
-                    rightCell.value = '---';
+                    rightCell.value = lastRightNumber;
                 } else {
                     rightCell.value = rightLaunch.launch_number;
+                    if (typeof rightLaunch.launch_number === 'number') {
+                        lastRightNumber = rightLaunch.launch_number;
+                    }
                 }
                 rightOp = rightLaunch.operator_sn ? getName(rightLaunch.operator_sn) : null;
                 processRemark('D2', rightLaunch.remark);
             } else {
-                rightCell.value = null;
+                rightCell.value = leftLaunch ? lastRightNumber : null;
             }
 
             const initials = new Set<string>();
