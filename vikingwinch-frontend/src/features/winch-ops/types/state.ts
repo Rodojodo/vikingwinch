@@ -30,7 +30,8 @@ export type WinchAction =
   | { type: 'FINISH_DAY'; payload: DayLogResponse }
   | { type: 'SET_WINCH_ID'; payload: number }
   | { type: 'SET_SQUADRON'; payload: string }
-  | { type: 'SET_OPERATOR'; payload: string };
+  | { type: 'SET_OPERATOR'; payload: string }
+  | { type: 'HYDRATE_LAUNCHES'; payload: LaunchResponse[] };
 
 
 export interface Trainee {

@@ -2,6 +2,7 @@ import {useReducer, useState, useMemo, useCallback, useEffect} from 'react';
 import type {DayLogPayload, DrumPosition, LaunchPayload, RemarkPayload} from '../types';
 import {postLaunchToDb, postRemarkToDb, postDayLogToDb, removeLaunchFromDb} from '../api/dataClient';
 import { createInitialState, winchReducer } from '../state/winchReducer';
+import type { LaunchResponse } from '../types';
 
 export const useWinchSession = (squadronId: string, operatorSn: string, initialWinchId: number | null = null) => {
     const [state, dispatch] = useReducer(winchReducer, createInitialState(squadronId, operatorSn, initialWinchId));
@@ -173,6 +174,13 @@ export const useWinchSession = (squadronId: string, operatorSn: string, initialW
         dispatch({ type: 'SET_WINCH_ID', payload: id });
     }, []);
 
+    const hydrateLaunches = useCallback((launches: LaunchResponse[]) => {
+        const sorted = [...launches].sort((a, b) => 
+            (a.timestamp || '').localeCompare(b.timestamp || '') || a.launch_id - b.launch_id
+        );
+        dispatch({ type: 'HYDRATE_LAUNCHES', payload: sorted });
+    }, []);
+
     return {
         state,
         derived,
@@ -184,5 +192,6 @@ export const useWinchSession = (squadronId: string, operatorSn: string, initialW
         addRemark,
         finishDay,
         setWinchId,
+        hydrateLaunches,
     };
 };
