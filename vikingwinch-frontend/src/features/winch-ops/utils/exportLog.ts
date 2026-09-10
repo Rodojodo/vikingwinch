@@ -91,23 +91,32 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
         let seenOperators = new Set<string>();
 
         const maxLaunches = Math.max(15, leftHistory.length, rightHistory.length);
-        const totalRows = Math.min(35, maxLaunches);
+        const totalSheetsNeeded = maxLaunches <= 15 ? 1 : 1 + Math.ceil((maxLaunches - 15) / 20);
+        const totalSheetsAvailable = workbook.worksheets.length;
+        const totalSheets = Math.min(totalSheetsNeeded, totalSheetsAvailable);
+        
+        for (let s = 0; s < totalSheets; s++) {
+            workbook.worksheets[s].getCell('K2').value = totalSheets;
+        }
+
+        const totalRows = Math.min(15 + (totalSheetsAvailable - 1) * 20, maxLaunches);
 
         for (let i = 0; i < totalRows; i++) {
             const leftLaunch = leftHistory[i];
             const rightLaunch = rightHistory[i];
 
-            let currentSheet;
-            let currentRow;
+            let sheetIndex = i < 15 ? 0 : 1 + Math.floor((i - 15) / 20);
+            let currentSheet = workbook.worksheets[sheetIndex];
             
-            if (i < 15) {
-                currentSheet = workbook.worksheets[0];
+            if (!currentSheet) break;
+
+            let currentRow;
+            if (sheetIndex === 0) {
                 currentRow = 14 + i;
             } else {
-                currentSheet = workbook.worksheets[1];
-                currentRow = 8 + (i - 15);
+                currentRow = 8 + ((i - 15) % 20);
                 
-                if (i === 15) {
+                if (currentRow === 8) {
                     currentSheet.getCell('D3').value = lastLeftNumber;
                     currentSheet.getCell('E3').value = lastRightNumber;
                 }
@@ -195,6 +204,10 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
             supervisorCell.value = supervisorsCombined.join(' / ') || null;
             toolCheckCell.value = Array.from(toolCheckInitials).join(' / ') || null;
         }
+
+        const finalLeft = typeof lastLeftNumber === 'number' ? lastLeftNumber : parseInt(String(lastLeftNumber)) || 0;
+        const finalRight = typeof lastRightNumber === 'number' ? lastRightNumber : parseInt(String(lastRightNumber)) || 0;
+        workbook.worksheets[0].getCell('L8').value = finalLeft + finalRight;
 
         const signOns = dayLogs.filter(log => log.type === 'sign_on');
         for (let i = 0; i < Math.min(signOns.length, 5); i++) {
