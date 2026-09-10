@@ -141,13 +141,17 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
             const processRemark = (drumStr: string, remarkStr: string | null) => {
                 if (!remarkStr) return;
                 let text = remarkStr;
-                const repairRegex = /(?:^|, )Repair: (.*?) S_id: (.*?)(?=(?:, |$))/g;
+                const repairRegex = /(?:^|, )Repair: (.*?) \| Worker: (.*?) \| Sup: (.*?)(?=(?:, |$))/g;
                 let match;
                 while ((match = repairRegex.exec(text)) !== null) {
-                    repairsCombined.push(`${drumStr}: ${match[1]}`);
-                    const supervisorName = getName(match[2]) || match[2];
+                    const repairDetail = match[1].trim();
+                    const workerName = getName(match[2].trim()) || match[2].trim();
+                    const supervisorName = getName(match[3].trim()) || match[3].trim();
+                    
+                    remarksCombined.push(`${drumStr}: Repair: ${repairDetail}`);
+                    repairsCombined.push(workerName);
                     supervisorsCombined.push(supervisorName);
-                    toolCheckInitials.add(getInitials(supervisorName));
+                    toolCheckInitials.add(getInitials(workerName));
                 }
                 text = text.replace(repairRegex, '').trim();
                 text = text.replace(/^,|,$/g, '').trim();

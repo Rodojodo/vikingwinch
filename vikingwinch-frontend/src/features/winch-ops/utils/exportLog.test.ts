@@ -64,7 +64,7 @@ describe('exportLog', () => {
             squadron: 'sqn1',
             winchId: 1,
             leftHistory: [
-                { launch_number: 10, burn: false, remark: 'Repair: Engine fixed S_id: OP2, Test left', operator_sn: 'OP1' },
+                { launch_number: 10, burn: false, remark: 'Repair: Engine fixed | Worker: OP1 | Sup: OP2, Test left', operator_sn: 'OP1' },
                 { launch_number: null, burn: true }
             ],
             rightHistory: [
@@ -84,7 +84,8 @@ describe('exportLog', () => {
         expect(cells['E9'].value).toBe(25);
         expect(cells['G14'].value).toContain('OO');
         expect(cells['G14'].value).toContain('OT');
-        expect(cells['K14'].value).toContain('Engine fixed');
+        expect(cells['H14'].value).toContain('Repair: Engine fixed');
+        expect(cells['K14'].value).toContain('Operator One');
         expect(cells['L14'].value).toContain('Operator Two');
     });
 
