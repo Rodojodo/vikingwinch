@@ -1,8 +1,8 @@
-import { render, screen, within } from '@testing-library/react';
+import {render, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi } from 'vitest';
-import { TraineeSelect } from './TraineeSelect.tsx';
-import type { OperatorRead } from '../../winch-ops/types';
+import {describe, expect, it, vi} from 'vitest';
+import {TraineeSelect} from './TraineeSelect.tsx';
+import type {OperatorRead} from '../../winch-ops/types';
 
 describe('TraineeSelect', () => {
     const mockOperators: OperatorRead[] = [
@@ -96,26 +96,5 @@ describe('TraineeSelect', () => {
 
         const combobox = screen.getByRole('combobox');
         expect(combobox).toHaveAttribute('aria-disabled', 'true');
-    });
-
-    it('disables the Empty option when emptyDisabled is true', async () => {
-        const user = userEvent.setup();
-        render(
-            <TraineeSelect 
-                value="OFF-1002"
-                onChange={vi.fn()}
-                operators={mockOperators}
-                operatorSn="OFF-1001"
-                emptyDisabled={true}
-            />
-        );
-
-        const select = screen.getByRole('combobox');
-        await user.click(select);
-
-        const listbox = screen.getByRole('listbox');
-        const emptyOption = within(listbox).getByRole('option', { name: '— None —' });
-        
-        expect(emptyOption).toHaveAttribute('aria-disabled', 'true');
     });
 });

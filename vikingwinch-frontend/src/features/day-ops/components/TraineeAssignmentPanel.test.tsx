@@ -1,8 +1,8 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import {render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { TraineeAssignmentPanel } from './TraineeAssignmentPanel.tsx';
-import { getOperatorsForSquadron } from '../../winch-ops/api/dataClient.ts';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {TraineeAssignmentPanel} from './TraineeAssignmentPanel.tsx';
+import {getOperatorsForSquadron} from '../../winch-ops/api/dataClient.ts';
 
 vi.mock('../../winch-ops/api/dataClient.ts', () => ({
     getOperatorsForSquadron: vi.fn(),
@@ -62,7 +62,7 @@ describe('TraineeAssignmentPanel', () => {
         expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
     });
 
-    it('disables the confirm button when no trainee is selected', async () => {
+    it('calls recordSignOn with null when no trainee is selected', async () => {
         const user = userEvent.setup();
         render(<TraineeAssignmentPanel {...defaultProps} />);
 
@@ -73,7 +73,9 @@ describe('TraineeAssignmentPanel', () => {
         });
 
         const confirmButton = screen.getByRole('button', { name: /confirm/i });
-        expect(confirmButton).toBeDisabled();
+        expect(confirmButton).not.toBeDisabled();
+        await user.click(confirmButton);
+        expect(mockRecordSignOn).toHaveBeenCalledWith(null);
     });
 
     it('updates the selected trainee, calls recordSignOn, and collapses on confirm', async () => {

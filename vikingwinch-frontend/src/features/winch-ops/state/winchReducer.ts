@@ -1,4 +1,4 @@
-import type { WinchAction, WinchLogState, LaunchRecord } from '../types';
+import type {LaunchRecord, WinchAction, WinchLogState} from '../types';
 
 export const createInitialState = (squadron: string, operatorSn: string, winchId: number | null = null): WinchLogState => ({
     squadron,
@@ -67,11 +67,13 @@ export const winchReducer = (state: WinchLogState, action: WinchAction): WinchLo
             return {...state, operatorSn: action.payload};
         }
 
-        case 'HYDRATE_LAUNCHES': {
+        case 'HYDRATE_HISTORY': {
             const leftHistory: LaunchRecord[] = [];
             const rightHistory: LaunchRecord[] = [];
-            
-            for (const launch of action.payload) {
+            const launches = action.payload.sorted;
+
+
+            for (const launch of launches) {
                 const record: LaunchRecord = {
                     id: launch.launch_id,
                     launch_number: launch.launch_number,
@@ -86,7 +88,7 @@ export const winchReducer = (state: WinchLogState, action: WinchAction): WinchLo
                     rightHistory.push(record);
                 }
             }
-            return { ...state, leftHistory, rightHistory };
+            return { ...state, leftHistory, rightHistory, traineeSn: action.payload.traineeSn };
         }
         default:
             return state;

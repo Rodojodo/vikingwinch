@@ -1,23 +1,18 @@
-import React, {useState, useEffect} from 'react';
-import {
-    Box,
-    Button, ButtonBase,
-    Paper,
-    Stack,
-    Typography
-} from '@mui/material';
-import { getOperatorsForSquadron } from '../../winch-ops/api/dataClient.ts';
-import type { OperatorRead, DayLogResponse } from '../../winch-ops/types';
-import { TraineeSelect } from './TraineeSelect.tsx';
+import React, {useEffect, useState} from 'react';
+import {Box, Button, ButtonBase, Paper, Stack, Typography} from '@mui/material';
+import {getOperatorsForSquadron} from '../../winch-ops/api/dataClient.ts';
+import type {DayLogResponse, OperatorRead} from '../../winch-ops/types';
+import {TraineeSelect} from './TraineeSelect.tsx';
 
 type TraineeAssignmentPanelProps = {
   isLoading: boolean;
-  recordSignOn: (traineeSn: string) => Promise<DayLogResponse>;
+    recordSignOn: (traineeSn: string | null) => Promise<DayLogResponse>;
   squadron?: string;
   operatorSn?: string | null;
+  traineeSn?: string | null;
 };
 
-export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({isLoading, recordSignOn, squadron, operatorSn}) => {
+export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({isLoading, recordSignOn, squadron, operatorSn, traineeSn}) => {
     const [isExpanded, setIsExpanded] = useState<boolean>(false);
     const [focusedTraineeId, setFocusedTraineeId] = useState<string>('');
     const [operators, setOperators] = useState<OperatorRead[]>([]);
@@ -43,13 +38,23 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({i
     }, [squadron]);
 
     const handleConfirm = () => {
-        recordSignOn(focusedTraineeId)
+        const traineeValue = focusedTraineeId === '' ? null : focusedTraineeId;
+        recordSignOn(traineeValue)
             .then(() => {
                 setIsExpanded(false);
                 setFocusedTraineeId('');
             })
             .catch(console.error);
     };
+
+
+    const selectedTrainee = traineeSn !== null
+        ? operators.find(op => op.service_no === traineeSn)
+        : null;
+
+    const labelText = selectedTrainee
+        ? `Change trainee (${selectedTrainee.name})`
+        : '+ Add trainee';
 
 
     if (!isExpanded) {
@@ -78,7 +83,7 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({i
                 }}
             >
                 <Typography sx={{fontWeight: 600, fontSize: '16px', zIndex: 1}}>
-                    + Add trainee
+                    {labelText}
                 </Typography>
             </ButtonBase>
         );
@@ -110,7 +115,6 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({i
                     operators={operators}
                     operatorSn={operatorSn}
                     isFetching={isFetching}
-                    emptyDisabled={true}
                 />
             </Box>
 
@@ -118,7 +122,7 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({i
                 <Button
                     variant="contained"
                     fullWidth
-                    disabled={isLoading || !focusedTraineeId}
+                    disabled={isLoading}
                     onClick={handleConfirm}
                     sx={{
                         backgroundColor: '#2970ff',
