@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { exportLog } from './exportLog.ts';
 import * as fileSaver from 'file-saver';
-import { getWinch, getDayLog, getOperatorsForSquadron } from '../api/dataClient.ts';
+import { getWinch, getDayLog, getOperatorsForSquadron, getBroughtForward } from '../api/dataClient.ts';
 
 vi.mock('file-saver', () => ({
     saveAs: vi.fn(),
@@ -11,6 +11,7 @@ vi.mock('../api/dataClient', () => ({
     getWinch: vi.fn(),
     getDayLog: vi.fn(),
     getOperatorsForSquadron: vi.fn(),
+    getBroughtForward: vi.fn(),
 }));
 
 vi.mock('exceljs', () => {
@@ -20,7 +21,11 @@ vi.mock('exceljs', () => {
             writeBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(8)),
         };
         worksheets = [{
-            getCell: vi.fn().mockReturnValue({ value: null })
+            getCell: vi.fn().mockImplementation((address: string) => {
+                if (!(globalThis as any).__excelCells) (globalThis as any).__excelCells = {};
+                if (!(globalThis as any).__excelCells[address]) (globalThis as any).__excelCells[address] = { value: null };
+                return (globalThis as any).__excelCells[address];
+            })
         }];
     }
     return {
@@ -34,16 +39,18 @@ vi.stubGlobal("fetch", vi.fn());
 describe('exportLog', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        (globalThis as any).__excelCells = {};
         vi.stubGlobal('fetch', vi.fn());
-        vi.mocked(getWinch).mockResolvedValue({ registration: 'REG123' });
+        vi.mocked(getWinch).mockResolvedValue({ registration: 'REG123' } as any);
+        vi.mocked(getBroughtForward).mockResolvedValue({ left: 15, right: 25 });
         vi.mocked(getDayLog).mockResolvedValue([
-            { type: 'sign_on', operator_sn: 'OP1', trainee: 'TR1' } as any,
-            { type: 'sign_on', operator_sn: 'OP2', trainee: null } as any
+            { type: 'sign_on', operator_sn: 'OP1', trainee: 'TR1', timestamp: '2026-09-09T08:00:00Z' } as any,
+            { type: 'sign_on', operator_sn: 'OP2', trainee: null, timestamp: '2026-09-09T09:00:00Z' } as any
         ]);
         vi.mocked(getOperatorsForSquadron).mockResolvedValue([
-            { sn: 'OP1', name: 'Operator One', squadron_id: 'sqn1' },
-            { sn: 'OP2', name: 'Operator Two', squadron_id: 'sqn1' },
-            { sn: 'TR1', name: 'Trainee One', squadron_id: 'sqn1' }
+            { service_no: 'OP1', name: 'Operator One', squadron_id: 'sqn1' } as any,
+            { service_no: 'OP2', name: 'Operator Two', squadron_id: 'sqn1' } as any,
+            { service_no: 'TR1', name: 'Trainee One', squadron_id: 'sqn1' } as any
         ]);
 
         const mockArrayBuffer = new ArrayBuffer(8);
@@ -57,33 +64,41 @@ describe('exportLog', () => {
             squadron: 'sqn1',
             winchId: 1,
             leftHistory: [
-                { launch_number: 10, burn: false },
+                { launch_number: 10, burn: false, remark: 'Repair: Engine fixed | Worker: OP1 | Sup: OP2, Test left', operator_sn: 'OP1' },
                 { launch_number: null, burn: true }
             ],
             rightHistory: [
-                { launch_number: 20, burn: false },
+                { launch_number: 20, burn: false, remark: 'D2 Test', operator_sn: 'OP2' },
                 { launch_number: null, burn: true }
             ]
         } as any;
 
-        // Mock exceljs inside to avoid actual heavy parsing
-        // wait, we can just run it since vitest has node access if it's not purely jsdom or if exceljs works in jsdom
-        // exceljs works in jsdom
-        await exportLog(mockState, 5.5);
+        await exportLog(mockState);
         
         expect(fileSaver.saveAs).toHaveBeenCalled();
         const blobArg = vi.mocked(fileSaver.saveAs).mock.calls[0][0];
         expect(blobArg).toBeInstanceOf(Blob);
+
+        const cells = (globalThis as any).__excelCells;
+        expect(cells['D9'].value).toBe(15);
+        expect(cells['E9'].value).toBe(25);
+        expect(cells['G14'].value).toContain('OO');
+        expect(cells['G14'].value).toContain('OT');
+        expect(cells['H14'].value).toContain('Repair: Engine fixed');
+        expect(cells['K14'].value).toContain('Operator One');
+        expect(cells['L14'].value).toContain('Operator Two');
     });
 
     it('throws error if winchId is null', async () => {
         const mockState = { winchId: null } as any;
-        await expect(exportLog(mockState, 5.5)).rejects.toThrow("No winch selected");
+        await expect(exportLog(mockState)).rejects.toThrow("No winch selected");
     });
 
     it('throws custom error if export process fails', async () => {
+        // Break fetch to trigger error
+        (globalThis.fetch as any).mockRejectedValueOnce(new Error('Network error'));
         const mockState = { winchId: 1 } as any;
-        await expect(exportLog(mockState, 5.5)).rejects.toThrow("Log export failed. Please check your connection and try again.");
+        await expect(exportLog(mockState)).rejects.toThrow("Log export failed. Please check your connection and try again.");
     });
 
 
@@ -100,12 +115,12 @@ describe('exportLog', () => {
             { type: 'sign_on', operator_sn: 'UNKNOWN_OP', trainee: null } as any
         ]);
         
-        await exportLog(mockState, 5.5);
+        await exportLog(mockState);
         
         expect(fileSaver.saveAs).toHaveBeenCalled();
     });
 
-    it('handles null hours and brought forward when all launch numbers are null', async () => {
+    it('handles null brought forward when all launch numbers are null', async () => {
         const mockState = {
             squadron: 'sqn1',
             winchId: 1,
@@ -117,8 +132,7 @@ describe('exportLog', () => {
             ]
         } as any;
 
-        // pass hours as null
-        await exportLog(mockState, null);
+        await exportLog(mockState);
         
         expect(fileSaver.saveAs).toHaveBeenCalled();
     });

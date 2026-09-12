@@ -15,11 +15,11 @@ INSERT INTO winches (id, registration, squadron_id) VALUES
 -- 3. POPULATE OPERATORS
 -- (Using unique simulated Entra OIDs / UUIDs)  
 INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES 
-('OFF-1001', 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d', 'John Smith', '123 VGS', 'examiner'),
+('OFF-1001', 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d', 'Joe Bloggs', '123 VGS', 'examiner'),
 ('OFF-1002', 'b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e', 'Sarah Jenkins', '123 VGS', 'instructor'),
 ('SGT-2005', 'c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f', 'David Miller', '123 VGS', 'operator'),
 ('CDT-3042', 'd4e5f6a7-b8c9-0d1e-2f3a-4b5c6d7e8f9a', 'Emily Clack', '123 VGS', 'trainee'),
-('OFF-4001', 'e5f6a7b8-c9d0-1e2f-3a4b-5c6d7e8f9a0b', 'Joe Bloggs', '321 VGS', 'instructor');
+('OFF-4001', 'e5f6a7b8-c9d0-1e2f-3a4b-5c6d7e8f9a0b', 'John Smith', '321 VGS', 'instructor');
 
 -- 4. POPULATE LAUNCHES
 -- (The launch_id column will auto-increment automatically)

@@ -8,6 +8,7 @@ export interface LaunchRecord {
   timestamp: string | null;
   remark: string | null;
   burn: boolean;
+  operator_sn: string;
 }
 
 

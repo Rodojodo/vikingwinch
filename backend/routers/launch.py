@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.session import get_db
 from repositories import launch_repo
-from core.schemas import LaunchCreate, LaunchRead, RemarkCreate, RepairCreate
+from core.schemas import LaunchCreate, LaunchRead, RemarkCreate, RepairCreate, BroughtForwardRead
 
 router = APIRouter(prefix="/launches", tags=["launches"])
 
@@ -74,3 +74,12 @@ async def get_launches(
 ):
     """All launches for a winch on a given date (?winch_id=N&day=YYYY-MM-DD)."""
     return await launch_repo.get_launches_from_date(db, winch_id, day)
+    
+@router.get("/brought_forward", response_model=BroughtForwardRead)
+async def get_brought_forward(
+    winch_id: int,
+    day: date,
+    db: AsyncSession = Depends(get_db),
+):
+    """Last non-burned launch number for each drum prior to the given date."""
+    return await launch_repo.get_brought_forward(db, winch_id, day)

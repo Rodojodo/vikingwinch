@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Button, FormControl, MenuItem, Select, TextField, Typography, Alert, Stack } from '@mui/material';
 import { darkSelectStyles, darkTextFieldStyles } from '../../../themes/styles.ts';
 import { getOperatorsForSquadron } from '../../winch-ops/api/dataClient.ts';
-import type { OperatorRead, WinchLogState } from '../../winch-ops/types/index';
+import type { OperatorRead, WinchLogState } from '../../winch-ops/types';
 import { exportLog } from '../../winch-ops/utils/exportLog.ts';
 
 type FinishDayPanelProps = {
@@ -84,10 +84,8 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ finishDay, isLoa
     };
 
     const handleDownloadLog = async () => {
-        const parsedHours = hoursStop ? parseFloat(hoursStop) : null;
-        const validHours = typeof parsedHours === 'number' && !isNaN(parsedHours) ? parsedHours : null;
         try {
-            await exportLog(state, validHours);
+            await exportLog(state);
         } catch (err) {
             setLocalError(err instanceof Error ? err.message : 'Failed to download log');
         }

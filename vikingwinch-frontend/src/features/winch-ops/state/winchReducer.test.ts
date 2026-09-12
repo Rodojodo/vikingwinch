@@ -48,7 +48,7 @@ describe('winchReducer', () => {
 
     const result = winchReducer(initialState, action);
 
-    expect(result.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:15:00Z', remark: null, burn: false, launch_number: 101 }]);
+    expect(result.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:15:00Z', remark: null, burn: false, launch_number: 101, operator_sn: 'OFF-1001' }]);
     expect(result.rightHistory).toEqual([]);
   });
 
@@ -58,7 +58,7 @@ describe('winchReducer', () => {
 
     const result = winchReducer(initialState, action);
 
-    expect(result.rightHistory).toEqual([{ id: 102, timestamp: '2026-08-30T10:15:00Z', remark: null, burn: false, launch_number: 102 }]);
+    expect(result.rightHistory).toEqual([{ id: 102, timestamp: '2026-08-30T10:15:00Z', remark: null, burn: false, launch_number: 102, operator_sn: 'OFF-1001' }]);
     expect(result.leftHistory).toEqual([]);
   });
 
@@ -88,30 +88,30 @@ describe('winchReducer', () => {
     const state = {
       ...initialState,
       leftHistory: [
-        { id: 101, timestamp: '2026-08-30T09:15:00Z', remark: null, burn: false, launch_number: 101 },
-        { id: 102, timestamp: '2026-08-30T09:25:00Z', remark: null, burn: false, launch_number: 102 },
+        { id: 101, timestamp: '2026-08-30T09:15:00Z', remark: null, burn: false, launch_number: 101, operator_sn: 'OFF-1001' },
+        { id: 102, timestamp: '2026-08-30T09:25:00Z', remark: null, burn: false, launch_number: 102, operator_sn: 'OFF-1001' },
       ],
     };
 
     const action: WinchAction = { type: 'UNDO_LAUNCH', payload: { drum: 'left' } };
     const result = winchReducer(state, action);
 
-    expect(result.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:15:00Z', remark: null, burn: false, launch_number: 101 }]);
+    expect(result.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:15:00Z', remark: null, burn: false, launch_number: 101, operator_sn: 'OFF-1001' }]);
   });
 
   it('processes UNDO_LAUNCH for the right drum and removes the last record', () => {
     const state = {
       ...initialState,
       rightHistory: [
-        { id: 201, timestamp: '2026-08-30T10:15:00Z', remark: null, burn: false, launch_number: 201 },
-        { id: 202, timestamp: '2026-08-30T10:25:00Z', remark: null, burn: false, launch_number: 202 },
+        { id: 201, timestamp: '2026-08-30T10:15:00Z', remark: null, burn: false, launch_number: 201, operator_sn: 'OFF-1001' },
+        { id: 202, timestamp: '2026-08-30T10:25:00Z', remark: null, burn: false, launch_number: 202, operator_sn: 'OFF-1001' },
       ],
     };
 
     const action: WinchAction = { type: 'UNDO_LAUNCH', payload: { drum: 'right' } };
     const result = winchReducer(state, action);
 
-    expect(result.rightHistory).toEqual([{ id: 201, timestamp: '2026-08-30T10:15:00Z', remark: null, burn: false, launch_number: 201 }]);
+    expect(result.rightHistory).toEqual([{ id: 201, timestamp: '2026-08-30T10:15:00Z', remark: null, burn: false, launch_number: 201, operator_sn: 'OFF-1001' }]);
   });
 
   it('handles UNDO_LAUNCH gracefully when the target history stack is empty', () => {
@@ -136,8 +136,8 @@ describe('winchReducer', () => {
     const state = {
       ...initialState,
       leftHistory: [
-        { id: 101, timestamp: '2026-08-30T09:15:00Z', remark: null, burn: false, launch_number: 101 },
-        { id: 102, timestamp: '2026-08-30T09:25:00Z', remark: null, burn: false, launch_number: 102 },
+        { id: 101, timestamp: '2026-08-30T09:15:00Z', remark: null, burn: false, launch_number: 101, operator_sn: 'OFF-1001' },
+        { id: 102, timestamp: '2026-08-30T09:25:00Z', remark: null, burn: false, launch_number: 102, operator_sn: 'OFF-1001' },
       ],
     };
 
@@ -158,7 +158,7 @@ describe('winchReducer', () => {
     const state = {
       ...initialState,
       rightHistory: [
-        { id: 201, timestamp: '2026-08-30T09:15:00Z', remark: null, burn: false, launch_number: 201 },
+        { id: 201, timestamp: '2026-08-30T09:15:00Z', remark: null, burn: false, launch_number: 201, operator_sn: 'OFF-1001' },
       ],
     };
 
@@ -184,7 +184,7 @@ describe('winchReducer', () => {
     const state = {
       ...initialState,
       leftHistory: [
-        { id: 101, timestamp: '2026-08-30T09:15:00Z', remark: 'Initial remark', burn: false, launch_number: 101 },
+        { id: 101, timestamp: '2026-08-30T09:15:00Z', remark: 'Initial remark', burn: false, launch_number: 101, operator_sn: 'OFF-1001' },
       ],
     };
 
