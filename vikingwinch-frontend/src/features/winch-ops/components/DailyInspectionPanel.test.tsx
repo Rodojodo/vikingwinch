@@ -2,10 +2,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DailyInspectionPanel } from './DailyInspectionPanel.tsx';
-import { getWinchDrums, getWinchHours, postDayLogToDb } from '../api/dataClient.ts';
+import { getBroughtForward, getWinchHours, postDayLogToDb } from '../api/dataClient.ts';
 
 vi.mock('../api/dataClient.ts', () => ({
-    getWinchDrums: vi.fn(),
+    getBroughtForward: vi.fn(),
     getWinchHours: vi.fn(),
     postDayLogToDb: vi.fn(),
 }));
@@ -36,7 +36,7 @@ describe('DailyInspectionPanel', () => {
 
     it('retrieves data from cloud and updates fields', async () => {
         const user = userEvent.setup();
-        vi.mocked(getWinchDrums).mockResolvedValue({ left_drum: 15, right_drum: 8 } as any);
+        vi.mocked(getBroughtForward).mockResolvedValue({ left: 15, right: 8 } as any);
         vi.mocked(getWinchHours).mockResolvedValue({ hours: 150.5 } as any);
 
         render(<DailyInspectionPanel session={mockSession as any} onComplete={mockOnComplete} />);
@@ -53,7 +53,7 @@ describe('DailyInspectionPanel', () => {
 
     it('handles retrieve data missing fields', async () => {
         const user = userEvent.setup();
-        vi.mocked(getWinchDrums).mockResolvedValue({ left_drum: null, right_drum: undefined } as any);
+        vi.mocked(getBroughtForward).mockResolvedValue({ left: null, right: undefined } as any);
         vi.mocked(getWinchHours).mockResolvedValue({ hours: null } as any);
 
         render(<DailyInspectionPanel session={mockSession as any} onComplete={mockOnComplete} />);
@@ -62,7 +62,7 @@ describe('DailyInspectionPanel', () => {
         await user.click(retrieveBtn);
 
         await waitFor(() => {
-            expect(getWinchDrums).toHaveBeenCalledWith(42);
+            expect(getBroughtForward).toHaveBeenCalledWith(42, expect.any(String));
         });
 
         // Fields should remain empty
@@ -73,7 +73,7 @@ describe('DailyInspectionPanel', () => {
         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         const user = userEvent.setup();
 
-        vi.mocked(getWinchDrums).mockRejectedValue(new Error('Fetch drums failed'));
+        vi.mocked(getBroughtForward).mockRejectedValue(new Error('Fetch drums failed'));
         vi.mocked(getWinchHours).mockRejectedValue(new Error('Fetch hours failed'));
 
         render(<DailyInspectionPanel session={mockSession as any} onComplete={mockOnComplete} />);
@@ -175,6 +175,6 @@ describe('DailyInspectionPanel', () => {
         const retrieveBtn = screen.getByRole('button', { name: 'Retrieve data from cloud' });
         await user.click(retrieveBtn);
 
-        expect(getWinchDrums).not.toHaveBeenCalled();
+        expect(getBroughtForward).not.toHaveBeenCalled();
     });
 });
