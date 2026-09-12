@@ -8,7 +8,7 @@ import {
 } from '@mui/material';
 import { getOperatorsForSquadron } from '../../winch-ops/api/dataClient.ts';
 import type { OperatorRead, DayLogResponse } from '../../winch-ops/types';
-import { TraineeSelect } from '../../../components/TraineeSelect.tsx';
+import { TraineeSelect } from './TraineeSelect.tsx';
 
 type TraineeAssignmentPanelProps = {
   isLoading: boolean;
@@ -110,7 +110,6 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({i
                     operators={operators}
                     operatorSn={operatorSn}
                     isFetching={isFetching}
-                    emptyText="— Select Trainee —"
                     emptyDisabled={true}
                 />
             </Box>

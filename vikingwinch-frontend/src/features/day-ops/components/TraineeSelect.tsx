@@ -1,6 +1,6 @@
 import React from 'react';
 import { FormControl, Select, MenuItem, type SelectChangeEvent } from '@mui/material';
-import type { OperatorRead } from '../features/winch-ops/types';
+import type { OperatorRead } from '../../winch-ops/types';
 
 export interface TraineeSelectProps {
     value: string;
@@ -9,7 +9,6 @@ export interface TraineeSelectProps {
     operatorSn: string | null | undefined;
     disabled?: boolean;
     isFetching?: boolean;
-    emptyText?: string;
     emptyDisabled?: boolean;
 }
 
@@ -20,7 +19,6 @@ export const TraineeSelect: React.FC<TraineeSelectProps> = ({
     operatorSn,
     disabled = false,
     isFetching = false,
-    emptyText = "— None —",
     emptyDisabled = false
 }) => {
     return (
@@ -40,7 +38,7 @@ export const TraineeSelect: React.FC<TraineeSelectProps> = ({
                     '& .MuiSvgIcon-root': { color: '#94a3b8' }
                 }}
             >
-                <MenuItem value="" disabled={emptyDisabled}>{emptyText}</MenuItem>
+                <MenuItem value="" disabled={emptyDisabled}>— None —</MenuItem>
                 {operators
                     .filter(op => op.service_no !== operatorSn)
                     .map(op => (

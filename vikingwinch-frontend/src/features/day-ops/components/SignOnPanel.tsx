@@ -3,7 +3,7 @@ import { Box, Button, Typography, Paper } from '@mui/material';
 import { getOperatorsForSquadron } from '../../winch-ops/api/dataClient.ts';
 import type { OperatorRead } from '../../winch-ops/types';
 import { useWinchSession } from '../../winch-ops/hooks/useWinchSession.ts';
-import { TraineeSelect } from '../../../components/TraineeSelect.tsx';
+import { TraineeSelect } from './TraineeSelect.tsx';
 
 interface SignOnPanelProps {
     session: ReturnType<typeof useWinchSession>;
@@ -108,7 +108,6 @@ export const SignOnPanel: React.FC<SignOnPanelProps> = ({ session, onComplete, l
                     operators={operators}
                     operatorSn={state.operatorSn}
                     isFetching={isFetching}
-                    emptyText="— None —"
                     emptyDisabled={false}
                 />
             </Paper>
