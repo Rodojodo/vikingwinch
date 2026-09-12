@@ -76,7 +76,7 @@ describe('useWinchSession', () => {
       is_burn: false,
     });
 
-    expect(result.current.state.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:15:00Z', remark: null, burn: false, launch_number: 101 }]);
+    expect(result.current.state.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:15:00Z', remark: null, burn: false, launch_number: 101, operator_sn: 'OFF-1001' }]);
     expect(result.current.derived.leftLaunches).toBe(1);
     expect(result.current.derived.leftLast).toBe('2026-08-30T09:15:00Z');
     expect(result.current.derived.lastDrum).toBe('left');
@@ -94,7 +94,7 @@ describe('useWinchSession', () => {
       await result.current.executeLaunch('right', false);
     });
 
-    expect(result.current.state.rightHistory).toEqual([{ id: 102, timestamp: '2026-08-30T10:15:00Z', remark: null, burn: false, launch_number: 102 }]);
+    expect(result.current.state.rightHistory).toEqual([{ id: 102, timestamp: '2026-08-30T10:15:00Z', remark: null, burn: false, launch_number: 102, operator_sn: 'OFF-1001' }]);
     expect(result.current.derived.rightLaunches).toBe(1);
     expect(result.current.derived.rightLast).toBe('2026-08-30T10:15:00Z');
     expect(result.current.derived.lastDrum).toBe('right');
@@ -142,7 +142,7 @@ describe('useWinchSession', () => {
     });
 
     expect(removeLaunchFromDb).toHaveBeenCalledWith(102);
-    expect(result.current.state.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:00:00Z', remark: null, burn: false, launch_number: 101 }]);
+    expect(result.current.state.leftHistory).toEqual([{ id: 101, timestamp: '2026-08-30T09:00:00Z', remark: null, burn: false, launch_number: 101, operator_sn: 'OFF-1001' }]);
     expect(result.current.derived.leftLaunches).toBe(1);
     expect(result.current.derived.leftLast).toBe('2026-08-30T09:00:00Z');
   });
