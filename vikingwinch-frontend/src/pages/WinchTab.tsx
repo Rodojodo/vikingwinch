@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
-import { Box } from '@mui/material';
-import { LaunchPanel } from '../features/launch-ops/components/LaunchPanel';
-import { SkylogValues } from '../features/day-ops/components/SkylogValues';
-import { useWinchSession } from '../features/winch-ops/hooks/useWinchSession';
-import { WinchSelectPanel } from '../features/winch-ops/components/WinchSelectPanel';
-import { SignOnPanel } from '../features/day-ops/components/SignOnPanel.tsx';
-import { DailyInspectionPanel } from '../features/winch-ops/components/DailyInspectionPanel';
-import { getDayLog, getLaunches } from '../features/winch-ops/api/dataClient';
-import type { TabView } from '../features/winch-ops/types'
+import {useEffect, useState} from 'react';
+import {Box} from '@mui/material';
+import {LaunchPanel} from '../features/launch-ops/components/LaunchPanel';
+import {SkylogValues} from '../features/day-ops/components/SkylogValues';
+import {useWinchSession} from '../features/winch-ops/hooks/useWinchSession';
+import {WinchSelectPanel} from '../features/winch-ops/components/WinchSelectPanel';
+import {SignOnPanel} from '../features/day-ops/components/SignOnPanel.tsx';
+import {DailyInspectionPanel} from '../features/winch-ops/components/DailyInspectionPanel';
+import {getDayLog, getLaunches} from '../features/winch-ops/api/dataClient';
+import type {TabView} from '../features/winch-ops/types'
 
 
 interface WinchTabProps {
@@ -52,8 +52,8 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, openWinchIds,
                     getLaunches(session.state.winchId!, todayStr)
                 ]);
 
-                const traineeSn = logs.findLast(l => l.type === 'sign_on')?.trainee ?? null;                console.log(traineeSn);
-                session.hydrateLaunches(launches, traineeSn);
+                const traineeSn = logs.findLast(l => l.type === 'sign_on')?.trainee ?? null;
+                session.hydrateHistory(launches, traineeSn);
                 const signOnLogs = logs.filter(l => l.type === 'sign_on');
                 const diLogs = logs.filter(l => l.type === 'di');
                 

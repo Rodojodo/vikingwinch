@@ -71,7 +71,7 @@ export const winchReducer = (state: WinchLogState, action: WinchAction): WinchLo
             const leftHistory: LaunchRecord[] = [];
             const rightHistory: LaunchRecord[] = [];
             const launches = action.payload.sorted;
-            console.log(action.payload);
+
 
             for (const launch of launches) {
                 const record: LaunchRecord = {

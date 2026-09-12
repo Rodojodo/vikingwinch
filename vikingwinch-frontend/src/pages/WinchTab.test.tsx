@@ -1,8 +1,8 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
-import { WinchTab } from './WinchTab.tsx';
-import { useWinchSession } from '../features/winch-ops/hooks/useWinchSession';
-import { getDayLog, getLaunches } from '../features/winch-ops/api/dataClient';
+import {fireEvent, render, screen, waitFor} from '@testing-library/react';
+import {describe, expect, it, vi} from 'vitest';
+import {WinchTab} from './WinchTab.tsx';
+import {useWinchSession} from '../features/winch-ops/hooks/useWinchSession';
+import {getDayLog, getLaunches} from '../features/winch-ops/api/dataClient';
 
 vi.mock('../features/winch-ops/hooks/useWinchSession', () => ({
     useWinchSession: vi.fn(),
@@ -30,7 +30,7 @@ vi.mock('../features/day-ops/components/SkylogValues', () => ({
 }));
 
 vi.mock('../features/winch-ops/components/WinchSelectPanel', () => ({
-    WinchSelectPanel: ({ onSelectWinch, openWinchIds }: any) => (
+    WinchSelectPanel: ({onSelectWinch}: any) => (
         <div data-testid="winch-select">
             <button onClick={() => onSelectWinch(1)}>Select Winch</button>
         </div>
@@ -42,7 +42,7 @@ describe('WinchTab', () => {
         vi.mocked(useWinchSession).mockReturnValue({
             state: { winchId: 1, squadron: 'sqn1' },
             derived: { leftLaunches: 10, rightLaunches: 15 },
-            hydrateLaunches: vi.fn(),
+            hydrateHistory: vi.fn(),
         } as any);
 
         vi.mocked(getDayLog).mockResolvedValue([
@@ -72,7 +72,7 @@ describe('WinchTab', () => {
             state: { winchId: null, squadron: 'sqn1' },
             setWinchId: setWinchIdMock,
             derived: { leftLaunches: 10, rightLaunches: 15 },
-            hydrateLaunches: vi.fn(),
+            hydrateHistory: vi.fn(),
         } as any);
 
         render(<WinchTab tabId="1" squadronId="123 VGS" operatorSn="OFF-1001" winchId={null} openWinchIds={[]} onWinchSelect={vi.fn()} />);
