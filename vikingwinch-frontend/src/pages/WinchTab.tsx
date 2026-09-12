@@ -52,7 +52,8 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, openWinchIds,
                     getLaunches(session.state.winchId!, todayStr)
                 ]);
 
-                session.hydrateLaunches(launches);
+                const traineeSn = logs.findLast(l => l.type === 'sign_on')?.trainee ?? null;                console.log(traineeSn);
+                session.hydrateLaunches(launches, traineeSn);
                 const signOnLogs = logs.filter(l => l.type === 'sign_on');
                 const diLogs = logs.filter(l => l.type === 'di');
                 

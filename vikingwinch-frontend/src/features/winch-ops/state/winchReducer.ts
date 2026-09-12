@@ -70,8 +70,10 @@ export const winchReducer = (state: WinchLogState, action: WinchAction): WinchLo
         case 'HYDRATE_LAUNCHES': {
             const leftHistory: LaunchRecord[] = [];
             const rightHistory: LaunchRecord[] = [];
-            
-            for (const launch of action.payload) {
+            const launches = action.payload.sorted;
+            console.log(action.payload);
+
+            for (const launch of launches) {
                 const record: LaunchRecord = {
                     id: launch.launch_id,
                     launch_number: launch.launch_number,
@@ -86,7 +88,7 @@ export const winchReducer = (state: WinchLogState, action: WinchAction): WinchLo
                     rightHistory.push(record);
                 }
             }
-            return { ...state, leftHistory, rightHistory };
+            return { ...state, leftHistory, rightHistory, traineeSn: action.payload.traineeSn };
         }
         default:
             return state;

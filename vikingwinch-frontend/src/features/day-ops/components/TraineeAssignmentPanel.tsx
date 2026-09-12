@@ -15,9 +15,10 @@ type TraineeAssignmentPanelProps = {
   recordSignOn: (traineeSn: string) => Promise<DayLogResponse>;
   squadron?: string;
   operatorSn?: string | null;
+  traineeSn?: string | null;
 };
 
-export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({isLoading, recordSignOn, squadron, operatorSn}) => {
+export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({isLoading, recordSignOn, squadron, operatorSn, traineeSn}) => {
     const [isExpanded, setIsExpanded] = useState<boolean>(false);
     const [focusedTraineeId, setFocusedTraineeId] = useState<string>('');
     const [operators, setOperators] = useState<OperatorRead[]>([]);
@@ -52,6 +53,15 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({i
     };
 
 
+    const selectedTrainee = traineeSn !== null
+        ? operators.find(op => op.service_no === traineeSn)
+        : null;
+
+    const labelText = selectedTrainee
+        ? `Change trainee (${selectedTrainee.name})`
+        : '+ Add trainee';
+
+
     if (!isExpanded) {
         return (
             <ButtonBase
@@ -78,7 +88,7 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({i
                 }}
             >
                 <Typography sx={{fontWeight: 600, fontSize: '16px', zIndex: 1}}>
-                    + Add trainee
+                    {labelText}
                 </Typography>
             </ButtonBase>
         );

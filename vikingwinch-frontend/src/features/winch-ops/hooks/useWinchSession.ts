@@ -174,11 +174,12 @@ export const useWinchSession = (squadronId: string, operatorSn: string, initialW
         dispatch({ type: 'SET_WINCH_ID', payload: id });
     }, []);
 
-    const hydrateLaunches = useCallback((launches: LaunchResponse[]) => {
+    const hydrateLaunches = useCallback((launches: LaunchResponse[], traineeSn: string | null) => {
         const sorted = [...launches].sort((a, b) => 
             (a.timestamp || '').localeCompare(b.timestamp || '') || a.launch_id - b.launch_id
         );
-        dispatch({ type: 'HYDRATE_LAUNCHES', payload: sorted });
+        const payload = {sorted, traineeSn};
+        dispatch({ type: 'HYDRATE_LAUNCHES', payload: payload });
     }, []);
 
     return {
