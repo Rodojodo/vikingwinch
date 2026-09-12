@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
     Box,
     Button, ButtonBase,
@@ -10,25 +10,52 @@ import {
     Stack,
     Typography
 } from '@mui/material';
-import type {DayLogResponse, Trainee} from "../../types";
-
-
-const TRAINEES: Trainee[] = [
-    {id: '1', name: 'Ben Ten'},
-    {id: '2', name: 'Gwen Tennyson'},
-];
+import { getOperatorsForSquadron } from '../../winch-ops/api/dataClient.ts';
+import type { OperatorRead, DayLogResponse } from '../../winch-ops/types';
 
 type TraineeAssignmentPanelProps = {
   isLoading: boolean;
   recordSignOn: (traineeSn: string) => Promise<DayLogResponse>;
+  squadron?: string;
+  operatorSn?: string | null;
 };
 
-export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({isLoading, recordSignOn}) => {
+export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({isLoading, recordSignOn, squadron, operatorSn}) => {
     const [isExpanded, setIsExpanded] = useState<boolean>(false);
-    const [focusedTraineeId, setFocusedTraineeId] = useState<string>('1');
+    const [focusedTraineeId, setFocusedTraineeId] = useState<string>('');
+    const [operators, setOperators] = useState<OperatorRead[]>([]);
+    const [isFetching, setIsFetching] = useState(false);
+
+    useEffect(() => {
+        if (!squadron) return;
+        setIsFetching(true);
+        const controller = new AbortController();
+        getOperatorsForSquadron(squadron, controller.signal)
+            .then(data => {
+                if (!controller.signal.aborted) {
+                    setOperators(data);
+                }
+            })
+            .catch(console.error)
+            .finally(() => {
+                if (!controller.signal.aborted) {
+                    setIsFetching(false);
+                }
+            });
+        return () => controller.abort();
+    }, [squadron]);
 
     const handleFocusChange = (event: SelectChangeEvent<string>) => {
         setFocusedTraineeId(event.target.value);
+    };
+
+    const handleConfirm = () => {
+        recordSignOn(focusedTraineeId)
+            .then(() => {
+                setIsExpanded(false);
+                setFocusedTraineeId('');
+            })
+            .catch(console.error);
     };
 
 
@@ -88,6 +115,8 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({i
                     <Select
                         value={focusedTraineeId}
                         onChange={handleFocusChange}
+                        displayEmpty
+                        disabled={isFetching}
                         sx={{
                             backgroundColor: '#111927',
                             color: 'white',
@@ -107,9 +136,10 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({i
                             }
                         }}
                     >
-                        {TRAINEES.map((trainee) => (
-                            <MenuItem key={trainee.id} value={trainee.id}>
-                                {trainee.name}
+                        <MenuItem value="" disabled>— Select Trainee —</MenuItem>
+                        {operators.filter(op => op.service_no !== operatorSn).map((op) => (
+                            <MenuItem key={op.service_no} value={op.service_no}>
+                                {op.name}
                             </MenuItem>
                         ))}
                     </Select>
@@ -120,7 +150,8 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({i
                 <Button
                     variant="contained"
                     fullWidth
-                    onClick={() => recordSignOn(focusedTraineeId)}
+                    disabled={isLoading || !focusedTraineeId}
+                    onClick={handleConfirm}
                     sx={{
                         backgroundColor: '#2970ff',
                         textTransform: 'none',
