@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Button, Typography, FormControl, Select, MenuItem, Paper } from '@mui/material';
-import { getOperatorsForSquadron } from '../api/dataClient.ts';
-import type { OperatorRead } from '../types';
-import { useWinchSession } from '../hooks/useWinchSession.ts';
+import { Box, Button, Typography, Paper } from '@mui/material';
+import { getOperatorsForSquadron } from '../../winch-ops/api/dataClient.ts';
+import type { OperatorRead } from '../../winch-ops/types';
+import { useWinchSession } from '../../winch-ops/hooks/useWinchSession.ts';
+import { TraineeSelect } from '../../../components/TraineeSelect.tsx';
 
 interface SignOnPanelProps {
     session: ReturnType<typeof useWinchSession>;
@@ -101,30 +102,15 @@ export const SignOnPanel: React.FC<SignOnPanelProps> = ({ session, onComplete, l
                 <Typography variant="body2" sx={{ color: '#94a3b8', mb: 1, fontWeight: 500 }}>
                     Add trainee (optional)
                 </Typography>
-                <FormControl fullWidth size="small">
-                    <Select
-                        value={selectedTraineeSn}
-                        onChange={(e) => setSelectedTraineeSn(e.target.value)}
-                        displayEmpty
-                        disabled={isFetching}
-                        sx={{
-                            backgroundColor: '#111927',
-                            color: 'white',
-                            borderRadius: 2,
-                            '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.1)' },
-                            '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.2)' },
-                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#3b82f6' },
-                            '& .MuiSvgIcon-root': { color: '#94a3b8' }
-                        }}
-                    >
-                        <MenuItem value="">— None —</MenuItem>
-                        {operators.filter(op => op.service_no !== state.operatorSn).map(op => (
-                            <MenuItem key={op.service_no} value={op.service_no}>
-                                {op.name}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
+                <TraineeSelect
+                    value={selectedTraineeSn}
+                    onChange={setSelectedTraineeSn}
+                    operators={operators}
+                    operatorSn={state.operatorSn}
+                    isFetching={isFetching}
+                    emptyText="— None —"
+                    emptyDisabled={false}
+                />
             </Paper>
 
             <Button

@@ -2,16 +2,13 @@ import React, {useState, useEffect} from 'react';
 import {
     Box,
     Button, ButtonBase,
-    FormControl,
-    MenuItem,
     Paper,
-    Select,
-    type SelectChangeEvent,
     Stack,
     Typography
 } from '@mui/material';
 import { getOperatorsForSquadron } from '../../winch-ops/api/dataClient.ts';
 import type { OperatorRead, DayLogResponse } from '../../winch-ops/types';
+import { TraineeSelect } from '../../../components/TraineeSelect.tsx';
 
 type TraineeAssignmentPanelProps = {
   isLoading: boolean;
@@ -44,10 +41,6 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({i
             });
         return () => controller.abort();
     }, [squadron]);
-
-    const handleFocusChange = (event: SelectChangeEvent<string>) => {
-        setFocusedTraineeId(event.target.value);
-    };
 
     const handleConfirm = () => {
         recordSignOn(focusedTraineeId)
@@ -111,39 +104,15 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({i
                 >
                     Select trainee
                 </Typography>
-                <FormControl fullWidth size="small">
-                    <Select
-                        value={focusedTraineeId}
-                        onChange={handleFocusChange}
-                        displayEmpty
-                        disabled={isFetching}
-                        sx={{
-                            backgroundColor: '#111927',
-                            color: 'white',
-                            borderRadius: 2,
-                            '& .MuiOutlinedInput-notchedOutline': {
-                                borderColor: '#2970ff',
-                                borderWidth: 2,
-                            },
-                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                                borderColor: '#2970ff',
-                            },
-                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                borderColor: '#2970ff',
-                            },
-                            '& .MuiSvgIcon-root': {
-                                color: '#8b9bb4',
-                            }
-                        }}
-                    >
-                        <MenuItem value="" disabled>— Select Trainee —</MenuItem>
-                        {operators.filter(op => op.service_no !== operatorSn).map((op) => (
-                            <MenuItem key={op.service_no} value={op.service_no}>
-                                {op.name}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
+                <TraineeSelect
+                    value={focusedTraineeId}
+                    onChange={setFocusedTraineeId}
+                    operators={operators}
+                    operatorSn={operatorSn}
+                    isFetching={isFetching}
+                    emptyText="— Select Trainee —"
+                    emptyDisabled={true}
+                />
             </Box>
 
             <Stack direction="row" spacing={2}>

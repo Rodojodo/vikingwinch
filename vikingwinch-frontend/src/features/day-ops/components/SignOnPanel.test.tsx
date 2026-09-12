@@ -2,9 +2,9 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SignOnPanel } from './SignOnPanel.tsx';
-import { getOperatorsForSquadron } from '../api/dataClient.ts';
+import { getOperatorsForSquadron } from '../../winch-ops/api/dataClient.ts';
 
-vi.mock('../api/dataClient.ts', () => ({
+vi.mock('../../winch-ops/api/dataClient.ts', () => ({
     getOperatorsForSquadron: vi.fn(),
 }));
 
