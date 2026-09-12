@@ -74,7 +74,7 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
         }
 
         if (finishLog) {
-            sheet.getCell('H12').value = getName(finishLog.operator_sn);
+            sheet.getCell('H12').value = getName(finishLog.cable_check);
             sheet.getCell('J12').value = getName(finishLog.operator_sn); // Signature is just the name for now
         }
 
@@ -141,7 +141,7 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
             const processRemark = (drumStr: string, remarkStr: string | null) => {
                 if (!remarkStr) return;
                 let text = remarkStr;
-                const repairRegex = /(?:^|, )Repair: (.*?) \| Worker: (.*?) \| Sup: (.*?)(?=(?:, |$))/g;
+                const repairRegex = /(?:^|, )Repair: (.*?) \| Worker: (.*?) \| Sup: (.*?)(?=, |$)/g;
                 let match;
                 while ((match = repairRegex.exec(text)) !== null) {
                     const repairDetail = match[1].trim();
@@ -228,7 +228,7 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
             if (log.timestamp) {
                 sheet.getCell(`I${CELLS.OPERATOR_START_ROW + i}`).value = formatUKTime(log.timestamp);
             }
-            sheet.getCell(`K${CELLS.OPERATOR_START_ROW + i}`).value = cellValue;
+            sheet.getCell(`K${CELLS.OPERATOR_START_ROW + i}`).value = operatorName;
         }
 
         const buffer = await workbook.xlsx.writeBuffer();

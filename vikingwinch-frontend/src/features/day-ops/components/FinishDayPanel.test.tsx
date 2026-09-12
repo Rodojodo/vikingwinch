@@ -79,7 +79,7 @@ describe('FinishDayPanel', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Download Log' }));
 
         await waitFor(() => {
-            expect(exportLog).toHaveBeenCalledWith(mockState, 10);
+            expect(exportLog).toHaveBeenCalledWith(mockState);
         });
     });
 
