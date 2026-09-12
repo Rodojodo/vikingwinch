@@ -16,8 +16,6 @@ class DayLogRead(ORMModel):
     winch_id: int
     type: Literal["finish_day", "di", "sign_on"]
     timestamp: datetime | None
-    left_drum: int | None
-    right_drum: int | None
     operator_sn: str
     trainee: str | None
     cable_check: str | None
@@ -27,17 +25,10 @@ class DayLogRead(ORMModel):
 class DayLogCreate(BaseModel):
     squadron_id: str
     type: Literal["finish_day", "di", "sign_on"]
-    left_drum: int | None = None
-    right_drum: int | None = None
     operator_sn: str
     trainee: str | None = None
     cable_check: str | None = None
     hours: float | None = None
-
-
-class DrumValuesRead(BaseModel):
-    left_drum: int | None
-    right_drum: int | None
 
 
 class WinchHoursRead(BaseModel):

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Box, Button, Typography, TextField } from '@mui/material';
-import { getWinchDrums, getWinchHours, postDayLogToDb } from '../api/dataClient.ts';
+import { getBroughtForward, getWinchHours, postDayLogToDb } from '../api/dataClient.ts';
 import { useWinchSession } from '../hooks/useWinchSession.ts';
 
 interface DailyInspectionPanelProps {
@@ -21,9 +21,11 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ sess
         if (!state.winchId) return;
         setIsFetching(true);
         try {
-            const drums = await getWinchDrums(state.winchId);
-            if (drums.left_drum !== null && drums.left_drum !== undefined) setLeftDrum(drums.left_drum.toString());
-            if (drums.right_drum !== null && drums.right_drum !== undefined) setRightDrum(drums.right_drum.toString());
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            const bf = await getBroughtForward(state.winchId, todayStr);
+            if (bf.left !== null && bf.left !== undefined) setLeftDrum(bf.left.toString());
+            if (bf.right !== null && bf.right !== undefined) setRightDrum(bf.right.toString());
         } catch (e) {
             console.error("Failed to fetch drums", e);
             setError("Failed to retrieve drum totals.");

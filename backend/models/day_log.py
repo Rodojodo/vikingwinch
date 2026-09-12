@@ -17,8 +17,6 @@ class Day_Log(Base):
     winch_id: Mapped[int] = mapped_column(ForeignKey("winches.id"), nullable=False)
     type: Mapped[str] = mapped_column(Enum('finish_day', 'di', 'sign_on'), nullable=False)
     timestamp: Mapped[datetime | None] = mapped_column(TIMESTAMP, nullable=True)
-    left_drum: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    right_drum: Mapped[int | None] = mapped_column(Integer, nullable=True)
     operator_sn: Mapped[str] = mapped_column(ForeignKey("operators.service_no"), nullable=False)
     trainee: Mapped[str | None] = mapped_column(String(20), nullable=True)
     cable_check: Mapped[str | None] = mapped_column(String(20), nullable=True)
