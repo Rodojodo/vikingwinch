@@ -1,8 +1,7 @@
-import {useReducer, useState, useMemo, useCallback, useEffect} from 'react';
-import type {DayLogPayload, DrumPosition, LaunchPayload, RemarkPayload} from '../types';
-import {postLaunchToDb, postRemarkToDb, postDayLogToDb, removeLaunchFromDb} from '../api/dataClient';
-import { createInitialState, winchReducer } from '../state/winchReducer';
-import type { LaunchResponse } from '../types';
+import {useCallback, useEffect, useMemo, useReducer, useState} from 'react';
+import type {DayLogPayload, DrumPosition, LaunchPayload, LaunchResponse, RemarkPayload} from '../types';
+import {postDayLogToDb, postLaunchToDb, postRemarkToDb, removeLaunchFromDb} from '../api/dataClient';
+import {createInitialState, winchReducer} from '../state/winchReducer';
 
 export const useWinchSession = (squadronId: string, operatorSn: string, initialWinchId: number | null = null) => {
     const [state, dispatch] = useReducer(winchReducer, createInitialState(squadronId, operatorSn, initialWinchId));
@@ -174,12 +173,12 @@ export const useWinchSession = (squadronId: string, operatorSn: string, initialW
         dispatch({ type: 'SET_WINCH_ID', payload: id });
     }, []);
 
-    const hydrateLaunches = useCallback((launches: LaunchResponse[], traineeSn: string | null) => {
+    const hydrateHistory = useCallback((launches: LaunchResponse[], traineeSn: string | null) => {
         const sorted = [...launches].sort((a, b) => 
             (a.timestamp || '').localeCompare(b.timestamp || '') || a.launch_id - b.launch_id
         );
         const payload = {sorted, traineeSn};
-        dispatch({ type: 'HYDRATE_LAUNCHES', payload: payload });
+        dispatch({type: 'HYDRATE_HISTORY', payload: payload});
     }, []);
 
     return {
@@ -193,6 +192,6 @@ export const useWinchSession = (squadronId: string, operatorSn: string, initialW
         addRemark,
         finishDay,
         setWinchId,
-        hydrateLaunches,
+        hydrateHistory,
     };
 };

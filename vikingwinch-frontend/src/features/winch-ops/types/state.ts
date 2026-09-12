@@ -32,7 +32,8 @@ export type WinchAction =
   | { type: 'SET_WINCH_ID'; payload: number }
   | { type: 'SET_SQUADRON'; payload: string }
   | { type: 'SET_OPERATOR'; payload: string }
-  | { type: 'HYDRATE_LAUNCHES'; payload: { sorted: LaunchResponse[]; traineeSn: string | null; }
+    | {
+  type: 'HYDRATE_HISTORY'; payload: { sorted: LaunchResponse[]; traineeSn: string | null; }
 };
 
 
