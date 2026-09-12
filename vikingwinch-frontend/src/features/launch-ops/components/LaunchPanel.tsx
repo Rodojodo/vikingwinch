@@ -171,7 +171,7 @@ export const LaunchPanel = ({ onViewSkylogValues, session }: LaunchPanelProps) =
             </Stack>
 
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <TraineeAssignmentPanel isLoading={isLoading} recordSignOn={recordSignOn} />
+                <TraineeAssignmentPanel isLoading={isLoading} recordSignOn={recordSignOn} squadron={state.squadron} operatorSn={state.operatorSn} />
                 <RemarksRepairsPanel addRemark={addRemark} isLoading={isLoading} derived={derived} state={state} />
                 <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.08)', my: 0.5 }} />
 

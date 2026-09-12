@@ -1,34 +1,54 @@
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
     Box,
     Button, ButtonBase,
-    FormControl,
-    MenuItem,
     Paper,
-    Select,
-    type SelectChangeEvent,
     Stack,
     Typography
 } from '@mui/material';
-import type {DayLogResponse, Trainee} from "../../types";
-
-
-const TRAINEES: Trainee[] = [
-    {id: '1', name: 'Ben Ten'},
-    {id: '2', name: 'Gwen Tennyson'},
-];
+import { getOperatorsForSquadron } from '../../winch-ops/api/dataClient.ts';
+import type { OperatorRead, DayLogResponse } from '../../winch-ops/types';
+import { TraineeSelect } from './TraineeSelect.tsx';
 
 type TraineeAssignmentPanelProps = {
   isLoading: boolean;
   recordSignOn: (traineeSn: string) => Promise<DayLogResponse>;
+  squadron?: string;
+  operatorSn?: string | null;
 };
 
-export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({isLoading, recordSignOn}) => {
+export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({isLoading, recordSignOn, squadron, operatorSn}) => {
     const [isExpanded, setIsExpanded] = useState<boolean>(false);
-    const [focusedTraineeId, setFocusedTraineeId] = useState<string>('1');
+    const [focusedTraineeId, setFocusedTraineeId] = useState<string>('');
+    const [operators, setOperators] = useState<OperatorRead[]>([]);
+    const [isFetching, setIsFetching] = useState(false);
 
-    const handleFocusChange = (event: SelectChangeEvent<string>) => {
-        setFocusedTraineeId(event.target.value);
+    useEffect(() => {
+        if (!squadron) return;
+        setIsFetching(true);
+        const controller = new AbortController();
+        getOperatorsForSquadron(squadron, controller.signal)
+            .then(data => {
+                if (!controller.signal.aborted) {
+                    setOperators(data);
+                }
+            })
+            .catch(console.error)
+            .finally(() => {
+                if (!controller.signal.aborted) {
+                    setIsFetching(false);
+                }
+            });
+        return () => controller.abort();
+    }, [squadron]);
+
+    const handleConfirm = () => {
+        recordSignOn(focusedTraineeId)
+            .then(() => {
+                setIsExpanded(false);
+                setFocusedTraineeId('');
+            })
+            .catch(console.error);
     };
 
 
@@ -84,43 +104,22 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({i
                 >
                     Select trainee
                 </Typography>
-                <FormControl fullWidth size="small">
-                    <Select
-                        value={focusedTraineeId}
-                        onChange={handleFocusChange}
-                        sx={{
-                            backgroundColor: '#111927',
-                            color: 'white',
-                            borderRadius: 2,
-                            '& .MuiOutlinedInput-notchedOutline': {
-                                borderColor: '#2970ff',
-                                borderWidth: 2,
-                            },
-                            '&:hover .MuiOutlinedInput-notchedOutline': {
-                                borderColor: '#2970ff',
-                            },
-                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                                borderColor: '#2970ff',
-                            },
-                            '& .MuiSvgIcon-root': {
-                                color: '#8b9bb4',
-                            }
-                        }}
-                    >
-                        {TRAINEES.map((trainee) => (
-                            <MenuItem key={trainee.id} value={trainee.id}>
-                                {trainee.name}
-                            </MenuItem>
-                        ))}
-                    </Select>
-                </FormControl>
+                <TraineeSelect
+                    value={focusedTraineeId}
+                    onChange={setFocusedTraineeId}
+                    operators={operators}
+                    operatorSn={operatorSn}
+                    isFetching={isFetching}
+                    emptyDisabled={true}
+                />
             </Box>
 
             <Stack direction="row" spacing={2}>
                 <Button
                     variant="contained"
                     fullWidth
-                    onClick={() => recordSignOn(focusedTraineeId)}
+                    disabled={isLoading || !focusedTraineeId}
+                    onClick={handleConfirm}
                     sx={{
                         backgroundColor: '#2970ff',
                         textTransform: 'none',

@@ -4,10 +4,10 @@ import { LaunchPanel } from '../features/launch-ops/components/LaunchPanel';
 import { SkylogValues } from '../features/day-ops/components/SkylogValues';
 import { useWinchSession } from '../features/winch-ops/hooks/useWinchSession';
 import { WinchSelectPanel } from '../features/winch-ops/components/WinchSelectPanel';
-import { SignOnPanel } from '../features/winch-ops/components/SignOnPanel';
+import { SignOnPanel } from '../features/day-ops/components/SignOnPanel.tsx';
 import { DailyInspectionPanel } from '../features/winch-ops/components/DailyInspectionPanel';
 import { getDayLog, getLaunches } from '../features/winch-ops/api/dataClient';
-import type { TabView } from '../features/winch-ops/types/index'
+import type { TabView } from '../features/winch-ops/types'
 
 
 interface WinchTabProps {
