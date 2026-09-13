@@ -1,6 +1,7 @@
 import React from 'react';
 import {FormControl, MenuItem, Select, type SelectChangeEvent} from '@mui/material';
 import type {OperatorRead} from '../../winch-ops/types';
+import {darkMenuStyles, darkSelectStyles} from "../../../themes/styles.ts";
 
 export interface TraineeSelectProps {
     value: string;
@@ -26,15 +27,8 @@ export const TraineeSelect: React.FC<TraineeSelectProps> = ({
                 onChange={(e: SelectChangeEvent<string>) => onChange(e.target.value)}
                 displayEmpty
                 disabled={disabled || isFetching}
-                sx={{
-                    backgroundColor: '#111927',
-                    color: 'white',
-                    borderRadius: 2,
-                    '& .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.1)' },
-                    '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'rgba(255,255,255,0.2)' },
-                    '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#3b82f6' },
-                    '& .MuiSvgIcon-root': { color: '#94a3b8' }
-                }}
+                sx={darkSelectStyles}
+                MenuProps={darkMenuStyles}
             >
                 <MenuItem value="">— None —</MenuItem>
                 {operators

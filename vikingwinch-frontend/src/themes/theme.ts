@@ -1,35 +1,106 @@
-import { createTheme } from '@mui/material/styles';
+import {createTheme} from '@mui/material/styles';
+
+declare module '@mui/material/styles' {
+    interface Palette {
+        surface: {
+            card: string;
+            cardLight: string; // <-- Added here
+            border: string;
+            borderStrong: string;
+        };
+    }
+
+    interface PaletteOptions {
+        surface?: {
+            card?: string;
+            cardLight?: string; // <-- Added here
+            border?: string;
+            borderStrong?: string;
+        };
+    }
+}
 
 export const appTheme = createTheme({
     palette: {
         mode: 'dark',
         primary: {
-            main: '#3b82f6', // The blue used for Left Drum and Remarks/Repairs toggle
-            light: '#60a5fa',
-            dark: '#2563eb',
+            main: '#3478f3',
+            light: '#5f93f6',
+            dark: '#2860c9',
+            contrastText: '#ffffff',
+        },
+        secondary: {
+            main: '#ffffff08',
+            light: '#8896a8',
+            dark: '#334155cc',
+            contrastText: '#ffffff',
         },
         success: {
-            main: '#10b981', // The green used for Right Drum and "Turn off winch" sticker
-            light: '#34d399',
-            dark: '#059669',
+            main: '#4caf50',
+            light: '#3fc79a',
+            dark: '#4caf5033',
+            contrastText: '#ffffff',
         },
         error: {
-            main: '#ef4444', // The red used for Burns and "Don't turn off winch" sticker
-            light: '#f87171',
-            dark: '#dc2626',
+            main: '#ef4444',
+            light: '#ef444414',
+            dark: '#ef444433',
         },
         background: {
-            default: '#0f172a', // Default dark background
-            paper: '#1e293b',   // Slightly lighter background used for panels
-        }
+            default: '#0f172a',
+            paper: '#1b243a',
+        },
+        surface: {
+            card: '#1b243a',
+            cardLight: '#232f48', // <-- The slightly lighter color for nested panels
+            border: '#313a4c',
+            borderStrong: 'rgba(255, 255, 255, 0.15)',
+        },
+        text: {
+            primary: '#ffffff',
+            secondary: '#94a3b8',
+        },
     },
     typography: {
         fontFamily: '"Inter", system-ui, -apple-system, sans-serif',
         h2: {
             fontFamily: '"Outfit", sans-serif',
+            fontSize: '48px',
             fontWeight: 700,
             letterSpacing: '-0.5px',
-        }
+        },
+        h3: {
+            fontFamily: '"Outfit", sans-serif',
+            fontSize: '32px',
+            fontWeight: 700,
+            letterSpacing: '-0.5px',
+            textAlign: 'center',
+        },
+        h4: {
+            fontSize: '16px',
+            fontWeight: 500,
+            color: '#8b9bb4',
+            textAlign: 'center',
+        },
+        h6: {
+            fontSize: '32px',
+            fontWeight: 700,
+            fontFamily: 'var(--mono), Consolas, monospace',
+            fontVariantNumeric: 'slashed-zero',
+            color: 'white',
+            lineHeight: 1
+        },
+        subtitle1: {
+            color: 'text.primary',
+            textAlign: 'center'
+        },
+        subtitle2: {
+            fontSize: '18px',
+            fontWeight: 500,
+            color: '#8b9bb4',
+        },
+
+
     },
     components: {
         MuiButton: {
@@ -37,6 +108,23 @@ export const appTheme = createTheme({
                 root: {
                     textTransform: 'none',
                     borderRadius: '12px',
+                },
+            },
+        },
+        MuiToggleButton: {
+            styleOverrides: {
+                root: {
+                    textTransform: 'none',
+                    '&:hover': {
+                        backgroundColor: '#ffffff14',
+                    },
+                },
+            },
+        },
+        MuiPaper: {
+            styleOverrides: {
+                root: {
+                    backgroundImage: 'none',
                 },
             },
         },

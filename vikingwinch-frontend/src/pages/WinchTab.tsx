@@ -9,6 +9,7 @@ import {SignOnPanel} from '../features/day-ops/components/SignOnPanel.tsx';
 import {DailyInspectionPanel} from '../features/winch-ops/components/DailyInspectionPanel';
 import {getDayLog, getLaunches, getOperatorsForSquadron} from '../features/winch-ops/api/dataClient';
 import type {OperatorRead, TabView} from '../features/winch-ops/types'
+import {appBackgroundSx} from "../themes/styles.ts";
 
 
 interface WinchTabProps {
@@ -177,17 +178,7 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, openWinchIds,
     };
 
     return (
-        <Box sx={{
-            flexGrow: 1,
-            background: 'radial-gradient(circle at top right, #1e1b4b, #0f172a)',
-            backgroundAttachment: 'fixed',
-            display: 'flex',
-            alignItems: 'flex-start',
-            justifyContent: 'center',
-            p: 2,
-            pt: 4,
-            position: 'relative'
-        }}>
+        <Box sx={appBackgroundSx}>
             {renderView()}
         </Box>
     );

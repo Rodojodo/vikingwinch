@@ -1,5 +1,5 @@
 import React from 'react';
-import {Box, Button, Typography, Container, Paper} from '@mui/material';
+import {Box, Button, Container, Paper, Typography} from '@mui/material';
 import {useMsal} from '@azure/msal-react';
 import winchLogo from '../assets/SkylaunchWinchPixel.png';
 
@@ -88,7 +88,7 @@ export const LoginPage: React.FC = () => {
                         Winch Log Keeper
                     </Typography>
 
-                    <Typography variant="body1" sx={{mb: 4, color: '#94a3b8', textAlign: 'center'}}>
+                    <Typography variant="body1" sx={{mb: 4, color: 'text.secondary', textAlign: 'center'}}>
                         Welcome back. Please sign in with your Microsoft account to continue to the winch operations
                         dashboard.
                     </Typography>

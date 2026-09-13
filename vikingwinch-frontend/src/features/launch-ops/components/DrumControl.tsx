@@ -1,8 +1,8 @@
-import { Box, Stack, Typography, Chip, Button } from '@mui/material';
+import {Box, Button, Chip, Stack, Typography} from '@mui/material';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
-import { LaunchButton } from './LaunchButton.tsx';
-import type { DrumPosition } from '../../winch-ops/types';
-import { useEffect, useState } from 'react';
+import type {DrumPosition} from '../../winch-ops/types';
+import {useEffect, useState} from 'react';
+import {burnButtonSx, darkBlueButton, giantLaunchButtonSx, launchCountChipSx} from "../../../themes/styles.ts";
 
 function formatTimeAgo(timestamp: string | number | Date): string {
     const time = new Date(timestamp).getTime();
@@ -35,40 +35,26 @@ interface DrumControlProps {
 }
 
 export const DrumControl = ({
-    drumType,
-    launches,
-    lastLaunch,
-    isLoading,
-    isUsed,
-    isResetting,
-    currentAnim,
-    onLaunch,
-    onBurn,
-    onUndo
-}: DrumControlProps) => {
-    // Force re-render every minute so relative time updates automatically
+                                drumType,
+                                launches,
+                                lastLaunch,
+                                isLoading,
+                                isUsed,
+                                isResetting,
+                                currentAnim,
+                                onLaunch,
+                                onBurn,
+                                onUndo
+                            }: DrumControlProps) => {
     const [, setTick] = useState(0);
+
     useEffect(() => {
         if (!lastLaunch) return;
         const interval = setInterval(() => setTick(t => t + 1), 60000);
         return () => clearInterval(interval);
     }, [lastLaunch]);
 
-    // Capitalize label
     const label = drumType === 'left' ? 'Left Drum' : 'Right Drum';
-
-    // Color configurations depending on drum type
-    const colors = drumType === 'left'
-        ? {
-            gradient: 'linear-gradient(145deg, #3b82f6, #2563eb)',
-            shadow: 'rgba(37, 99, 235, 0.4)',
-            hoverShadow: 'rgba(37, 99, 235, 0.6)'
-        }
-        : {
-            gradient: 'linear-gradient(145deg, #10b981, #059669)',
-            shadow: 'rgba(16, 185, 129, 0.4)',
-            hoverShadow: 'rgba(16, 185, 129, 0.6)'
-        };
 
     const isInteractionDisabled = isLoading || isUsed || isResetting;
 
@@ -81,61 +67,34 @@ export const DrumControl = ({
                 pointerEvents: isResetting ? 'none' : 'auto',
                 animation: currentAnim !== 'none' && !isResetting && !isUsed ? currentAnim : 'none',
             }}>
-                <LaunchButton
-                    isLoading={isLoading}
+                <Button
+                    variant="contained"
+                    fullWidth
+                    loading={isLoading}
                     disabled={isInteractionDisabled}
                     onClick={onLaunch}
-                    sx={{
-                        background: colors.gradient,
-                        boxShadow: `0 8px 24px ${colors.shadow}`,
-                        '&:hover': {
-                            boxShadow: `0 12px 32px ${colors.hoverShadow}`,
-                            transform: 'translateY(-4px) scale(1.02)'
-                        },
-                        py: 3.5,
-                        px: 2,
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        borderRadius: '20px',
-                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                    }}
-                    label={
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                            <Typography sx={{ fontSize: '20px', fontWeight: 700 }}>{label}</Typography>
-                            <Chip
-                                label={`${launches} launches`}
-                                size="small"
-                                sx={{ backgroundColor: 'rgba(0, 0, 0, 0.2)', color: 'white', border: 'none', px: 1.5, py: 0.5, height: 'auto', fontSize: '14px', fontWeight: 500, borderRadius: '12px' }}
-                            />
-                        </Box>
-                    }
-                />
+                    sx={giantLaunchButtonSx(drumType === 'left')}
+                >
+                    {<Box sx={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1}}>
+                        {label}
+                        <Chip
+                            label={`${launches} launches`}
+                            size="small"
+                            sx={launchCountChipSx}
+                        />
+                    </Box>}
+                </Button>
 
-                <LaunchButton
-                    isLoading={isLoading}
+                <Button
+                    variant="contained"
+                    fullWidth
+                    loading={isLoading}
                     disabled={isInteractionDisabled}
                     onClick={onBurn}
-                    mode="burn"
-                    sx={{
-                        borderRadius: '10px',
-                        py: 1,
-                        px: 2,
-                        border: '1.5px solid rgba(239, 68, 68, 0.5)',
-                        backgroundColor: 'rgba(239, 68, 68, 0.08)',
-                        color: '#f87171',
-                        boxShadow: 'none',
-                        '&:hover': {
-                            backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                            borderColor: '#ef4444',
-                            color: '#ef4444',
-                            boxShadow: 'none'
-                        }
-                    }}
-                    label={
-                        <Typography sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: '13px', fontWeight: 600 }}>
-                            <LocalFireDepartmentIcon sx={{ fontSize: '16px' }} /> Burn {drumType === 'left' ? 'Left' : 'Right'}
-                        </Typography>
-                    }
-                />
+                    sx={burnButtonSx}
+                >
+                    <LocalFireDepartmentIcon sx={{fontSize: '16px'}}/> Burn {drumType === 'left' ? 'Left' : 'Right'}
+                </Button>
             </Stack>
 
             <Button
@@ -143,37 +102,12 @@ export const DrumControl = ({
                 fullWidth
                 disabled={isLoading || launches === 0}
                 onClick={onUndo}
-                sx={{
-                    backgroundColor: 'rgba(59, 130, 246, 0.05)',
-                    border: '2px solid #3b82f6',
-                    color: '#f8fafc',
-                    textTransform: 'none',
-                    borderRadius: '16px',
-                    py: 1.5,
-                    px: 2,
-                    fontSize: '15px',
-                    fontWeight: 600,
-                    backdropFilter: 'blur(4px)',
-                    transition: 'all 0.2s ease',
-                    mt: 1,
-                    '&:hover': {
-                        backgroundColor: '#3b82f6',
-                        color: 'white',
-                        transform: 'scale(1.02)',
-                        boxShadow: '0 8px 24px rgba(59, 130, 246, 0.5)',
-                        borderColor: 'transparent'
-                    },
-                    '&:disabled': {
-                        opacity: 0.5,
-                        color: 'rgba(255, 255, 255, 0.3)',
-                        borderColor: 'rgba(255, 255, 255, 0.1)',
-                    }
-                }}
+                sx={darkBlueButton}
             >
                 − Undo {drumType === 'left' ? 'Left' : 'Right'}
             </Button>
 
-            <Typography sx={{ color: '#94a3b8', textAlign: 'center', fontSize: '14px', mt: 1, fontFamily: 'monospace', fontWeight: 500 }}>
+            <Typography variant="h4">
                 {launches === 0 ? 'Not yet launched' : (lastLaunch ? `Last launch: ${formatTimeAgo(lastLaunch)}` : '')}
             </Typography>
         </Stack>

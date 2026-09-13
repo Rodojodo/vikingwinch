@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Box, Tabs, Tab, IconButton, Typography, Button, AppBar, Toolbar } from '@mui/material';
+import React, {useCallback, useEffect, useState} from 'react';
+import {AppBar, Box, Button, IconButton, Tab, Tabs, Toolbar, Typography} from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
-import { useMsal } from '@azure/msal-react';
-import { WinchTab } from './WinchTab';
-import { getWinchesForSquadron } from '../features/winch-ops/api/dataClient';
-import type { WinchRead } from '../features/winch-ops/types';
+import {useMsal} from '@azure/msal-react';
+import {WinchTab} from './WinchTab';
+import {getWinchesForSquadron} from '../features/winch-ops/api/dataClient';
+import type {WinchRead} from '../features/winch-ops/types';
 
 interface WinchOpsPageProps {
     squadronId: string;
@@ -67,13 +67,19 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
     }, []);
 
     return (
-        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: '#0f172a' }}>
-            <AppBar position="static" elevation={0} sx={{ bgcolor: '#1b2438', backgroundImage: 'none', boxShadow: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+        <Box sx={{display: 'flex', flexDirection: 'column', minHeight: '100vh', bgcolor: 'background.default'}}>
+            <AppBar position="static" elevation={0} sx={{
+                bgcolor: 'surface.card',
+                backgroundImage: 'none',
+                boxShadow: 'none',
+                borderBottom: '1px solid rgba(255,255,255,0.1)'
+            }}>
                 <Toolbar>
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 'bold', color: '#498ff8' }}>
+                    <Typography variant="h6" component="div"
+                                sx={{flexGrow: 1, fontWeight: 'bold', color: 'primary.main'}}>
                         {squadronId} — Winch Log
                     </Typography>
-                    <Typography variant="body1" sx={{ mr: 2, color: '#f7f9fb', fontWeight: 500 }}>
+                    <Typography variant="body1" sx={{mr: 2, color: 'text.primary', fontWeight: 500}}>
                         {operatorName}
                     </Typography>
                     <Button 
@@ -84,14 +90,14 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
                             backgroundColor: 'rgba(255, 255, 255, 0.05)',
                             border: '1px solid rgba(255, 255, 255, 0.1)',
                             borderRadius: '12px',
-                            color: '#f8fafc',
+                            color: 'text.primary',
                             overflow: 'hidden',
                             transition: 'all 0.2s ease',
                             px: 2,
                             '&:hover': {
                                 backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                                borderColor: '#3b82f6',
-                                color: '#3b82f6',
+                                borderColor: 'primary.main',
+                                color: 'primary.main',
                                 transform: 'translateY(-2px)'
                             }
                         }}
@@ -100,7 +106,15 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
                     </Button>
                 </Toolbar>
             </AppBar>
-            <Box sx={{ display: 'flex', alignItems: 'flex-end', bgcolor: '#10172d', borderBottom: 1, borderColor: 'divider', px: 2, pt: 1.5 }}>
+            <Box sx={{
+                display: 'flex',
+                alignItems: 'flex-end',
+                bgcolor: 'background.default',
+                borderBottom: 1,
+                borderColor: 'divider',
+                px: 2,
+                pt: 1.5
+            }}>
                 <Tabs 
                     value={activeTabId} 
                     onChange={(_, nv) => setActiveTabId(nv)} 
@@ -140,8 +154,8 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
                                             p: 0.25, 
                                             borderRadius: '50%',
                                             cursor: 'pointer',
-                                            color: 'inherit', 
-                                            '&:hover': { color: '#f7f9fb', bgcolor: 'rgba(255,255,255,0.1)' } 
+                                            color: 'inherit',
+                                            '&:hover': {color: 'text.primary', bgcolor: 'rgba(255,255,255,0.1)'}
                                         }}
                                     >
                                         <CloseIcon sx={{ width: 14, height: 14 }} />
@@ -151,21 +165,21 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
                             sx={{
                                 minHeight: '48px',
                                 px: 3,
-                                backgroundColor: activeTabId === tab.id ? '#192336' : '#161e31',
+                                backgroundColor: activeTabId === tab.id ? 'surface.card' : 'surface.card',
                                 borderRadius: '12px 12px 0 0',
                                 opacity: 1,
                                 mr: 1.5,
                                 border: '1px solid',
-                                borderColor: activeTabId === tab.id ? '#31394a' : 'transparent',
+                                borderColor: activeTabId === tab.id ? 'surface.border' : 'transparent',
                                 borderBottom: 'none',
-                                color: activeTabId === tab.id ? '#f7f9fb' : '#909eb4',
+                                color: activeTabId === tab.id ? 'text.primary' : 'text.secondary',
                                 transition: 'all 0.2s ease',
                                 '&.Mui-selected': {
-                                    color: '#f7f9fb',
+                                    color: 'text.primary',
                                 },
                                 '&:hover': {
-                                    backgroundColor: activeTabId === tab.id ? '#192336' : '#1c263d',
-                                    color: activeTabId === tab.id ? '#f7f9fb' : '#b0bed4',
+                                    backgroundColor: activeTabId === tab.id ? 'surface.card' : 'surface.card',
+                                    color: activeTabId === tab.id ? 'text.primary' : 'text.secondary',
                                 }
                             }}
                         />
@@ -174,12 +188,12 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
                 <IconButton 
                     onClick={handleAddTab} 
                     disabled={availableWinches.length > 0 && tabs.length >= availableWinches.length} 
-                    sx={{ 
-                        color: '#909eb4', ml: 1, mb: 0.5,
+                    sx={{
+                        color: 'text.secondary', ml: 1, mb: 0.5,
                         transition: 'all 0.2s ease',
                         '&:hover': {
                             backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                            color: '#f7f9fb'
+                            color: 'text.primary'
                         },
                         '&.Mui-disabled': { color: 'rgba(255,255,255,0.2)' }
                     }}
@@ -191,7 +205,7 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
             <Box sx={{ flexGrow: 1, position: 'relative', display: 'flex', flexDirection: 'column' }}>
                 {tabs.length === 0 ? (
                 <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexGrow: 1 }}>
-                    <Typography color="#909eb4">No active winches. Click '+' to open a new tab.</Typography>
+                    <Typography color="text.secondary">No active winches. Click '+' to open a new tab.</Typography>
                 </Box>
             ) : (
                 tabs.map((tab) => (

@@ -3,13 +3,14 @@ import {Box, Button, ButtonBase, Paper, Stack, Typography} from '@mui/material';
 import {getOperatorsForSquadron} from '../../winch-ops/api/dataClient.ts';
 import type {DayLogResponse, OperatorRead} from '../../winch-ops/types';
 import {TraineeSelect} from './TraineeSelect.tsx';
+import {elevatedPanel, getTabButtonStyles, glowingPrimaryButtonSx} from "../../../themes/styles.ts";
 
 type TraineeAssignmentPanelProps = {
-  isLoading: boolean;
+    isLoading: boolean;
     recordSignOn: (traineeSn: string | null) => Promise<DayLogResponse>;
-  squadron?: string;
-  operatorSn?: string | null;
-  traineeSn?: string | null;
+    squadron?: string;
+    operatorSn?: string | null;
+    traineeSn?: string | null;
 };
 
 export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({isLoading, recordSignOn, squadron, operatorSn, traineeSn}) => {
@@ -47,7 +48,6 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({i
             .catch(console.error);
     };
 
-
     const selectedTrainee = traineeSn !== null
         ? operators.find(op => op.service_no === traineeSn)
         : null;
@@ -56,35 +56,13 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({i
         ? `Change trainee (${selectedTrainee.name})`
         : '+ Add trainee';
 
-
     if (!isExpanded) {
         return (
             <ButtonBase
                 onClick={() => setIsExpanded(true)}
-                sx={{
-                    position: 'relative',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '100%',
-                    height: 56,
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    borderRadius: '12px',
-                    color: '#f8fafc',
-                    overflow: 'hidden',
-                    transition: 'all 0.2s ease',
-                    '&:hover': {
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        borderColor: '#3b82f6',
-                        color: '#3b82f6',
-                        transform: 'translateY(-2px)'
-                    },
-                }}
+                sx={getTabButtonStyles(false)}
             >
-                <Typography sx={{fontWeight: 600, fontSize: '16px', zIndex: 1}}>
                     {labelText}
-                </Typography>
             </ButtonBase>
         );
     }
@@ -92,20 +70,13 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({i
     return (
         <Paper
             elevation={0}
-            sx={{
-                backgroundColor: 'rgba(59, 130, 246, 0.06)',
-                border: '1px solid rgba(59, 130, 246, 0.25)',
-                borderRadius: '14px',
-                p: 2,
-                width: '100%',
-                boxSizing: 'border-box'
-            }}
+            sx={elevatedPanel}
             aria-expanded={true}
         >
             <Box sx={{mb: 2}}>
                 <Typography
-                    variant="body2"
-                    sx={{color: '#8b9bb4', mb: 1, fontWeight: 500}}
+                    variant="subtitle2"
+                    sx={{mb: 1}}
                 >
                     Select trainee
                 </Typography>
@@ -121,18 +92,11 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({i
             <Stack direction="row" spacing={2}>
                 <Button
                     variant="contained"
+                    color="primary"
                     fullWidth
                     disabled={isLoading}
                     onClick={handleConfirm}
-                    sx={{
-                        backgroundColor: '#2970ff',
-                        textTransform: 'none',
-                        borderRadius: 2,
-                        boxShadow: '0px 4px 12px rgba(41, 112, 255, 0.4)',
-                        '&:hover': {
-                            backgroundColor: '#1a5ce6',
-                        }
-                    }}
+                    sx={glowingPrimaryButtonSx}
                 >
                     Confirm
                 </Button>
@@ -141,16 +105,7 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({i
                     variant="outlined"
                     fullWidth
                     onClick={() => setIsExpanded(false)}
-                    sx={{
-                        borderColor: '#2f3a4e',
-                        color: 'white',
-                        textTransform: 'none',
-                        borderRadius: 2,
-                        '&:hover': {
-                            borderColor: '#8b9bb4',
-                            backgroundColor: 'transparent'
-                        }
-                    }}
+                    sx={getTabButtonStyles(false)}
                 >
                     Cancel
                 </Button>
