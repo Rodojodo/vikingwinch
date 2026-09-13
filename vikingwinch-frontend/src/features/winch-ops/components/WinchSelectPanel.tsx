@@ -47,7 +47,7 @@ export const WinchSelectPanel = ({ squadronId, openWinchIds, onSelectWinch }: Wi
             ) : availableWinches.length === 0 ? (
                 <Typography>No winches available for this squadron.</Typography>
             ) : (
-                <Box sx={{ display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 2, width: '100%', justifyContent: 'center' }}>
+                <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 2, width: '100%'}}>
                     {availableWinches.map(winch => (
                         <Button
                             key={winch.id}
@@ -56,12 +56,11 @@ export const WinchSelectPanel = ({ squadronId, openWinchIds, onSelectWinch }: Wi
                             sx={[
                                 darkBlueButton,
                                 {
-                                    flex: 1,
-                                    minWidth: '120px',
-                                    py: 2.5, // Overrides the default py: 1.5 from darkBlueButton
-                                    px: 2,
+                                    flexGrow: 1,
+                                    flexBasis: 'calc(33.333% - 16px)',
+                                    py: 2.5,
                                 }
-                            ] as SxProps<Theme>}
+                            ]}
                         >
                             Winch {winch.id}
                         </Button>

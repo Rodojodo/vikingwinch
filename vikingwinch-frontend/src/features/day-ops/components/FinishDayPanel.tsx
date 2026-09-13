@@ -95,7 +95,7 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ finishDay, isLoa
                 }}
             >
                 <Stack spacing={2}>
-                    <Typography variant="h6" sx={{color: 'text.primary', textAlign: 'center', fontWeight: 600}}>
+                    <Typography variant="h3">
                         Finish Day
                     </Typography>
 

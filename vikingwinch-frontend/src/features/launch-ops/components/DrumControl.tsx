@@ -1,10 +1,8 @@
-import {Box, Button, Chip, Stack, Typography, useTheme} from '@mui/material';
+import {Box, Button, Chip, Stack, Typography} from '@mui/material';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
-import {LaunchButton} from './LaunchButton.tsx';
 import type {DrumPosition} from '../../winch-ops/types';
 import {useEffect, useState} from 'react';
-import {darkBlueButton} from "../../../themes/styles.ts";
-import {alpha} from "@mui/material/styles";
+import {burnButtonSx, darkBlueButton, giantLaunchButtonSx, launchCountChipSx} from "../../../themes/styles.ts";
 
 function formatTimeAgo(timestamp: string | number | Date): string {
     const time = new Date(timestamp).getTime();
@@ -48,7 +46,6 @@ export const DrumControl = ({
                                 onBurn,
                                 onUndo
                             }: DrumControlProps) => {
-    const theme = useTheme();
     const [, setTick] = useState(0);
 
     useEffect(() => {
@@ -58,19 +55,6 @@ export const DrumControl = ({
     }, [lastLaunch]);
 
     const label = drumType === 'left' ? 'Left Drum' : 'Right Drum';
-
-    // Dynamically derive gradients and shadows from the application theme
-    const colors = drumType === 'left'
-        ? {
-            bg: theme.palette.primary.main,
-            shadow: alpha(theme.palette.primary.main, 0.4),
-            hoverShadow: alpha(theme.palette.primary.main, 0.6)
-        }
-        : {
-            bg: theme.palette.success.main,
-            shadow: alpha(theme.palette.success.main, 0.4),
-            hoverShadow: alpha(theme.palette.success.main, 0.6)
-        };
 
     const isInteractionDisabled = isLoading || isUsed || isResetting;
 
@@ -83,72 +67,34 @@ export const DrumControl = ({
                 pointerEvents: isResetting ? 'none' : 'auto',
                 animation: currentAnim !== 'none' && !isResetting && !isUsed ? currentAnim : 'none',
             }}>
-                <LaunchButton
-                    isLoading={isLoading}
+                <Button
+                    variant="contained"
+                    fullWidth
+                    loading={isLoading}
                     disabled={isInteractionDisabled}
                     onClick={onLaunch}
-                    sx={{
-                        backgroundColor: colors.bg, // <-- Changed this line
-                        boxShadow: `0 8px 24px ${colors.shadow}`,
-                        '&:hover': {
-                            boxShadow: `0 12px 32px ${colors.hoverShadow}`,
-                            transform: 'translateY(-4px) scale(1.02)'
-                        },
-                        py: 3.5,
-                        px: 2,
-                        border: 1,
-                        borderColor: 'surface.borderStrong',
-                        borderRadius: '20px',
-                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                    }}
-                    label={
-                        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-                            <Typography sx={{ fontSize: '20px', fontWeight: 700 }}>{label}</Typography>
-                            <Chip
-                                label={`${launches} launches`}
-                                size="small"
-                                sx={{
-                                    backgroundColor: alpha(theme.palette.common.black, 0.2),
-                                    color: 'primary.contrastText',
-                                    border: 'none',
-                                    px: 1.5, py: 0.5,
-                                    height: 'auto',
-                                    fontSize: '14px',
-                                    fontWeight: 500,
-                                    borderRadius: '12px'
-                                }}
-                            />
-                        </Box>
-                    }
-                />
+                    sx={giantLaunchButtonSx(drumType === 'left')}
+                >
+                    {<Box sx={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1}}>
+                        {label}
+                        <Chip
+                            label={`${launches} launches`}
+                            size="small"
+                            sx={launchCountChipSx}
+                        />
+                    </Box>}
+                </Button>
 
-                <LaunchButton
-                    isLoading={isLoading}
+                <Button
+                    variant="contained"
+                    fullWidth
+                    loading={isLoading}
                     disabled={isInteractionDisabled}
                     onClick={onBurn}
-                    mode="burn"
-                    sx={{
-                        borderRadius: '10px',
-                        py: 1,
-                        px: 2,
-                        border: 1,
-                        borderColor: 'error.main',
-                        backgroundColor: alpha(theme.palette.error.main, 0.1), // Corrects contrast failure
-                        color: 'error.main',
-                        boxShadow: 'none',
-                        '&:hover': {
-                            backgroundColor: alpha(theme.palette.error.main, 0.2),
-                            borderColor: 'error.main',
-                            color: 'error.main',
-                            boxShadow: 'none'
-                        }
-                    }}
-                    label={
-                        <Typography sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: '13px', fontWeight: 600 }}>
-                            <LocalFireDepartmentIcon sx={{ fontSize: '16px' }} /> Burn {drumType === 'left' ? 'Left' : 'Right'}
-                        </Typography>
-                    }
-                />
+                    sx={burnButtonSx}
+                >
+                    <LocalFireDepartmentIcon sx={{fontSize: '16px'}}/> Burn {drumType === 'left' ? 'Left' : 'Right'}
+                </Button>
             </Stack>
 
             <Button
@@ -161,7 +107,7 @@ export const DrumControl = ({
                 − Undo {drumType === 'left' ? 'Left' : 'Right'}
             </Button>
 
-            <Typography variant="subtitle2" sx={{fontSize: '14px', textAlign: 'center'}}>
+            <Typography variant="h4">
                 {launches === 0 ? 'Not yet launched' : (lastLaunch ? `Last launch: ${formatTimeAgo(lastLaunch)}` : '')}
             </Typography>
         </Stack>

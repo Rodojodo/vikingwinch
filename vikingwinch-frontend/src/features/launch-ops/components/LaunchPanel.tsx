@@ -166,9 +166,7 @@ export const LaunchPanel = ({ onViewSkylogValues, session }: LaunchPanelProps) =
                     onClick={onViewSkylogValues}
                     sx={getTabButtonStyles(false)}
                 >
-                    <Typography sx={{fontWeight: 600, fontSize: '16px', zIndex: 1}}>
                         Show skylog values
-                    </Typography>
                 </ButtonBase>
                 <FinishDayPanel finishDay={session.finishDay} isLoading={isLoading} state={state} />
             </Box>

@@ -69,11 +69,38 @@ export const appTheme = createTheme({
             fontWeight: 700,
             letterSpacing: '-0.5px',
         },
-        subtitle2: {
-            fontSize: '18px', // Standard MUI size for subtitle2, adjust if needed
-            fontWeight: 500,
-            color: '#8b9bb4', // Standardizes your specific label color
+        h3: {
+            fontFamily: '"Outfit", sans-serif',
+            fontSize: '32px',
+            fontWeight: 700,
+            letterSpacing: '-0.5px',
+            textAlign: 'center',
         },
+        h4: {
+            fontSize: '16px',
+            fontWeight: 500,
+            color: '#8b9bb4',
+            textAlign: 'center',
+        },
+        h6: {
+            fontSize: '32px',
+            fontWeight: 700,
+            fontFamily: 'var(--mono), Consolas, monospace',
+            fontVariantNumeric: 'slashed-zero',
+            color: 'white',
+            lineHeight: 1
+        },
+        subtitle1: {
+            color: 'text.primary',
+            textAlign: 'center'
+        },
+        subtitle2: {
+            fontSize: '18px',
+            fontWeight: 500,
+            color: '#8b9bb4',
+        },
+
+
     },
     components: {
         MuiButton: {

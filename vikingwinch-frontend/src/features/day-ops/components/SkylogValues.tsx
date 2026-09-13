@@ -28,7 +28,7 @@ export const SkylogValues = ({ onBack, winchId, squadron, leftLaunches, rightLau
             </Box>
 
             <Box sx={{ textAlign: 'center', width: '100%', mt: 1 }}>
-                <Typography variant="h2" sx={{mb: 1, fontSize: '40px'}}>
+                <Typography variant="h3" sx={{mb: 1}}>
                     Skylog Values
                 </Typography>
 
@@ -40,51 +40,30 @@ export const SkylogValues = ({ onBack, winchId, squadron, leftLaunches, rightLau
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {/* Left Drum */}
                 <Box sx={skylogCardStyle}>
-                    <Typography variant="subtitle2" sx={{fontSize: '18px'}}>
+                    <Typography variant="subtitle1">
                         Left Drum Total
                     </Typography>
-                    <Typography sx={{
-                        fontSize: '32px',
-                        fontWeight: 700,
-                        fontFamily: 'var(--mono), Consolas, monospace',
-                        fontVariantNumeric: 'slashed-zero',
-                        color: 'white',
-                        lineHeight: 1
-                    }}>
+                    <Typography variant="h6">
                         {leftLaunches}
                     </Typography>
                 </Box>
 
                 {/* Right Drum */}
                 <Box sx={skylogCardStyle}>
-                    <Typography variant="subtitle2" sx={{fontSize: '18px'}}>
+                    <Typography variant="subtitle1">
                         Right Drum Total
                     </Typography>
-                    <Typography sx={{ 
-                        fontSize: '32px', 
-                        fontWeight: 700, 
-                        fontFamily: 'var(--mono), Consolas, monospace',
-                        fontVariantNumeric: 'slashed-zero',
-                        color: 'white',
-                        lineHeight: 1
-                    }}>
+                    <Typography variant="h6">
                         {rightLaunches}
                     </Typography>
                 </Box>
 
                 {/* Winch Total */}
                 <Box sx={skylogTotalCardStyle}>
-                    <Typography variant="subtitle2" sx={{fontSize: '18px', color: 'primary.light'}}>
+                    <Typography variant="subtitle1" sx={{color: 'primary.light'}}>
                         Winch Total (L + R)
                     </Typography>
-                    <Typography sx={{ 
-                        fontSize: '32px', 
-                        fontWeight: 700, 
-                        fontFamily: 'var(--mono), Consolas, monospace',
-                        fontVariantNumeric: 'slashed-zero',
-                        color: 'white',
-                        lineHeight: 1
-                    }}>
+                    <Typography variant="h6">
                         {winchTotal}
                     </Typography>
                 </Box>

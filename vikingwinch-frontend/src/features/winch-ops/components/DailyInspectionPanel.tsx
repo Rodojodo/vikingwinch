@@ -77,11 +77,11 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ sess
                 Winch {state.winchId}
             </Typography>
 
-            <Typography sx={{color: 'text.primary', textAlign: 'center'}}>
+            <Typography variant="subtitle1">
                 This winch has not been used today. A Daily Inspection is required.
             </Typography>
 
-            <Typography sx={{color: 'text.primary'}}>
+            <Typography variant="subtitle1">
                 Enter the current drum totals.
             </Typography>
 

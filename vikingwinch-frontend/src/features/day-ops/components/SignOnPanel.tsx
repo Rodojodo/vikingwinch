@@ -76,7 +76,7 @@ export const SignOnPanel: React.FC<SignOnPanelProps> = ({ session, onComplete, l
                 Current operator: {currentOperatorText}
             </Typography>
 
-            <Typography sx={{color: 'text.primary', mb: 1}}>
+            <Typography variant="subtitle1">
                 This winch has already been inspected today.
             </Typography>
 

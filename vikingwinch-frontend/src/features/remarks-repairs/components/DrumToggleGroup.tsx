@@ -18,14 +18,10 @@ export const DrumToggleGroup: React.FC<DrumToggleGroupProps> = ({ value, onChang
                 exclusive
                 fullWidth
                 onChange={(_, next) => next && onChange(next)}
-                sx={[
-                    slidingPillSx,
-                    {
-                        '& .MuiToggleButton-root': {
-                            minWidth: '110px',
-                        }
-                    }
-                ]}
+                sx={
+                    slidingPillSx
+
+                }
             >
                 <ToggleButton value="left">Left drum</ToggleButton>
                 <ToggleButton value="right">Right drum</ToggleButton>

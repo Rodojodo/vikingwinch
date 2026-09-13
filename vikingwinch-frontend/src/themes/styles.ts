@@ -187,7 +187,7 @@ export const slidingPillSx: SxProps<Theme> = {
     borderRadius: '10px !important',
     fontWeight: 600,
     textTransform: 'none',
-    py: '6px',
+    py: 0.75,
     transition: 'color 0.2s ease',
     '&:hover': {
       backgroundColor: 'transparent',
@@ -247,6 +247,7 @@ export const wingPanel = (open: boolean, wingSize: number): SxProps<Theme> => ({
   overflow: 'hidden',
   flexShrink: 0,
   boxSizing: 'border-box',
+  px: 1,
   transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease',
   backgroundColor: 'surface.card',
   backdropFilter: 'blur(20px)',
@@ -263,7 +264,7 @@ export const wingPanelButton: SxProps<Theme> = {
   left: 0,
   top: '50%',
   transform: 'translate(0, -50%)',
-  width: 20,
+  width: 25,
   height: 140,
   backgroundColor: 'secondary.main',
   border: 1,
@@ -281,3 +282,72 @@ export const wingPanelButton: SxProps<Theme> = {
   zIndex: 1,
   '&:hover': {color: 'primary.constrastText', backgroundColor: 'secondary.dark',},
 }
+
+export const giantLaunchButtonSx = (isLeft: boolean): SxProps<Theme> => (theme) => {
+  const baseColor = isLeft ? theme.palette.primary.main : theme.palette.success.main;
+
+  return {
+    fontSize: '20px',
+    fontWeight: 700,
+    flexDirection: 'column',
+    gap: 1,
+    whiteSpace: 'nowrap',
+    textTransform: 'none',
+    backgroundColor: baseColor,
+    py: 3,
+    px: 2,
+    border: 1,
+    borderColor: 'surface.borderStrong',
+    borderRadius: '20px',
+    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+    boxShadow: `0 8px 24px ${alpha(baseColor, 0.4)}`,
+    '&:hover': {
+      boxShadow: `0 12px 32px ${alpha(baseColor, 0.6)}`,
+      transform: 'translateY(-4px) scale(1.02)'
+    },
+  };
+};
+
+
+export const burnButtonSx: SxProps<Theme> = (theme) => ({
+  borderRadius: '16px',
+  py: 1,
+  px: 2,
+  border: 1,
+  borderColor: 'error.main',
+  backgroundColor: alpha(theme.palette.error.main, 0.1),
+  color: 'error.main',
+  boxShadow: 'none',
+  '&:hover': {
+    backgroundColor: alpha(theme.palette.error.main, 0.2),
+    borderColor: 'error.main',
+    color: 'error.main',
+    boxShadow: 'none'
+  }
+});
+
+
+export const statusPillSx = (color: 'success' | 'error'): SxProps<Theme> => ({
+  display: 'flex',
+  alignItems: 'center',
+  gap: 0.75,
+  py: 0.5,
+  px: 1.25,
+  borderRadius: '20px',
+  backgroundColor: `${color}.dark`,
+  color: `${color}.main`,
+  fontWeight: 700,
+  fontSize: '16px',
+  lineHeight: 1,
+});
+
+export const launchCountChipSx: SxProps<Theme> = (theme) => ({
+  backgroundColor: alpha(theme.palette.common.black, 0.2),
+  color: 'primary.contrastText',
+  border: 'none',
+  px: 1.5, py: 0.5,
+  height: 'auto',
+  fontSize: '14px',
+  fontWeight: 500,
+  borderRadius: '12px'
+});

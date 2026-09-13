@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Alert, Box, Button, Stack, TextField, Typography} from '@mui/material';
+import {Alert, Box, Button, TextField, Typography} from '@mui/material';
 import {DrumToggleGroup} from './DrumToggleGroup';
 import type {DerivedWinchState, DrumPosition} from '../../winch-ops/types';
 import {darkTextFieldStyles} from "../../../themes/styles.ts";
@@ -56,15 +56,17 @@ export const RemarksPanel: React.FC<RemarksPanelProps> = ({ addRemark, isLoading
                 onChange={(e) => setRemark(e.target.value)}
                 sx={darkTextFieldStyles}
             />
-            <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mt: 2}}>
-                <Stack direction="row" spacing={2} sx={{alignItems: 'center'}}>
+            <Box sx={{display: 'flex', alignItems: 'center', gap: 2, mt: 2}}>
+                <Box sx={{flex: 1}}>
                     <DrumToggleGroup value={drum} onChange={setDrum} />
-                    {!hasLaunches && (
-                        <Typography variant="subtitle2" sx={{mb: 1}}>
-                            No launches yet
-                        </Typography>
-                    )}
-                </Stack>
+                </Box>
+
+                {!hasLaunches && (
+                    <Typography variant="subtitle2">
+                        No launches yet
+                    </Typography>
+                )}
+
                 <Button
                     onClick={handleSubmit}
                     disabled={isLoading || !remark.trim() || !hasLaunches}

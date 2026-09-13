@@ -52,14 +52,7 @@ export const TraineeWing: React.FC<TraineeWingProps> = ({
                     onClick={onToggle}
                     sx={wingPanelButton}
                 >
-                    <Typography sx={{
-                        writingMode: 'vertical-rl',
-                        fontSize: 11,
-                        fontWeight: 600,
-                        letterSpacing: '0.5px',
-                        textTransform: 'uppercase',
-                        whiteSpace: 'nowrap'
-                    }}>
+                    <Typography variant='subtitle2' sx={{writingMode: 'vertical-rl'}}>
                         Trainee info
                     </Typography>
                 </ButtonBase>
@@ -69,17 +62,7 @@ export const TraineeWing: React.FC<TraineeWingProps> = ({
                 >
                     <Box sx={{width: WING_WIDTH, p: 3, boxSizing: 'border-box'}}>
                         <Stack spacing={3}>
-                            <Typography
-                                variant="h2"
-                                sx={{
-                                    fontSize: '32px',
-                                    fontWeight: 700,
-                                    letterSpacing: '-0.5px',
-                                    mb: 1,
-                                    fontFamily: '"Outfit", sans-serif',
-                                    textAlign: 'center'
-                                }}
-                            >
+                            <Typography variant="h3">
                                 Trainee Info
                             </Typography>
                             <ActiveDriverToggle

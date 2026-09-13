@@ -62,9 +62,7 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({i
                 onClick={() => setIsExpanded(true)}
                 sx={getTabButtonStyles(false)}
             >
-                <Typography sx={{fontWeight: 600, fontSize: '16px', zIndex: 1}}>
                     {labelText}
-                </Typography>
             </ButtonBase>
         );
     }
@@ -77,8 +75,8 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({i
         >
             <Box sx={{mb: 2}}>
                 <Typography
-                    variant="body2"
-                    sx={{color: 'text.secondary', mb: 1, fontWeight: 500}}
+                    variant="subtitle2"
+                    sx={{mb: 1}}
                 >
                     Select trainee
                 </Typography>
