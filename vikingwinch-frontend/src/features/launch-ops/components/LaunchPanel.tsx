@@ -1,10 +1,9 @@
-import { Box, Stack, Typography, ButtonBase, Divider } from '@mui/material';
-import { useState, useEffect, useRef } from 'react';
-import { TraineeAssignmentPanel } from '../../day-ops/components/TraineeAssignmentPanel.tsx';
-import { RemarksRepairsPanel } from '../../remarks-repairs/components/RemarksRepairsPanel.tsx';
-import { FinishDayPanel } from '../../day-ops/components/FinishDayPanel.tsx';
-import { WinchDetailsSticker } from './WinchDetailsSticker.tsx';
-import { useWinchSession } from '../../winch-ops/hooks/useWinchSession.ts';
+import {Box, ButtonBase, Divider, Stack, Typography} from '@mui/material';
+import {useEffect, useRef, useState} from 'react';
+import {RemarksRepairsPanel} from '../../remarks-repairs/components/RemarksRepairsPanel.tsx';
+import {FinishDayPanel} from '../../day-ops/components/FinishDayPanel.tsx';
+import {WinchDetailsSticker} from './WinchDetailsSticker.tsx';
+import {useWinchSession} from '../../winch-ops/hooks/useWinchSession.ts';
 import './LaunchPanel.css';
 import {DrumControl} from "./DrumControl.tsx";
 
@@ -31,7 +30,7 @@ interface LaunchPanelProps {
 }
 
 export const LaunchPanel = ({ onViewSkylogValues, session }: LaunchPanelProps) => {
-    const { derived, isLoading, error, executeLaunch, undoLaunch, recordSignOn, addRemark, state } = session;
+    const {derived, isLoading, error, executeLaunch, undoLaunch, addRemark, state} = session;
     
     const { leftTotal, rightTotal, leftLaunches, rightLaunches, leftLast, rightLast } = derived;
 
@@ -171,7 +170,7 @@ export const LaunchPanel = ({ onViewSkylogValues, session }: LaunchPanelProps) =
             </Stack>
 
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <TraineeAssignmentPanel isLoading={isLoading} recordSignOn={recordSignOn} squadron={state.squadron} operatorSn={state.operatorSn} traineeSn={state.traineeSn} />
+                <Divider sx={{borderColor: 'rgba(255, 255, 255, 0.08)', my: 0.5}}/>
                 <RemarksRepairsPanel addRemark={addRemark} isLoading={isLoading} derived={derived} state={state} />
                 <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.08)', my: 0.5 }} />
 

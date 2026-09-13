@@ -1,7 +1,7 @@
-import { render, screen, fireEvent, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import {act, fireEvent, render, screen} from '@testing-library/react';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import LaunchPanel from './LaunchPanel.tsx';
-import { useWinchSession } from '../../winch-ops/hooks/useWinchSession.ts';
+import {useWinchSession} from '../../winch-ops/hooks/useWinchSession.ts';
 
 vi.mock('../../winch-ops/hooks/useWinchSession.ts', () => ({
     useWinchSession: vi.fn(),
@@ -54,7 +54,6 @@ describe('LaunchPanel', () => {
         expect(screen.getByText('Left Drum')).toBeInTheDocument();
         expect(screen.getByText('Right Drum')).toBeInTheDocument();
         expect(screen.getByTestId('winch-sticker')).toBeInTheDocument();
-        expect(screen.getByTestId('trainee-panel')).toBeInTheDocument();
         expect(screen.getByTestId('remarks-panel')).toBeInTheDocument();
     });
 

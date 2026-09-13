@@ -1,13 +1,14 @@
 import {useEffect, useState} from 'react';
 import {Box} from '@mui/material';
 import {LaunchPanel} from '../features/launch-ops/components/LaunchPanel';
+import {TraineeWing} from '../features/trainee-ops/components/TraineeWing.tsx'
 import {SkylogValues} from '../features/day-ops/components/SkylogValues';
 import {useWinchSession} from '../features/winch-ops/hooks/useWinchSession';
 import {WinchSelectPanel} from '../features/winch-ops/components/WinchSelectPanel';
 import {SignOnPanel} from '../features/day-ops/components/SignOnPanel.tsx';
 import {DailyInspectionPanel} from '../features/winch-ops/components/DailyInspectionPanel';
-import {getDayLog, getLaunches} from '../features/winch-ops/api/dataClient';
-import type {TabView} from '../features/winch-ops/types'
+import {getDayLog, getLaunches, getOperatorsForSquadron} from '../features/winch-ops/api/dataClient';
+import type {OperatorRead, TabView} from '../features/winch-ops/types'
 
 
 interface WinchTabProps {
@@ -23,14 +24,32 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, openWinchIds,
     const [view, setView] = useState<TabView>('loading');
     const [lastOperatorSn, setLastOperatorSn] = useState<string | null>(null);
     const [lastTraineeSn, setLastTraineeSn] = useState<string | null>(null);
-    
+    const [wingOpen, setWingOpen] = useState(false);
+    const [operators, setOperators] = useState<OperatorRead[]>([]);
+    const [isFetchingOperators, setIsFetchingOperators] = useState(false);
+
     const session = useWinchSession(squadronId, operatorSn, winchId);
-    
+
     useEffect(() => {
         if (session.state.winchId && session.state.winchId !== winchId) {
             onWinchSelect(tabId, session.state.winchId);
         }
     }, [session.state.winchId, winchId, tabId, onWinchSelect]);
+
+    useEffect(() => {
+        if (!squadronId) return;
+        setIsFetchingOperators(true);
+        const controller = new AbortController();
+        getOperatorsForSquadron(squadronId, controller.signal)
+            .then(data => {
+                if (!controller.signal.aborted) setOperators(data);
+            })
+            .catch(console.error)
+            .finally(() => {
+                if (!controller.signal.aborted) setIsFetchingOperators(false);
+            });
+        return () => controller.abort();
+    }, [squadronId]);
 
     useEffect(() => {
         if (!session.state.winchId) {
@@ -56,9 +75,9 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, openWinchIds,
                 session.hydrateHistory(launches, traineeSn);
                 const signOnLogs = logs.filter(l => l.type === 'sign_on');
                 const diLogs = logs.filter(l => l.type === 'di');
-                
+
                 const hasDiToday = diLogs.length > 0;
-                
+
                 if (signOnLogs.length > 0) {
                     const lastLog = signOnLogs[signOnLogs.length - 1];
                     setLastOperatorSn(lastLog.operator_sn);
@@ -85,7 +104,10 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, openWinchIds,
         fetchDayLog();
     }, [session.state.winchId, operatorSn]);
 
-
+    const operatorName = operators.find(o => o.service_no === session.state.operatorSn)?.name ?? 'Instructor';
+    const traineeName = session.state.traineeSn
+        ? operators.find(o => o.service_no === session.state.traineeSn)?.name
+        : undefined;
 
     const renderView = () => {
         switch (view) {
@@ -116,7 +138,29 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, openWinchIds,
                     />
                 );
             case 'launch':
-                return <LaunchPanel onViewSkylogValues={() => setView('skylog')} session={session} />;
+                return (
+                    <Box sx={{position: 'relative', width: '100%', maxWidth: 540}}>
+                        <LaunchPanel
+                            onViewSkylogValues={() => setView('skylog')}
+                            session={session}
+                        />
+                        <TraineeWing
+                            open={wingOpen}
+                            onToggle={() => setWingOpen(o => !o)}
+                            isLoading={session.isLoading}
+                            squadron={session.state.squadron}
+                            operatorSn={session.state.operatorSn}
+                            operatorName={operatorName}
+                            traineeSn={session.state.traineeSn}
+                            traineeName={traineeName}
+                            activeLauncherSn={session.state.activeLauncherSn}
+                            operators={operators}
+                            isFetchingOperators={isFetchingOperators}
+                            setActiveLauncher={session.setActiveLauncher}
+                            recordSignOn={session.recordSignOn}
+                        />
+                    </Box>
+                );
             case 'skylog':
                 return (
                     <SkylogValues
