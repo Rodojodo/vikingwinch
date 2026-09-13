@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { Box, Button, Typography, TextField } from '@mui/material';
-import { getBroughtForward, getWinchHours, postDayLogToDb } from '../api/dataClient.ts';
-import { useWinchSession } from '../hooks/useWinchSession.ts';
+import React, {useState} from 'react';
+import {Box, Button, TextField, Typography} from '@mui/material';
+import {getBroughtForward, getWinchHours, postDayLogToDb} from '../api/dataClient.ts';
+import {useWinchSession} from '../hooks/useWinchSession.ts';
+import {darkTextFieldStyles, errorBannerSx, glassPanelSx, glowingPrimaryButtonSx} from '../../../themes/styles.ts';
+import type {SxProps, Theme} from "@mui/material/styles";
 
 interface DailyInspectionPanelProps {
     session: ReturnType<typeof useWinchSession>;
@@ -30,7 +32,7 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ sess
             console.error("Failed to fetch drums", e);
             setError("Failed to retrieve drum totals.");
         }
-        
+
         try {
             const h = await getWinchHours(state.winchId);
             if (h.hours !== null && h.hours !== undefined) setHours(h.hours.toString());
@@ -65,60 +67,43 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ sess
     };
 
     return (
-        <Box sx={{
-            p: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            backgroundColor: 'rgba(30, 41, 59, 0.7)',
-            backdropFilter: 'blur(20px)',
-            borderRadius: '24px',
-            color: 'white',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-            width: '100%',
-            maxWidth: 480
-        }}>
+        <Box sx={[glassPanelSx, {maxWidth: 540, gap: 3}] as SxProps<Theme>}>
             {error && (
-                <Typography color="error" variant="body2" sx={{ textAlign: 'center', p: 1, backgroundColor: 'rgba(239, 68, 68, 0.1)', mb: 2, borderRadius: 2, width: '100%' }}>
+                <Typography variant="body2" sx={errorBannerSx}>
                     {error}
                 </Typography>
             )}
-            <Typography variant="h4" sx={{ fontWeight: 700, mb: 3 }}>
+            <Typography variant="h2">
                 Winch {state.winchId}
             </Typography>
 
-            <Typography sx={{ color: '#f8fafc', mb: 4, textAlign: 'center' }}>
+            <Typography sx={{color: 'text.primary', textAlign: 'center'}}>
                 This winch has not been used today. A Daily Inspection is required.
             </Typography>
 
-            <Typography sx={{ color: '#f8fafc', mb: 2 }}>
+            <Typography sx={{color: 'text.primary'}}>
                 Enter the current drum totals.
             </Typography>
 
             <Button
                 variant="outlined"
+                color="primary"
                 onClick={handleRetrieveData}
                 disabled={isFetching}
                 sx={{
-                    mb: 4,
-                    borderColor: '#3b82f6',
-                    color: '#f8fafc',
-                    textTransform: 'none',
                     borderRadius: '20px',
                     px: 3,
                     '&:hover': {
-                        borderColor: '#60a5fa',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    }
+                        backgroundColor: (theme) => `${theme.palette.primary.main}1a`,
+                    },
                 }}
             >
                 Retrieve data from cloud
             </Button>
 
-            <Box sx={{ display: 'flex', gap: 2, mb: 3, width: '100%' }}>
+            <Box sx={{display: 'flex', gap: 2, width: '100%'}}>
                 <Box sx={{ flex: 1 }}>
-                    <Typography variant="body2" sx={{ color: '#94a3b8', mb: 1, fontWeight: 500 }}>
+                    <Typography variant="subtitle2" sx={{mb: 1}}>
                         Left drum total
                     </Typography>
                     <TextField
@@ -128,20 +113,11 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ sess
                         value={leftDrum}
                         onChange={(e) => setLeftDrum(e.target.value)}
                         type="number"
-                        sx={{
-                            backgroundColor: '#111927',
-                            borderRadius: 2,
-                            '& .MuiOutlinedInput-root': {
-                                color: 'white',
-                                '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
-                                '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
-                                '&.Mui-focused fieldset': { borderColor: '#3b82f6' },
-                            }
-                        }}
+                        sx={darkTextFieldStyles}
                     />
                 </Box>
                 <Box sx={{ flex: 1 }}>
-                    <Typography variant="body2" sx={{ color: '#94a3b8', mb: 1, fontWeight: 500 }}>
+                    <Typography variant="subtitle2" sx={{mb: 1}}>
                         Right drum total
                     </Typography>
                     <TextField
@@ -151,22 +127,13 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ sess
                         value={rightDrum}
                         onChange={(e) => setRightDrum(e.target.value)}
                         type="number"
-                        sx={{
-                            backgroundColor: '#111927',
-                            borderRadius: 2,
-                            '& .MuiOutlinedInput-root': {
-                                color: 'white',
-                                '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
-                                '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
-                                '&.Mui-focused fieldset': { borderColor: '#3b82f6' },
-                            }
-                        }}
+                        sx={darkTextFieldStyles}
                     />
                 </Box>
             </Box>
 
-            <Box sx={{ width: '100%', mb: 4 }}>
-                <Typography variant="body2" sx={{ color: '#94a3b8', mb: 1, fontWeight: 500 }}>
+            <Box sx={{width: '100%'}}>
+                <Typography variant="subtitle2" sx={{mb: 1}}>
                     Hours
                 </Typography>
                 <TextField
@@ -176,38 +143,19 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ sess
                     value={hours}
                     onChange={(e) => setHours(e.target.value)}
                     type="number"
-                    sx={{
-                        backgroundColor: '#111927',
-                        borderRadius: 2,
-                        '& .MuiOutlinedInput-root': {
-                            color: 'white',
-                            '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
-                            '&:hover fieldset': { borderColor: 'rgba(255,255,255,0.2)' },
-                            '&.Mui-focused fieldset': { borderColor: '#3b82f6' },
-                        }
-                    }}
+                    sx={darkTextFieldStyles}
                 />
             </Box>
 
             <Button
                 variant="contained"
+                color="success"
                 disabled={isSubmitting}
                 onClick={handleSignDI}
-                sx={{
-                    backgroundColor: '#10b981',
-                    color: 'white',
-                    py: 1.5,
-                    px: 4,
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    textTransform: 'none',
-                    borderRadius: '12px',
-                    boxShadow: '0 4px 14px 0 rgba(16, 185, 129, 0.39)',
-                    '&:hover': {
-                        backgroundColor: '#059669',
-                        boxShadow: '0 6px 20px rgba(16, 185, 129, 0.23)'
-                    }
-                }}
+                sx={[
+                    glowingPrimaryButtonSx,
+                    {py: 2, px: 5}
+                ] as SxProps<Theme>}
             >
                 Sign DI
             </Button>

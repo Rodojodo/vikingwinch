@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import { AuthenticatedTemplate, UnauthenticatedTemplate, useMsal } from '@azure/msal-react';
+import {useEffect, useState} from 'react';
+import {AuthenticatedTemplate, UnauthenticatedTemplate, useMsal} from '@azure/msal-react';
 import '../App.css'
-import { WinchOpsPage } from './WinchOpsPage';
-import { LoginPage } from './LoginPage';
-import { getUserDepartment, getUserProfile } from '../features/auth/api/graphAPI';
+import {WinchOpsPage} from './WinchOpsPage';
+import {LoginPage} from './LoginPage';
+import {getUserDepartment, getUserProfile} from '../features/auth/api/graphAPI';
 
 function App() {
     const { instance, accounts, inProgress } = useMsal();
@@ -63,9 +63,25 @@ function App() {
             <AuthenticatedTemplate>
                 {/* Ensure we only render WinchOpsPage once we have the details from Graph */}
                 {error ? (
-                    <div style={{ color: '#ef4444', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
+                    <div style={{
+                        color: 'error.main',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        height: '100vh',
+                        flexDirection: 'column'
+                    }}>
                         <p>{error}</p>
-                        <button onClick={() => instance.logoutRedirect()} style={{ marginTop: '1rem', padding: '0.5rem 1rem', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>Return to Login</button>
+                        <button onClick={() => instance.logoutRedirect()} style={{
+                            marginTop: '1rem',
+                            padding: '0.5rem 1rem',
+                            background: 'primary.main',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            cursor: 'pointer'
+                        }}>Return to Login
+                        </button>
                     </div>
                 ) : operatorSn && squadronId ? (
                     <WinchOpsPage squadronId={squadronId} operatorSn={operatorSn} />

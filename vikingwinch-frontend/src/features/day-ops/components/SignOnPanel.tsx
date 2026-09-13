@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Button, Typography, Paper } from '@mui/material';
-import { getOperatorsForSquadron } from '../../winch-ops/api/dataClient.ts';
-import type { OperatorRead } from '../../winch-ops/types';
-import { useWinchSession } from '../../winch-ops/hooks/useWinchSession.ts';
-import { TraineeSelect } from './TraineeSelect.tsx';
+import React, {useEffect, useState} from 'react';
+import {Box, Button, Paper, Typography} from '@mui/material';
+import {getOperatorsForSquadron} from '../../winch-ops/api/dataClient.ts';
+import type {OperatorRead} from '../../winch-ops/types';
+import {useWinchSession} from '../../winch-ops/hooks/useWinchSession.ts';
+import {TraineeSelect} from './TraineeSelect.tsx';
+import {elevatedPanel, errorBannerSx, glassPanelSx, glowingPrimaryButtonSx} from "../../../themes/styles.ts";
+import type {SxProps, Theme} from "@mui/material/styles";
 
 interface SignOnPanelProps {
     session: ReturnType<typeof useWinchSession>;
@@ -60,46 +62,34 @@ export const SignOnPanel: React.FC<SignOnPanelProps> = ({ session, onComplete, l
     }
 
     return (
-        <Box sx={{
-            p: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            backgroundColor: 'rgba(30, 41, 59, 0.7)',
-            backdropFilter: 'blur(20px)',
-            borderRadius: '24px',
-            color: 'white',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-            width: '100%',
-            maxWidth: 480
-        }}>
+        <Box sx={[glassPanelSx, {maxWidth: 540, gap: 2}] as SxProps<Theme>}>
             {error && (
-                <Typography color="error" variant="body2" sx={{ textAlign: 'center', p: 1, backgroundColor: 'rgba(239, 68, 68, 0.1)', mb: 2, borderRadius: 2, width: '100%' }}>
+                <Typography variant="body2" sx={errorBannerSx}>
                     {error}
                 </Typography>
             )}
-            <Typography variant="h3" sx={{ fontWeight: 700, mb: 3 }}>
+            <Typography variant="h2">
                 Winch {state.winchId}
             </Typography>
 
-            <Typography sx={{ color: '#94a3b8', fontSize: '16px', mb: 2 }}>
+            <Typography variant="subtitle2" sx={{mb: 1}}>
                 Current operator: {currentOperatorText}
             </Typography>
 
-            <Typography sx={{ color: '#f8fafc', mb: 4 }}>
+            <Typography sx={{color: 'text.primary', mb: 1}}>
                 This winch has already been inspected today.
             </Typography>
 
-            <Paper elevation={0} sx={{
-                width: '100%',
-                backgroundColor: 'rgba(255, 255, 255, 0.03)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '12px',
-                p: 2,
-                mb: 3
-            }}>
-                <Typography variant="body2" sx={{ color: '#94a3b8', mb: 1, fontWeight: 500 }}>
+            <Paper
+                elevation={0}
+                sx={[
+                    elevatedPanel,
+                    {
+                        mb: 1,
+                        width: '100%',
+                    }
+                ] as SxProps<Theme>}>
+                <Typography variant="subtitle2" sx={{mb: 1}}>
                     Add trainee (optional)
                 </Typography>
                 <TraineeSelect
@@ -108,7 +98,6 @@ export const SignOnPanel: React.FC<SignOnPanelProps> = ({ session, onComplete, l
                     operators={operators}
                     operatorSn={state.operatorSn}
                     isFetching={isFetching}
-                    emptyDisabled={false}
                 />
             </Paper>
 
@@ -117,20 +106,7 @@ export const SignOnPanel: React.FC<SignOnPanelProps> = ({ session, onComplete, l
                 fullWidth
                 disabled={isLoading}
                 onClick={handleSignOn}
-                sx={{
-                    backgroundColor: '#3b82f6',
-                    color: 'white',
-                    py: 1.5,
-                    fontSize: '16px',
-                    fontWeight: 600,
-                    textTransform: 'none',
-                    borderRadius: '12px',
-                    boxShadow: '0 4px 14px 0 rgba(59, 130, 246, 0.39)',
-                    '&:hover': {
-                        backgroundColor: '#2563eb',
-                        boxShadow: '0 6px 20px rgba(59, 130, 246, 0.23)'
-                    }
-                }}
+                sx={glowingPrimaryButtonSx}
             >
                 Walkaround complete. Sign on to winch
             </Button>

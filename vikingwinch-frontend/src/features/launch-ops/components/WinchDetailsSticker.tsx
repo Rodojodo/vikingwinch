@@ -1,4 +1,4 @@
-import { Box, Typography } from '@mui/material';
+import {Box, Typography} from '@mui/material';
 import EnergySavingsLeafIcon from '@mui/icons-material/EnergySavingsLeaf';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 
@@ -15,8 +15,8 @@ export const WinchDetailsSticker = ({ isRecentLaunch, squadron, winchId }: Winch
                 <Box sx={{
                     display: 'flex', alignItems: 'center', gap: '6px',
                     padding: '4px 10px', borderRadius: '20px',
-                    backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                    color: '#ef4444',
+                    backgroundColor: 'error.dark',
+                    color: 'error.main',
                     fontWeight: 700, fontSize: '13px',
                     lineHeight: 1
                 }}>
@@ -27,8 +27,8 @@ export const WinchDetailsSticker = ({ isRecentLaunch, squadron, winchId }: Winch
                 <Box sx={{
                     display: 'flex', alignItems: 'center', gap: '6px',
                     padding: '4px 10px', borderRadius: '20px',
-                    backgroundColor: 'rgba(76, 175, 80, 0.2)',
-                    color: '#4caf50',
+                    backgroundColor: 'success.dark',
+                    color: 'success.main',
                     fontWeight: 700, fontSize: '13px',
                     lineHeight: 1
                 }}>
@@ -36,7 +36,7 @@ export const WinchDetailsSticker = ({ isRecentLaunch, squadron, winchId }: Winch
                     <span>Turn off winch</span>
                 </Box>
             )}
-            <Typography variant="body1" sx={{ color: '#94a3b8', fontSize: '16px', fontWeight: 500 }}>
+            <Typography variant="subtitle2" sx={{fontSize: '16px'}}>
                 {`Winch ${winchId} — ${squadron}`}
             </Typography>
         </Box>

@@ -1,33 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Button, FormControl, MenuItem, Select, TextField, Typography, Alert, Stack } from '@mui/material';
-import { darkSelectStyles, darkTextFieldStyles } from '../../../themes/styles.ts';
-import { getOperatorsForSquadron } from '../../winch-ops/api/dataClient.ts';
-import type { OperatorRead, WinchLogState } from '../../winch-ops/types';
-import { exportLog } from '../../winch-ops/utils/exportLog.ts';
+import React, {useEffect, useState} from 'react';
+import {Alert, Box, Button, FormControl, MenuItem, Select, Stack, TextField, Typography} from '@mui/material';
+import {darkMenuStyles, darkSelectStyles, darkTextFieldStyles, getTabButtonStyles} from '../../../themes/styles.ts';
+import {getOperatorsForSquadron} from '../../winch-ops/api/dataClient.ts';
+import type {OperatorRead, WinchLogState} from '../../winch-ops/types';
+import {exportLog} from '../../winch-ops/utils/exportLog.ts';
 
 type FinishDayPanelProps = {
     finishDay: (cableCheck: string | null, hours: number | null) => Promise<any>;
     isLoading: boolean;
     state: WinchLogState;
 };
-
-const getTabStyle = (isActive: boolean) => ({
-    py: 1.5,
-    textTransform: 'none',
-    fontWeight: 600,
-    fontSize: '16px',
-    backgroundColor: isActive ? '#3b82f6' : 'rgba(255, 255, 255, 0.03)',
-    color: isActive ? 'white' : '#94a3b8',
-    border: `1px solid ${isActive ? '#3b82f6' : 'rgba(255, 255, 255, 0.1)'}`,
-    borderRadius: '12px',
-    boxShadow: isActive ? '0 2px 8px rgba(59, 130, 246, 0.5)' : 'none',
-    transition: 'all 0.2s ease',
-    '&:hover': {
-        backgroundColor: isActive ? '#3b82f6' : 'rgba(255, 255, 255, 0.08)',
-        color: 'white',
-        borderColor: isActive ? '#3b82f6' : 'rgba(255, 255, 255, 0.1)'
-    }
-});
 
 export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ finishDay, isLoading, state }) => {
     const [isOpen, setIsOpen] = useState(false);
@@ -70,7 +52,7 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ finishDay, isLoa
 
     const handleSubmit = async () => {
         setLocalError(null);
-        
+
         const hours = hoursStop ? parseFloat(hoursStop) : null;
 
         try {
@@ -96,7 +78,7 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ finishDay, isLoa
             <Button
                 fullWidth
                 onClick={handleToggle}
-                sx={getTabStyle(isOpen)}
+                sx={getTabButtonStyles(isOpen)}
             >
                 Finish Day
             </Button>
@@ -106,13 +88,14 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ finishDay, isLoa
                     mt: 2,
                     p: 3,
                     backgroundColor: 'transparent',
-                    border: '1px solid #363e51',
+                    border: 1,
+                    borderColor: 'surface.border',
                     borderRadius: 3,
                     display: isOpen ? 'block' : 'none',
                 }}
             >
                 <Stack spacing={2}>
-                    <Typography variant="h6" sx={{ color: 'white', textAlign: 'center', fontWeight: 600 }}>
+                    <Typography variant="h6" sx={{color: 'text.primary', textAlign: 'center', fontWeight: 600}}>
                         Finish Day
                     </Typography>
 
@@ -123,7 +106,7 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ finishDay, isLoa
                     )}
 
                     <Box>
-                        <Typography variant="subtitle2" sx={{ color: '#8b9bb4', mb: 1, textAlign: 'center' }}>
+                        <Typography variant="subtitle2" sx={{color: 'text.secondary', mb: 1, textAlign: 'center'}}>
                             Hours Stop
                         </Typography>
                         <TextField
@@ -138,7 +121,7 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ finishDay, isLoa
                     </Box>
 
                     <Box>
-                        <Typography variant="subtitle2" sx={{ color: '#8b9bb4', mb: 1, textAlign: 'center' }}>
+                        <Typography variant="subtitle2" sx={{color: 'text.secondary', mb: 1, textAlign: 'center'}}>
                             Cable Check By
                         </Typography>
                         <FormControl fullWidth size="small">
@@ -147,6 +130,7 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ finishDay, isLoa
                                 value={cableCheckBy}
                                 onChange={(e) => setCableCheckBy(e.target.value)}
                                 sx={darkSelectStyles}
+                                MenuProps={darkMenuStyles}
                                 disabled={isFetchingOperators}
                             >
                                 <MenuItem value="">
@@ -167,7 +151,8 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ finishDay, isLoa
                             onClick={handleSubmit}
                             disabled={isLoading}
                             variant="contained"
-                            sx={{ backgroundColor: '#3b5f99', textTransform: 'none', borderRadius: 2, py: 1.5 }}
+                            color="primary"
+                            sx={{borderRadius: 2, py: 1.5}}
                         >
                             {isLoading ? 'Submitting...' : 'Finish Day'}
                         </Button>
@@ -175,7 +160,8 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ finishDay, isLoa
                             fullWidth
                             onClick={handleDownloadLog}
                             variant="contained"
-                            sx={{ backgroundColor: '#3b5f99', textTransform: 'none', borderRadius: 2, py: 1.5 }}
+                            color="primary"
+                            sx={{borderRadius: 2, py: 1.5}}
                         >
                             Download Log
                         </Button>

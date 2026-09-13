@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Button, FormControl, Grid, MenuItem, Select, TextField, Typography, Alert, Stack } from '@mui/material';
-import { DrumToggleGroup } from './DrumToggleGroup';
-import { darkSelectStyles, darkTextFieldStyles } from '../../../themes/styles.ts';
-import type { DrumPosition, OperatorRead, WinchLogState, DerivedWinchState } from '../../types';
+import React, {useEffect, useState} from 'react';
+import {Alert, Box, Button, FormControl, Grid, MenuItem, Select, Stack, TextField, Typography} from '@mui/material';
+import {DrumToggleGroup} from './DrumToggleGroup';
+import {darkMenuStyles, darkSelectStyles, darkTextFieldStyles} from '../../../themes/styles.ts';
+import type {DerivedWinchState, DrumPosition, OperatorRead, WinchLogState} from '../../winch-ops/types';
 import {getOperatorsForSquadron} from "../../winch-ops/api/dataClient.ts";
 
 
@@ -77,7 +77,7 @@ export const RepairsPanel: React.FC<RepairsPanelProps> = ({ addRemark, isLoading
 
     return (
         <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle2" sx={{ color: '#8b9bb4', mb: 1 }}>
+            <Typography variant="subtitle2" sx={{mb: 1}}>
                 Repair details
             </Typography>
             {localError && (
@@ -99,7 +99,7 @@ export const RepairsPanel: React.FC<RepairsPanelProps> = ({ addRemark, isLoading
                 <Stack direction="row" spacing={2} sx={{alignItems: 'center'}}>
                     <DrumToggleGroup value={drum} onChange={setDrum} />
                     {!hasLaunches && (
-                        <Typography variant="body2" sx={{ color: '#8b9bb4' }}>
+                        <Typography variant="subtitle2">
                             No launches yet
                         </Typography>
                     )}
@@ -108,22 +108,23 @@ export const RepairsPanel: React.FC<RepairsPanelProps> = ({ addRemark, isLoading
 
             <Grid container spacing={2}>
                 <Grid size={6}>
-                    <Typography variant="subtitle2" sx={{ color: '#8b9bb4', mb: 1 }}>Work c/o by (worker)</Typography>
+                    <Typography variant="subtitle2" sx={{mb: 1}}>Work c/o by (worker)</Typography>
                     <FormControl fullWidth size="small">
                         <Select 
                             displayEmpty
-                            value={worker} 
-                            onChange={(e) => setWorker(e.target.value)} 
+                            value={worker}
+                            onChange={(e) => setWorker(e.target.value)}
                             sx={darkSelectStyles}
+                            MenuProps={darkMenuStyles}
                             disabled={isFetchingOperators}
                         >
                             <MenuItem value="" disabled>
                                 {isFetchingOperators ? 'Loading...' : 'Select worker...'}
                             </MenuItem>
                             {operators.map(op => (
-                                <MenuItem 
-                                    key={op.sn} 
-                                    value={op.sn} 
+                                <MenuItem
+                                    key={op.sn}
+                                    value={op.sn}
                                     disabled={supervisor !== 'none' && op.sn === supervisor}
                                 >
                                     {op.name}
@@ -133,22 +134,23 @@ export const RepairsPanel: React.FC<RepairsPanelProps> = ({ addRemark, isLoading
                     </FormControl>
                 </Grid>
                 <Grid size={6}>
-                    <Typography variant="subtitle2" sx={{ color: '#8b9bb4', mb: 1 }}>Supervised by</Typography>
+                    <Typography variant="subtitle2" sx={{mb: 1}}>Supervised by</Typography>
                     <FormControl fullWidth size="small">
                         <Select
                             displayEmpty
                             value={supervisor}
                             onChange={(e) => setSupervisor(e.target.value)}
                             sx={darkSelectStyles}
+                            MenuProps={darkMenuStyles}
                             disabled={isFetchingOperators}
                         >
                             <MenuItem value="none">
                                 {isFetchingOperators ? 'Loading...' : 'No supervisor'}
                             </MenuItem>
                             {operators.map(op => (
-                                <MenuItem 
-                                    key={op.sn} 
-                                    value={op.sn} 
+                                <MenuItem
+                                    key={op.sn}
+                                    value={op.sn}
                                     disabled={op.sn === worker && worker !== ''}
                                 >
                                     {op.name}
@@ -164,7 +166,8 @@ export const RepairsPanel: React.FC<RepairsPanelProps> = ({ addRemark, isLoading
                     onClick={handleSubmit}
                     disabled={isSubmitDisabled}
                     variant="contained"
-                    sx={{ backgroundColor: '#3b5f99', textTransform: 'none', borderRadius: 2 }}
+                    color="primary"
+                    sx={{textTransform: 'none', borderRadius: 2}}
                 >
                     {isLoading ? 'Submitting...' : (supervisor === 'none' ? 'Sign off Repair' : 'Sign as Supervisor')}
                 </Button>

@@ -1,8 +1,10 @@
-import { Box, Stack, Typography, Chip, Button } from '@mui/material';
+import {Box, Button, Chip, Stack, Typography, useTheme} from '@mui/material';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
-import { LaunchButton } from './LaunchButton.tsx';
-import type { DrumPosition } from '../../winch-ops/types';
-import { useEffect, useState } from 'react';
+import {LaunchButton} from './LaunchButton.tsx';
+import type {DrumPosition} from '../../winch-ops/types';
+import {useEffect, useState} from 'react';
+import {darkBlueButton} from "../../../themes/styles.ts";
+import {alpha} from "@mui/material/styles";
 
 function formatTimeAgo(timestamp: string | number | Date): string {
     const time = new Date(timestamp).getTime();
@@ -35,39 +37,39 @@ interface DrumControlProps {
 }
 
 export const DrumControl = ({
-    drumType,
-    launches,
-    lastLaunch,
-    isLoading,
-    isUsed,
-    isResetting,
-    currentAnim,
-    onLaunch,
-    onBurn,
-    onUndo
-}: DrumControlProps) => {
-    // Force re-render every minute so relative time updates automatically
+                                drumType,
+                                launches,
+                                lastLaunch,
+                                isLoading,
+                                isUsed,
+                                isResetting,
+                                currentAnim,
+                                onLaunch,
+                                onBurn,
+                                onUndo
+                            }: DrumControlProps) => {
+    const theme = useTheme();
     const [, setTick] = useState(0);
+
     useEffect(() => {
         if (!lastLaunch) return;
         const interval = setInterval(() => setTick(t => t + 1), 60000);
         return () => clearInterval(interval);
     }, [lastLaunch]);
 
-    // Capitalize label
     const label = drumType === 'left' ? 'Left Drum' : 'Right Drum';
 
-    // Color configurations depending on drum type
+    // Dynamically derive gradients and shadows from the application theme
     const colors = drumType === 'left'
         ? {
-            gradient: 'linear-gradient(145deg, #3b82f6, #2563eb)',
-            shadow: 'rgba(37, 99, 235, 0.4)',
-            hoverShadow: 'rgba(37, 99, 235, 0.6)'
+            bg: theme.palette.primary.main,
+            shadow: alpha(theme.palette.primary.main, 0.4),
+            hoverShadow: alpha(theme.palette.primary.main, 0.6)
         }
         : {
-            gradient: 'linear-gradient(145deg, #10b981, #059669)',
-            shadow: 'rgba(16, 185, 129, 0.4)',
-            hoverShadow: 'rgba(16, 185, 129, 0.6)'
+            bg: theme.palette.success.main,
+            shadow: alpha(theme.palette.success.main, 0.4),
+            hoverShadow: alpha(theme.palette.success.main, 0.6)
         };
 
     const isInteractionDisabled = isLoading || isUsed || isResetting;
@@ -86,7 +88,7 @@ export const DrumControl = ({
                     disabled={isInteractionDisabled}
                     onClick={onLaunch}
                     sx={{
-                        background: colors.gradient,
+                        backgroundColor: colors.bg, // <-- Changed this line
                         boxShadow: `0 8px 24px ${colors.shadow}`,
                         '&:hover': {
                             boxShadow: `0 12px 32px ${colors.hoverShadow}`,
@@ -94,7 +96,8 @@ export const DrumControl = ({
                         },
                         py: 3.5,
                         px: 2,
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        border: 1,
+                        borderColor: 'surface.borderStrong',
                         borderRadius: '20px',
                         transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
@@ -104,7 +107,16 @@ export const DrumControl = ({
                             <Chip
                                 label={`${launches} launches`}
                                 size="small"
-                                sx={{ backgroundColor: 'rgba(0, 0, 0, 0.2)', color: 'white', border: 'none', px: 1.5, py: 0.5, height: 'auto', fontSize: '14px', fontWeight: 500, borderRadius: '12px' }}
+                                sx={{
+                                    backgroundColor: alpha(theme.palette.common.black, 0.2),
+                                    color: 'primary.contrastText',
+                                    border: 'none',
+                                    px: 1.5, py: 0.5,
+                                    height: 'auto',
+                                    fontSize: '14px',
+                                    fontWeight: 500,
+                                    borderRadius: '12px'
+                                }}
                             />
                         </Box>
                     }
@@ -119,14 +131,15 @@ export const DrumControl = ({
                         borderRadius: '10px',
                         py: 1,
                         px: 2,
-                        border: '1.5px solid rgba(239, 68, 68, 0.5)',
-                        backgroundColor: 'rgba(239, 68, 68, 0.08)',
-                        color: '#f87171',
+                        border: 1,
+                        borderColor: 'error.main',
+                        backgroundColor: alpha(theme.palette.error.main, 0.1), // Corrects contrast failure
+                        color: 'error.main',
                         boxShadow: 'none',
                         '&:hover': {
-                            backgroundColor: 'rgba(239, 68, 68, 0.2)',
-                            borderColor: '#ef4444',
-                            color: '#ef4444',
+                            backgroundColor: alpha(theme.palette.error.main, 0.2),
+                            borderColor: 'error.main',
+                            color: 'error.main',
                             boxShadow: 'none'
                         }
                     }}
@@ -143,37 +156,12 @@ export const DrumControl = ({
                 fullWidth
                 disabled={isLoading || launches === 0}
                 onClick={onUndo}
-                sx={{
-                    backgroundColor: 'rgba(59, 130, 246, 0.05)',
-                    border: '2px solid #3b82f6',
-                    color: '#f8fafc',
-                    textTransform: 'none',
-                    borderRadius: '16px',
-                    py: 1.5,
-                    px: 2,
-                    fontSize: '15px',
-                    fontWeight: 600,
-                    backdropFilter: 'blur(4px)',
-                    transition: 'all 0.2s ease',
-                    mt: 1,
-                    '&:hover': {
-                        backgroundColor: '#3b82f6',
-                        color: 'white',
-                        transform: 'scale(1.02)',
-                        boxShadow: '0 8px 24px rgba(59, 130, 246, 0.5)',
-                        borderColor: 'transparent'
-                    },
-                    '&:disabled': {
-                        opacity: 0.5,
-                        color: 'rgba(255, 255, 255, 0.3)',
-                        borderColor: 'rgba(255, 255, 255, 0.1)',
-                    }
-                }}
+                sx={darkBlueButton}
             >
                 − Undo {drumType === 'left' ? 'Left' : 'Right'}
             </Button>
 
-            <Typography sx={{ color: '#94a3b8', textAlign: 'center', fontSize: '14px', mt: 1, fontFamily: 'monospace', fontWeight: 500 }}>
+            <Typography variant="subtitle2" sx={{fontSize: '14px', textAlign: 'center'}}>
                 {launches === 0 ? 'Not yet launched' : (lastLaunch ? `Last launch: ${formatTimeAgo(lastLaunch)}` : '')}
             </Typography>
         </Stack>

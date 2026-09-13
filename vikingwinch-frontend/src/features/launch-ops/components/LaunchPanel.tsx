@@ -6,6 +6,8 @@ import {WinchDetailsSticker} from './WinchDetailsSticker.tsx';
 import {useWinchSession} from '../../winch-ops/hooks/useWinchSession.ts';
 import './LaunchPanel.css';
 import {DrumControl} from "./DrumControl.tsx";
+import {getTabButtonStyles, glassPanelSx} from "../../../themes/styles.ts";
+import type {SxProps, Theme} from "@mui/material/styles";
 
 const ANIMATIONS = [
     'animFadeScale 0.6s cubic-bezier(0.2, 0, 0, 1) forwards', // M3 Emphasized
@@ -108,23 +110,9 @@ export const LaunchPanel = ({ onViewSkylogValues, session }: LaunchPanelProps) =
     const handleBurnRight = () => executeLaunch('right', true).catch(console.error);
 
     return (
-        <Box sx={{ 
-            p: 5, 
-            display: 'flex', 
-            flexDirection: 'column', 
-            alignItems: 'center', 
-            gap: 3,
-            backgroundColor: 'rgba(30, 41, 59, 0.7)', 
-            backdropFilter: 'blur(20px)',
-            borderRadius: '24px', 
-            color: 'white', 
-            border: '1px solid rgba(255, 255, 255, 0.1)', 
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-            width: '100%',
-            maxWidth: 540
-        }}>
+        <Box sx={[glassPanelSx, {maxWidth: 540, gap: 3}] as SxProps<Theme>}>
             <Box sx={{ textAlign: 'center', width: '100%' }}>
-                <Typography variant="h2" sx={{ fontSize: '32px', fontWeight: 700, letterSpacing: '-0.5px', mb: 1, fontFamily: '"Outfit", sans-serif' }}>
+                <Typography variant="h2" sx={{mb: 1}}>
                     Launch Panel
                 </Typography>
                 
@@ -170,32 +158,13 @@ export const LaunchPanel = ({ onViewSkylogValues, session }: LaunchPanelProps) =
             </Stack>
 
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Divider sx={{borderColor: 'rgba(255, 255, 255, 0.08)', my: 0.5}}/>
+                <Divider sx={{borderColor: 'border.main', my: 0.5}}/>
                 <RemarksRepairsPanel addRemark={addRemark} isLoading={isLoading} derived={derived} state={state} />
-                <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.08)', my: 0.5 }} />
+                <Divider sx={{borderColor: 'border.main', my: 0.5}}/>
 
                 <ButtonBase
                     onClick={onViewSkylogValues}
-                    sx={{
-                        position: 'relative',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        width: '100%',
-                        height: 56,
-                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                        borderRadius: '12px',
-                        color: '#f8fafc',
-                        overflow: 'hidden',
-                        transition: 'all 0.2s ease',
-                        '&:hover': {
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            borderColor: '#3b82f6',
-                            color: '#3b82f6',
-                            transform: 'translateY(-2px)'
-                        },
-                    }}
+                    sx={getTabButtonStyles(false)}
                 >
                     <Typography sx={{fontWeight: 600, fontSize: '16px', zIndex: 1}}>
                         Show skylog values

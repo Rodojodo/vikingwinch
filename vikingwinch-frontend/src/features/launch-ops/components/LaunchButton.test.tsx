@@ -1,7 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import {render, screen} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach} from 'vitest'; // Compatible with Jest
-import { LaunchButton } from './LaunchButton.tsx';
+import {beforeEach, describe, expect, it, vi} from 'vitest'; // Compatible with Jest
+import {LaunchButton} from './LaunchButton.tsx';
 
 type LaunchButtonMode = 'default' | 'burn';
 
@@ -38,17 +38,5 @@ describe('LaunchButton', () => {
 
         const button = screen.getByRole('button', {name: 'Left Drum'});
         expect(button).toBeDisabled();
-    });
-
-    it('applies the correct computed style properties when mode is burn', () => {
-        render(<LaunchButton {...defaultProps} mode="burn" label="Burn Left" />);
-
-        const button = screen.getByRole('button', { name: 'Burn Left' });
-
-        // JSDOM computes hex colors to rgb. '#ff4444' resolves to 'rgb(255, 68, 68)'.
-        // Verify the color matches the modeStyles dictionary definition.
-        expect(button).toHaveStyle({
-            color: 'rgb(255, 68, 68)',
-        });
     });
 });

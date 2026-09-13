@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, type ButtonProps } from '@mui/material';
+import {Button, type ButtonProps} from '@mui/material';
 
 type LaunchButtonMode = 'default' | 'burn';
 
@@ -9,25 +9,6 @@ export interface LaunchButtonProps extends ButtonProps {
   label: React.ReactNode;
   mode?: LaunchButtonMode;
 }
-
-const modeStyles: Record<LaunchButtonMode, any> = {
-    default: {
-        color: 'white',
-        borderColor: 'rgba(255, 255, 255, 0.1)',
-        '&:hover': {
-            borderColor: 'rgba(255, 255, 255, 0.3)',
-            backgroundColor: 'rgba(255, 255, 255, 0.04)',
-        },
-    },
-    burn: {
-        color: '#ff4444', // Adjust specific burn colors as required
-        borderColor: 'rgba(255, 68, 68, 0.1)',
-        '&:hover': {
-            borderColor: 'rgba(255, 68, 68, 0.3)',
-            backgroundColor: 'rgba(255, 68, 68, 0.04)',
-        },
-    },
-};
 
 export const LaunchButton = ({
     onClick,
@@ -54,11 +35,6 @@ export const LaunchButton = ({
             gap: 1,
             whiteSpace: 'nowrap',
             textTransform: 'none',
-
-            // Mode-specific styles
-            ...modeStyles[mode],
-
-            // Allow parent overrides
             ...sx,
         }}
         {...rest}

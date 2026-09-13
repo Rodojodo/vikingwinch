@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
-import { Box, Button, TextField, Typography, Alert, Stack } from '@mui/material';
-import { DrumToggleGroup } from './DrumToggleGroup';
-import type { DrumPosition, DerivedWinchState } from '../../types';
+import React, {useState} from 'react';
+import {Alert, Box, Button, Stack, TextField, Typography} from '@mui/material';
+import {DrumToggleGroup} from './DrumToggleGroup';
+import type {DerivedWinchState, DrumPosition} from '../../winch-ops/types';
 import {darkTextFieldStyles} from "../../../themes/styles.ts";
 
 
@@ -39,7 +39,7 @@ export const RemarksPanel: React.FC<RemarksPanelProps> = ({ addRemark, isLoading
 
     return (
         <Box sx={{ mt: 2 }}>
-            <Typography variant="subtitle2" sx={{ color: '#8b9bb4', mb: 1 }}>
+            <Typography variant="subtitle2" sx={{mb: 1}}>
                 Launch remarks
             </Typography>
             {localError && (
@@ -56,11 +56,11 @@ export const RemarksPanel: React.FC<RemarksPanelProps> = ({ addRemark, isLoading
                 onChange={(e) => setRemark(e.target.value)}
                 sx={darkTextFieldStyles}
             />
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mt: 2 }}>
+            <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mt: 2}}>
                 <Stack direction="row" spacing={2} sx={{alignItems: 'center'}}>
                     <DrumToggleGroup value={drum} onChange={setDrum} />
                     {!hasLaunches && (
-                        <Typography variant="body2" sx={{ color: '#8b9bb4' }}>
+                        <Typography variant="subtitle2" sx={{mb: 1}}>
                             No launches yet
                         </Typography>
                     )}
@@ -69,7 +69,8 @@ export const RemarksPanel: React.FC<RemarksPanelProps> = ({ addRemark, isLoading
                     onClick={handleSubmit}
                     disabled={isLoading || !remark.trim() || !hasLaunches}
                     variant="contained"
-                    sx={{ backgroundColor: '#3b5f99', textTransform: 'none', borderRadius: 2 }}
+                    color="primary"
+                    sx={{textTransform: 'none', borderRadius: 2}}
                 >
                     {isLoading ? 'Submitting...' : 'Submit Remark'}
                 </Button>

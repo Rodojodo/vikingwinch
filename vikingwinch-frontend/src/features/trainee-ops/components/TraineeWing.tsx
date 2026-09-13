@@ -2,6 +2,7 @@ import {Box, ButtonBase, Stack, Typography} from '@mui/material';
 import {ActiveDriverToggle} from './ActiveDriverToggle';
 import {TraineeAssignmentPanel} from '../../day-ops/components/TraineeAssignmentPanel.tsx';
 import type {DayLogResponse, OperatorRead} from '../../winch-ops/types';
+import {wingPanel, wingPanelButton} from "../../../themes/styles.ts";
 
 
 interface TraineeWingProps {
@@ -20,8 +21,6 @@ interface TraineeWingProps {
     recordSignOn: (traineeSn: string | null) => Promise<DayLogResponse>;
 }
 
-const HANDLE_WIDTH = 20;
-const HANDLE_HEIGHT = 140;
 const WING_WIDTH = 320;
 
 export const TraineeWing: React.FC<TraineeWingProps> = ({
@@ -34,8 +33,6 @@ export const TraineeWing: React.FC<TraineeWingProps> = ({
                                                             traineeSn,
                                                             traineeName,
                                                             ActiveDriverSn,
-                                                            operators,
-                                                            isFetchingOperators,
                                                             setActiveDriver,
                                                             recordSignOn,
                                                         }) => {
@@ -53,28 +50,7 @@ export const TraineeWing: React.FC<TraineeWingProps> = ({
             <Box sx={{position: 'relative'}}>
                 <ButtonBase
                     onClick={onToggle}
-                    sx={{
-                        position: 'absolute',
-                        left: 0,
-                        top: '50%',
-                        transform: 'translate(0, -50%)',
-                        width: HANDLE_WIDTH,
-                        height: HANDLE_HEIGHT,
-                        backgroundColor: 'rgba(30, 41, 59, 0.9)',
-                        border: '1px solid rgba(255, 255, 255, 0.15)',
-                        borderLeft: 'none',
-                        borderTopLeftRadius: 0,
-                        borderBottomLeftRadius: 0,
-                        borderTopRightRadius: '10px',
-                        borderBottomRightRadius: '10px',
-                        color: '#94a3b8',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                        zIndex: 1,
-                        '&:hover': {color: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)'},
-                    }}
+                    sx={wingPanelButton}
                 >
                     <Typography sx={{
                         writingMode: 'vertical-rl',
@@ -89,21 +65,7 @@ export const TraineeWing: React.FC<TraineeWingProps> = ({
                 </ButtonBase>
 
                 <Box
-                    sx={{
-                        width: open ? WING_WIDTH : 0,
-                        opacity: open ? 1 : 0,
-                        overflow: 'hidden',
-                        flexShrink: 0,
-                        boxSizing: 'border-box',
-                        transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease',
-                        backgroundColor: '#1b243a',
-                        backdropFilter: 'blur(20px)',
-                        border: open ? '1px solid rgba(255, 255, 255, 0.15)' : 'none',
-                        borderTopLeftRadius: 0,
-                        borderBottomLeftRadius: 0,
-                        borderTopRightRadius: '16px',
-                        borderBottomRightRadius: '16px',
-                    }}
+                    sx={wingPanel(open, WING_WIDTH)}
                 >
                     <Box sx={{width: WING_WIDTH, p: 3, boxSizing: 'border-box'}}>
                         <Stack spacing={3}>
@@ -134,9 +96,6 @@ export const TraineeWing: React.FC<TraineeWingProps> = ({
                                 squadron={squadron}
                                 operatorSn={operatorSn}
                                 traineeSn={traineeSn}
-                                operators={operators}
-                                isFetchingOperators={isFetchingOperators}
-                                onCancel={onToggle}
                             />
                         </Stack>
                     </Box>
