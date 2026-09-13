@@ -187,6 +187,7 @@ export const slidingPillSx: SxProps<Theme> = {
     borderRadius: '10px !important',
     fontWeight: 600,
     textTransform: 'none',
+    whiteSpace: 'nowrap',
     py: 0.75,
     transition: 'color 0.2s ease',
     '&:hover': {
