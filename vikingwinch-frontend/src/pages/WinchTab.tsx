@@ -153,10 +153,10 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, openWinchIds,
                             operatorName={operatorName}
                             traineeSn={session.state.traineeSn}
                             traineeName={traineeName}
-                            activeLauncherSn={session.state.activeLauncherSn}
+                            ActiveDriverSn={session.state.activeLauncherSn}
                             operators={operators}
                             isFetchingOperators={isFetchingOperators}
-                            setActiveLauncher={session.setActiveLauncher}
+                            setActiveDriver={session.setActiveLauncher}
                             recordSignOn={session.recordSignOn}
                         />
                     </Box>

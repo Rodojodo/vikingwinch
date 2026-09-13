@@ -32,7 +32,7 @@ export const winchReducer = (state: WinchLogState, action: WinchAction): WinchLo
         }
 
         case 'CHANGE_TRAINEE': {
-            return {...state, traineeSn: action.payload.trainee };
+            return {...state, traineeSn: action.payload.trainee, activeLauncherSn: state.operatorSn};
         }
 
         case 'ADD_REMARK': {

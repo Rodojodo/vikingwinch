@@ -96,7 +96,7 @@ export const TraineeWing: React.FC<TraineeWingProps> = ({
                         flexShrink: 0,
                         boxSizing: 'border-box',
                         transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease',
-                        backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                        backgroundColor: '#1b243a',
                         backdropFilter: 'blur(20px)',
                         border: open ? '1px solid rgba(255, 255, 255, 0.15)' : 'none',
                         borderTopLeftRadius: 0,
