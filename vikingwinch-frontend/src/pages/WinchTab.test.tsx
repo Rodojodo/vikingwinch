@@ -2,7 +2,7 @@ import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {describe, expect, it, vi} from 'vitest';
 import {WinchTab} from './WinchTab.tsx';
 import {useWinchSession} from '../features/winch-ops/hooks/useWinchSession';
-import {getDayLog, getLaunches} from '../features/winch-ops/api/dataClient';
+import {getDayLog, getLaunches, getOperatorsForSquadron} from '../features/winch-ops/api/dataClient';
 
 vi.mock('../features/winch-ops/hooks/useWinchSession', () => ({
     useWinchSession: vi.fn(),
@@ -11,6 +11,7 @@ vi.mock('../features/winch-ops/hooks/useWinchSession', () => ({
 vi.mock('../features/winch-ops/api/dataClient', () => ({
     getDayLog: vi.fn(),
     getLaunches: vi.fn(),
+    getOperatorsForSquadron: vi.fn(),
 }));
 
 vi.mock('../features/launch-ops/components/LaunchPanel', () => ({
@@ -49,6 +50,7 @@ describe('WinchTab', () => {
             { id: 1, type: 'di', operator_sn: 'OFF-1001', squadron_id: 'sqn1', winch_id: 1, cable_check: 'OFF-1001', hours: 0, trainee: null, timestamp: null },
             { id: 2, type: 'sign_on', operator_sn: 'OFF-1001', squadron_id: 'sqn1', winch_id: 1, cable_check: 'OFF-1001', hours: 0, trainee: null, timestamp: null }
         ]);
+        vi.mocked(getOperatorsForSquadron).mockResolvedValue([]);
         vi.mocked(getLaunches).mockResolvedValue([]);
 
         render(<WinchTab tabId="1" squadronId="123 VGS" operatorSn="OFF-1001" winchId={1} openWinchIds={[]} onWinchSelect={vi.fn()} />);

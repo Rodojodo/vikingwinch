@@ -8,6 +8,7 @@ export const createInitialState = (squadron: string, operatorSn: string, winchId
     leftHistory: [],
     rightHistory: [],
     dayFinished: false,
+    activeLauncherSn: operatorSn,
 });
 
 
@@ -31,7 +32,7 @@ export const winchReducer = (state: WinchLogState, action: WinchAction): WinchLo
         }
 
         case 'CHANGE_TRAINEE': {
-            return {...state, traineeSn: action.payload.trainee };
+            return {...state, traineeSn: action.payload.trainee, activeLauncherSn: state.operatorSn};
         }
 
         case 'ADD_REMARK': {
@@ -66,6 +67,9 @@ export const winchReducer = (state: WinchLogState, action: WinchAction): WinchLo
         case 'SET_OPERATOR': {
             return {...state, operatorSn: action.payload};
         }
+
+        case 'SET_ACTIVE_LAUNCHER':
+            return {...state, activeLauncherSn: action.payload};
 
         case 'HYDRATE_HISTORY': {
             const leftHistory: LaunchRecord[] = [];

@@ -47,6 +47,10 @@ export const useWinchSession = (squadronId: string, operatorSn: string, initialW
         };
     }, [state.leftHistory, state.rightHistory]);
 
+    const setActiveLauncher = useCallback((sn: string) => {
+        dispatch({type: 'SET_ACTIVE_LAUNCHER', payload: sn});
+    }, []);
+    
     const executeLaunch = useCallback(async (drum: DrumPosition, burn: boolean = false) => {
         setIsLoading(true);
         setError(null);
@@ -55,7 +59,7 @@ export const useWinchSession = (squadronId: string, operatorSn: string, initialW
             const payload: LaunchPayload = {
                 squadron_id: state.squadron,
                 winch_id: state.winchId,
-                operator_sn: state.operatorSn,
+                operator_sn: state.activeLauncherSn,
                 drum,
                 is_burn: burn,
             };
@@ -68,7 +72,7 @@ export const useWinchSession = (squadronId: string, operatorSn: string, initialW
         } finally {
             setIsLoading(false);
         }
-    }, [state.squadron, state.winchId, state.operatorSn]);
+    }, [state.squadron, state.winchId, state.activeLauncherSn]);
 
     const undoLaunch = useCallback(async (drum: DrumPosition) => {
         const targetRecord = drum === 'left' ? derived.leftLastRecord : derived.rightLastRecord;
@@ -186,6 +190,7 @@ export const useWinchSession = (squadronId: string, operatorSn: string, initialW
         derived,
         isLoading,
         error,
+        setActiveLauncher,
         executeLaunch,
         undoLaunch,
         recordSignOn,

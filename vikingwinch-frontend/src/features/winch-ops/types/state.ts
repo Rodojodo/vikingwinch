@@ -20,6 +20,7 @@ export interface WinchLogState {
   leftHistory: LaunchRecord[];
   rightHistory: LaunchRecord[];
   dayFinished: boolean;
+  activeLauncherSn: string;
 }
 
 
@@ -32,6 +33,7 @@ export type WinchAction =
   | { type: 'SET_WINCH_ID'; payload: number }
   | { type: 'SET_SQUADRON'; payload: string }
   | { type: 'SET_OPERATOR'; payload: string }
+    | { type: 'SET_ACTIVE_LAUNCHER'; payload: string }
     | {
   type: 'HYDRATE_HISTORY'; payload: { sorted: LaunchResponse[]; traineeSn: string | null; }
 };
