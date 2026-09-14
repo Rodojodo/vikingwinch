@@ -1,4 +1,4 @@
-import type {WinchRead} from '../types/winchOpsTypes';
+import type {ExportDataResponse, WinchDayDataResponse, WinchRead} from '../types/winchOpsTypes';
 import {API_BASE_URL, handleApiError} from './utils';
 
 export const getWinchesForSquadron = async (squadronId: string, signal?: AbortSignal): Promise<WinchRead[]> => {
@@ -40,7 +40,7 @@ export const getWinchHours = async (winchId: number): Promise<{ hours: number | 
 }
 
 
-export const getWinchDayData = async (winchId: number, day: string): Promise<any> => {
+export const getWinchDayData = async (winchId: number, day: string): Promise<WinchDayDataResponse> => {
     const response = await fetch(`${API_BASE_URL}/winch/${winchId}/day_data?day=${day}`, {
         method: 'GET',
         headers: {
@@ -51,7 +51,7 @@ export const getWinchDayData = async (winchId: number, day: string): Promise<any
     return response.json();
 }
 
-export const getExportData = async (winchId: number, squadronId: string, day: string): Promise<any> => {
+export const getExportData = async (winchId: number, squadronId: string, day: string): Promise<ExportDataResponse> => {
     const response = await fetch(`${API_BASE_URL}/winch/${winchId}/export_data?squadron_id=${squadronId}&day=${day}`, {
         method: 'GET',
         headers: {

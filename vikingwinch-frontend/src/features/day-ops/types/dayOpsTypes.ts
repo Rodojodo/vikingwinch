@@ -21,3 +21,9 @@ export interface DayLogResponse {
     hours: number | null;
     timestamp: string | null;
 }
+
+export interface BroughtForwardInfoResponse {
+    left: number | null;
+    right: number | null;
+    hours: number | null;
+}

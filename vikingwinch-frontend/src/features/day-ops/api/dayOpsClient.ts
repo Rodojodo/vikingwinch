@@ -1,4 +1,4 @@
-import type {DayLogPayload, DayLogResponse} from '../types/dayOpsTypes';
+import type {BroughtForwardInfoResponse, DayLogPayload, DayLogResponse} from '../types/dayOpsTypes';
 import {API_BASE_URL, handleApiError} from '../../winch-ops/api/utils';
 
 export const postDayLogToDb = async (payload: DayLogPayload, winchId: number): Promise<DayLogResponse> => {
@@ -27,11 +27,7 @@ export const getDayLog = async (winchId: number, day: string): Promise<DayLogRes
     return response.json();
 }
 
-export const getBroughtForwardInfo = async (winchId: number, day: string): Promise<{
-    left: number | null,
-    right: number | null,
-    hours: number | null
-}> => {
+export const getBroughtForwardInfo = async (winchId: number, day: string): Promise<BroughtForwardInfoResponse> => {
     const response = await fetch(`${API_BASE_URL}/winch/${winchId}/bf_info?day=${day}`, {
         method: 'GET',
         headers: {
