@@ -2,10 +2,7 @@ import ExcelJS from 'exceljs';
 import {saveAs} from 'file-saver';
 import winchLogTemplateUrl from '../../../assets/winch_log.xltx?url';
 import type {WinchLogState} from '../types/winchOpsTypes';
-import {getWinch} from '../api/winchOpsClient';
-import {getDayLog} from '../../day-ops/api/dayOpsClient';
-import {getOperatorsForSquadron} from '../../auth/api/authClient';
-import {getBroughtForward} from '../../launch-ops/api/launchOpsClient';
+import {getExportData} from '../api/winchOpsClient';
 
 const CELLS = {
     UNIT: 'F2',
@@ -42,14 +39,14 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
         const day = String(today.getDate()).padStart(2, '0');
         const todayStr = `${year}-${month}-${day}`;
 
-        const [winch, dayLogs, operators, bf] = await Promise.all([
-            getWinch(state.winchId),
-            getDayLog(state.winchId, todayStr),
-            getOperatorsForSquadron(state.squadron),
-            getBroughtForward(state.winchId, todayStr)
-        ]);
+        const {
+            winch,
+            logs: dayLogs,
+            operators,
+            brought_forward: bf
+        } = await getExportData(state.winchId, state.squadron, todayStr);
 
-        const opMap = new Map(operators.map(op => [op.service_no, op.name]));
+        const opMap = new Map(operators.map((op: any) => [op.service_no, op.name]));
         const getName = (sn: string | null) => sn ? (opMap.get(sn) || sn) : null;
 
         const response = await fetch(winchLogTemplateUrl);

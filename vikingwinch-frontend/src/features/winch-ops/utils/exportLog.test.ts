@@ -1,19 +1,14 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {exportLog} from './exportLog.ts';
 import * as fileSaver from 'file-saver';
-import {getWinch} from '../api/winchOpsClient';
-import {getDayLog} from '../../day-ops/api/dayOpsClient';
-import {getOperatorsForSquadron} from '../../auth/api/authClient';
-import {getBroughtForward} from '../../launch-ops/api/launchOpsClient';
+import {getExportData} from '../api/winchOpsClient';
+
 
 vi.mock('file-saver', () => ({
     saveAs: vi.fn(),
 }));
 
-vi.mock('../../winch-ops/api/winchOpsClient', () => ({getWinch: vi.fn()}));
-vi.mock('../../day-ops/api/dayOpsClient', () => ({getDayLog: vi.fn()}));
-vi.mock('../../auth/api/authClient', () => ({getOperatorsForSquadron: vi.fn()}));
-vi.mock('../../launch-ops/api/launchOpsClient', () => ({getBroughtForward: vi.fn()}));
+vi.mock('../../winch-ops/api/winchOpsClient', () => ({getExportData: vi.fn()}));
 
 vi.mock('exceljs', () => {
     class Workbook {
@@ -42,17 +37,21 @@ describe('exportLog', () => {
         vi.clearAllMocks();
         (globalThis as any).__excelCells = {};
         vi.stubGlobal('fetch', vi.fn());
-        vi.mocked(getWinch).mockResolvedValue({ registration: 'REG123' } as any);
-        vi.mocked(getBroughtForward).mockResolvedValue({ left: 15, right: 25 });
-        vi.mocked(getDayLog).mockResolvedValue([
-            { type: 'sign_on', operator_sn: 'OP1', trainee: 'TR1', timestamp: '2026-09-09T08:00:00Z' } as any,
-            { type: 'sign_on', operator_sn: 'OP2', trainee: null, timestamp: '2026-09-09T09:00:00Z' } as any
-        ]);
-        vi.mocked(getOperatorsForSquadron).mockResolvedValue([
-            { service_no: 'OP1', name: 'Operator One', squadron_id: 'sqn1' } as any,
-            { service_no: 'OP2', name: 'Operator Two', squadron_id: 'sqn1' } as any,
-            { service_no: 'TR1', name: 'Trainee One', squadron_id: 'sqn1' } as any
-        ]);
+        vi.mocked(getExportData).mockResolvedValue({
+            winch: {registration: 'W123'},
+            logs: [
+                {id: 1, type: 'di', hours: '123.5', operator_sn: 'OP1'},
+                {id: 2, type: 'sign_on', timestamp: '2023-10-27T08:00:00Z', operator_sn: 'OP1', trainee: 'TR1'},
+                {id: 3, type: 'sign_on', timestamp: '2023-10-27T09:00:00Z', operator_sn: 'OP2', trainee: null},
+                {id: 4, type: 'finish_day', hours: '128.0', operator_sn: 'OP1', cable_check: 'OP2'}
+            ],
+            operators: [
+                {service_no: 'OP1', name: 'Operator One'},
+                {service_no: 'OP2', name: 'Operator Two'},
+                {service_no: 'TR1', name: 'Trainee One'}
+            ],
+            brought_forward: {left: 15, right: 25}
+        });
 
         const mockArrayBuffer = new ArrayBuffer(8);
         (globalThis.fetch as any).mockResolvedValue({
@@ -112,9 +111,6 @@ describe('exportLog', () => {
         } as any;
 
         // Give a log with unknown operator and no trainee
-        vi.mocked(getDayLog).mockResolvedValueOnce([
-            { type: 'sign_on', operator_sn: 'UNKNOWN_OP', trainee: null } as any
-        ]);
         
         await exportLog(mockState);
         

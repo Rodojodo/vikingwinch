@@ -7,8 +7,7 @@ import {useWinchSession} from '../features/winch-ops/hooks/useWinchSession';
 import {WinchSelectPanel} from '../features/winch-ops/components/WinchSelectPanel';
 import {SignOnPanel} from '../features/day-ops/components/SignOnPanel.tsx';
 import {DailyInspectionPanel} from '../features/winch-ops/components/DailyInspectionPanel';
-import {getDayLog} from '../features/day-ops/api/dayOpsClient';
-import {getLaunches} from '../features/launch-ops/api/launchOpsClient';
+import {getWinchDayData} from '../features/winch-ops/api/winchOpsClient';
 import {getOperatorsForSquadron} from '../features/auth/api/authClient';
 import type {OperatorRead} from '../features/auth/types/authTypes';
 import type {TabView} from '../features/winch-ops/types/winchOpsTypes';
@@ -70,10 +69,7 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, openWinchIds,
                 const localDate = new Date(todayDate.getTime() - (offset * 60 * 1000));
                 const todayStr = localDate.toISOString().split('T')[0];
 
-                const [logs, launches] = await Promise.all([
-                    getDayLog(session.state.winchId!, todayStr),
-                    getLaunches(session.state.winchId!, todayStr)
-                ]);
+                const {logs, launches} = await getWinchDayData(session.state.winchId!, todayStr);
 
                 const traineeSn = logs.findLast(l => l.type === 'sign_on')?.trainee ?? null;
                 session.hydrateHistory(launches, traineeSn);

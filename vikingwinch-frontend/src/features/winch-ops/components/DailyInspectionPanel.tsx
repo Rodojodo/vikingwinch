@@ -1,8 +1,6 @@
 import React, {useState} from 'react';
 import {Box, Button, TextField, Typography} from '@mui/material';
-import {getBroughtForward} from '../../launch-ops/api/launchOpsClient';
-import {getWinchHours} from '../api/winchOpsClient';
-import {postDayLogToDb} from '../../day-ops/api/dayOpsClient';
+import {getBroughtForwardInfo, postDayLogToDb} from '../../day-ops/api/dayOpsClient';
 import {useWinchSession} from '../hooks/useWinchSession.ts';
 import {darkTextFieldStyles, errorBannerSx, glassPanelSx, glowingPrimaryButtonSx} from '../../../themes/styles.ts';
 import type {SxProps, Theme} from "@mui/material/styles";
@@ -27,20 +25,13 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ sess
         try {
             const today = new Date();
             const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-            const bf = await getBroughtForward(state.winchId, todayStr);
-            if (bf.left !== null && bf.left !== undefined) setLeftDrum(bf.left.toString());
-            if (bf.right !== null && bf.right !== undefined) setRightDrum(bf.right.toString());
+            const info = await getBroughtForwardInfo(state.winchId, todayStr);
+            if (info.left !== null && info.left !== undefined) setLeftDrum(info.left.toString());
+            if (info.right !== null && info.right !== undefined) setRightDrum(info.right.toString());
+            if (info.hours !== null && info.hours !== undefined) setHours(info.hours.toString());
         } catch (e) {
-            console.error("Failed to fetch drums", e);
-            setError("Failed to retrieve drum totals.");
-        }
-
-        try {
-            const h = await getWinchHours(state.winchId);
-            if (h.hours !== null && h.hours !== undefined) setHours(h.hours.toString());
-        } catch (e) {
-            console.error("Failed to fetch hours", e);
-            setError("Failed to retrieve winch hours.");
+            console.error("Failed to fetch info", e);
+            setError("Failed to retrieve drum totals or winch hours.");
         }
         setIsFetching(false);
     };

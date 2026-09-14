@@ -26,3 +26,18 @@ export const getDayLog = async (winchId: number, day: string): Promise<DayLogRes
     await handleApiError(response);
     return response.json();
 }
+
+export const getBroughtForwardInfo = async (winchId: number, day: string): Promise<{
+    left: number | null,
+    right: number | null,
+    hours: number | null
+}> => {
+    const response = await fetch(`${API_BASE_URL}/winch/${winchId}/bf_info?day=${day}`, {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+        },
+    });
+    await handleApiError(response);
+    return response.json();
+}

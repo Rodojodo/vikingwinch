@@ -2,13 +2,12 @@ import {render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {DailyInspectionPanel} from '../../winch-ops/components/DailyInspectionPanel.tsx';
-import {getBroughtForward} from '../../launch-ops/api/launchOpsClient';
-import {getWinchHours} from '../../winch-ops/api/winchOpsClient';
-import {postDayLogToDb} from '../api/dayOpsClient';
+import {getBroughtForwardInfo, postDayLogToDb} from '../api/dayOpsClient';
 
-vi.mock('../../launch-ops/api/launchOpsClient', () => ({getBroughtForward: vi.fn()}));
-vi.mock('../../winch-ops/api/winchOpsClient', () => ({getWinchHours: vi.fn()}));
-vi.mock('../api/dayOpsClient', () => ({postDayLogToDb: vi.fn()}));
+vi.mock('../api/dayOpsClient', () => ({
+    getBroughtForwardInfo: vi.fn(),
+    postDayLogToDb: vi.fn()
+}));
 
 describe('DailyInspectionPanel', () => {
     const mockOnComplete = vi.fn();
@@ -36,8 +35,7 @@ describe('DailyInspectionPanel', () => {
 
     it('retrieves data from cloud and updates fields', async () => {
         const user = userEvent.setup();
-        vi.mocked(getBroughtForward).mockResolvedValue({ left: 15, right: 8 } as any);
-        vi.mocked(getWinchHours).mockResolvedValue({ hours: 150.5 } as any);
+        vi.mocked(getBroughtForwardInfo).mockResolvedValue({left: 15, right: 8, hours: 150.5} as any);
 
         render(<DailyInspectionPanel session={mockSession as any} onComplete={mockOnComplete} />);
 
@@ -49,12 +47,12 @@ describe('DailyInspectionPanel', () => {
             expect(screen.getByDisplayValue('8')).toBeInTheDocument();
             expect(screen.getByDisplayValue('150.5')).toBeInTheDocument();
         });
+        expect(getBroughtForwardInfo).toHaveBeenCalledWith(42, expect.any(String));
     });
 
     it('handles retrieve data missing fields', async () => {
         const user = userEvent.setup();
-        vi.mocked(getBroughtForward).mockResolvedValue({ left: null, right: undefined } as any);
-        vi.mocked(getWinchHours).mockResolvedValue({ hours: null } as any);
+        vi.mocked(getBroughtForwardInfo).mockResolvedValue({left: null, right: undefined, hours: null} as any);
 
         render(<DailyInspectionPanel session={mockSession as any} onComplete={mockOnComplete} />);
 
@@ -62,7 +60,7 @@ describe('DailyInspectionPanel', () => {
         await user.click(retrieveBtn);
 
         await waitFor(() => {
-            expect(getBroughtForward).toHaveBeenCalledWith(42, expect.any(String));
+            expect(getBroughtForwardInfo).toHaveBeenCalledWith(42, expect.any(String));
         });
 
         // Fields should remain empty
@@ -73,8 +71,7 @@ describe('DailyInspectionPanel', () => {
         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         const user = userEvent.setup();
 
-        vi.mocked(getBroughtForward).mockRejectedValue(new Error('Fetch drums failed'));
-        vi.mocked(getWinchHours).mockRejectedValue(new Error('Fetch hours failed'));
+        vi.mocked(getBroughtForwardInfo).mockRejectedValue(new Error('Fetch drums failed'));
 
         render(<DailyInspectionPanel session={mockSession as any} onComplete={mockOnComplete} />);
 
@@ -82,8 +79,7 @@ describe('DailyInspectionPanel', () => {
         await user.click(retrieveBtn);
 
         await waitFor(() => {
-            expect(consoleSpy).toHaveBeenCalledWith('Failed to fetch drums', expect.any(Error));
-            expect(consoleSpy).toHaveBeenCalledWith('Failed to fetch hours', expect.any(Error));
+            expect(consoleSpy).toHaveBeenCalledWith('Failed to fetch info', expect.any(Error));
         });
 
         consoleSpy.mockRestore();
@@ -175,6 +171,6 @@ describe('DailyInspectionPanel', () => {
         const retrieveBtn = screen.getByRole('button', { name: 'Retrieve data from cloud' });
         await user.click(retrieveBtn);
 
-        expect(getBroughtForward).not.toHaveBeenCalled();
+        expect(getBroughtForwardInfo).not.toHaveBeenCalled();
     });
 });
