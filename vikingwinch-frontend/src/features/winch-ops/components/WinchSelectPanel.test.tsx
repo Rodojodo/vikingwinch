@@ -1,9 +1,9 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { WinchSelectPanel } from './WinchSelectPanel';
-import { getWinchesForSquadron } from '../api/dataClient';
+import {fireEvent, render, screen} from '@testing-library/react';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {WinchSelectPanel} from './WinchSelectPanel';
+import {getWinchesForSquadron} from '../api';
 
-vi.mock('../api/dataClient', () => ({
+vi.mock('../api', () => ({
     getWinchesForSquadron: vi.fn(),
 }));
 

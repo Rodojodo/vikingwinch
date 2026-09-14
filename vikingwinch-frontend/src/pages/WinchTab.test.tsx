@@ -2,17 +2,17 @@ import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {describe, expect, it, vi} from 'vitest';
 import {WinchTab} from './WinchTab.tsx';
 import {useWinchSession} from '../features/winch-ops/hooks/useWinchSession';
-import {getDayLog, getLaunches, getOperatorsForSquadron} from '../features/winch-ops/api/dataClient';
+import {getDayLog} from '../features/day-ops/api';
+import {getLaunches} from '../features/launch-ops/api';
+import {getOperatorsForSquadron} from '../features/auth/api';
 
 vi.mock('../features/winch-ops/hooks/useWinchSession', () => ({
     useWinchSession: vi.fn(),
 }));
 
-vi.mock('../features/winch-ops/api/dataClient', () => ({
-    getDayLog: vi.fn(),
-    getLaunches: vi.fn(),
-    getOperatorsForSquadron: vi.fn(),
-}));
+vi.mock('../features/day-ops/api', () => ({getDayLog: vi.fn()}));
+vi.mock('../features/launch-ops/api', () => ({getLaunches: vi.fn()}));
+vi.mock('../features/auth/api', () => ({getOperatorsForSquadron: vi.fn()}));
 
 vi.mock('../features/launch-ops/components/LaunchPanel', () => ({
     LaunchPanel: ({ onViewSkylogValues }: any) => (
@@ -22,7 +22,7 @@ vi.mock('../features/launch-ops/components/LaunchPanel', () => ({
     ),
 }));
 
-vi.mock('../features/day-ops/components/SkylogValues', () => ({
+vi.mock('../features/winch-ops/components/SkylogValues', () => ({
     SkylogValues: ({ onBack }: any) => (
         <div data-testid="skylog-values">
             <button onClick={onBack}>Go back</button>

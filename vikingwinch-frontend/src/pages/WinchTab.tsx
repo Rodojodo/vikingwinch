@@ -2,13 +2,16 @@ import {useEffect, useState} from 'react';
 import {Box} from '@mui/material';
 import {LaunchPanel} from '../features/launch-ops/components/LaunchPanel';
 import {TraineeWing} from '../features/trainee-ops/components/TraineeWing.tsx'
-import {SkylogValues} from '../features/day-ops/components/SkylogValues';
+import {SkylogValues} from '../features/winch-ops/components/SkylogValues.tsx';
 import {useWinchSession} from '../features/winch-ops/hooks/useWinchSession';
 import {WinchSelectPanel} from '../features/winch-ops/components/WinchSelectPanel';
 import {SignOnPanel} from '../features/day-ops/components/SignOnPanel.tsx';
 import {DailyInspectionPanel} from '../features/winch-ops/components/DailyInspectionPanel';
-import {getDayLog, getLaunches, getOperatorsForSquadron} from '../features/winch-ops/api/dataClient';
-import type {OperatorRead, TabView} from '../features/winch-ops/types'
+import {getDayLog} from '../features/day-ops/api';
+import {getLaunches} from '../features/launch-ops/api';
+import {getOperatorsForSquadron} from '../features/auth/api';
+import type {OperatorRead} from '../features/auth/types';
+import type {TabView} from '../features/winch-ops/types';
 import {appBackgroundSx} from "../themes/styles.ts";
 
 

@@ -2,11 +2,9 @@ import {render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {TraineeAssignmentPanel} from './TraineeAssignmentPanel.tsx';
-import {getOperatorsForSquadron} from '../../winch-ops/api/dataClient.ts';
+import {getOperatorsForSquadron} from '../../auth/api';
 
-vi.mock('../../winch-ops/api/dataClient.ts', () => ({
-    getOperatorsForSquadron: vi.fn(),
-}));
+vi.mock('../../auth/api', () => ({getOperatorsForSquadron: vi.fn()}));
 
 const mockRecordSignOn = vi.fn().mockResolvedValue({});
 

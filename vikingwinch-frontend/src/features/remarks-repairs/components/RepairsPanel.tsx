@@ -2,8 +2,9 @@ import React, {useEffect, useState} from 'react';
 import {Alert, Box, Button, FormControl, Grid, MenuItem, Select, TextField, Typography} from '@mui/material';
 import {DrumToggleGroup} from './DrumToggleGroup';
 import {darkMenuStyles, darkSelectStyles, darkTextFieldStyles} from '../../../themes/styles.ts';
-import type {DerivedWinchState, DrumPosition, OperatorRead, WinchLogState} from '../../winch-ops/types';
-import {getOperatorsForSquadron} from "../../winch-ops/api/dataClient.ts";
+import type {DerivedWinchState, DrumPosition, WinchLogState} from '../../winch-ops/types';
+import type {OperatorRead} from '../../auth/types';
+import {getOperatorsForSquadron} from '../../auth/api';
 
 type RepairsPanelProps = {
     addRemark: (remark: string | null, drum: DrumPosition) => Promise<void>;

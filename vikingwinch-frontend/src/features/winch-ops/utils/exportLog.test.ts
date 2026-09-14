@@ -1,18 +1,19 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { exportLog } from './exportLog.ts';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {exportLog} from './exportLog.ts';
 import * as fileSaver from 'file-saver';
-import { getWinch, getDayLog, getOperatorsForSquadron, getBroughtForward } from '../api/dataClient.ts';
+import {getWinch} from '../api';
+import {getDayLog} from '../../day-ops/api';
+import {getOperatorsForSquadron} from '../../auth/api';
+import {getBroughtForward} from '../../launch-ops/api';
 
 vi.mock('file-saver', () => ({
     saveAs: vi.fn(),
 }));
 
-vi.mock('../api/dataClient', () => ({
-    getWinch: vi.fn(),
-    getDayLog: vi.fn(),
-    getOperatorsForSquadron: vi.fn(),
-    getBroughtForward: vi.fn(),
-}));
+vi.mock('../../winch-ops/api', () => ({getWinch: vi.fn()}));
+vi.mock('../../day-ops/api', () => ({getDayLog: vi.fn()}));
+vi.mock('../../auth/api', () => ({getOperatorsForSquadron: vi.fn()}));
+vi.mock('../../launch-ops/api', () => ({getBroughtForward: vi.fn()}));
 
 vi.mock('exceljs', () => {
     class Workbook {

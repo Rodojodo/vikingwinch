@@ -1,4 +1,5 @@
-import type {LaunchRecord, WinchAction, WinchLogState} from '../types';
+import type {LaunchRecord} from '../../launch-ops/types';
+import type {WinchAction, WinchLogState} from '../types';
 
 export const createInitialState = (squadron: string, operatorSn: string, winchId: number | null = null): WinchLogState => ({
     squadron,

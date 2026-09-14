@@ -1,10 +1,11 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { FinishDayPanel } from './FinishDayPanel.tsx';
-import { getOperatorsForSquadron } from '../../winch-ops/api/dataClient.ts';
-import { exportLog } from '../../winch-ops/utils/exportLog.ts';
+import {fireEvent, render, screen, waitFor} from '@testing-library/react';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {FinishDayPanel} from './FinishDayPanel.tsx';
+import {getOperatorsForSquadron} from '../../auth/api';
+import {exportLog} from '../../winch-ops/utils/exportLog.ts';
 
-vi.mock('../../winch-ops/api/dataClient.ts', () => ({
+vi.mock('../../auth/api', () => ({getOperatorsForSquadron: vi.fn()}));
+vi.mock('../api', () => ({
     getOperatorsForSquadron: vi.fn(),
 }));
 

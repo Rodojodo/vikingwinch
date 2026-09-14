@@ -4,7 +4,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
 import {useMsal} from '@azure/msal-react';
 import {WinchTab} from './WinchTab';
-import {getWinchesForSquadron} from '../features/winch-ops/api/dataClient';
+import {getWinchesForSquadron} from '../features/winch-ops/api';
 import type {WinchRead} from '../features/winch-ops/types';
 
 interface WinchOpsPageProps {

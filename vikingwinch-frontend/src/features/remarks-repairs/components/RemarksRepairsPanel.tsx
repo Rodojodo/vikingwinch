@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
 import {Box, Button, Stack} from '@mui/material';
-import type {DerivedWinchState, DrumPosition, PanelType, WinchLogState} from '../../winch-ops/types';
+import type {DerivedWinchState, DrumPosition, WinchLogState} from '../../winch-ops/types';
+import type {PanelType} from '../types';
 import {RemarksPanel} from './RemarksPanel.tsx';
 import {RepairsPanel} from './RepairsPanel.tsx';
 import {elevatedPanel, getTabButtonStyles} from '../../../themes/styles.ts';

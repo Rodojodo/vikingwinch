@@ -1,14 +1,14 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import {render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { DailyInspectionPanel } from './DailyInspectionPanel.tsx';
-import { getBroughtForward, getWinchHours, postDayLogToDb } from '../api/dataClient.ts';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {DailyInspectionPanel} from '../../winch-ops/components/DailyInspectionPanel.tsx';
+import {getBroughtForward} from '../../launch-ops/api';
+import {getWinchHours} from '../../winch-ops/api';
+import {postDayLogToDb} from '../api';
 
-vi.mock('../api/dataClient.ts', () => ({
-    getBroughtForward: vi.fn(),
-    getWinchHours: vi.fn(),
-    postDayLogToDb: vi.fn(),
-}));
+vi.mock('../../launch-ops/api', () => ({getBroughtForward: vi.fn()}));
+vi.mock('../../winch-ops/api', () => ({getWinchHours: vi.fn()}));
+vi.mock('../api', () => ({postDayLogToDb: vi.fn()}));
 
 describe('DailyInspectionPanel', () => {
     const mockOnComplete = vi.fn();

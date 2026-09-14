@@ -1,15 +1,15 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { WinchOpsPage } from './WinchOpsPage.tsx';
-import { useMsal } from '@azure/msal-react';
-import { getWinchesForSquadron } from '../features/winch-ops/api/dataClient.ts';
+import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {WinchOpsPage} from './WinchOpsPage.tsx';
+import {useMsal} from '@azure/msal-react';
+import {getWinchesForSquadron} from '../features/winch-ops/api';
 
 vi.mock('@azure/msal-react', () => ({
     useMsal: vi.fn(),
 }));
 
-vi.mock('../features/winch-ops/api/dataClient.ts', () => ({
+vi.mock('../features/winch-ops/api', () => ({
     getWinchesForSquadron: vi.fn(),
 }));
 
