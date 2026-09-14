@@ -1,5 +1,5 @@
-import type {RemarkPayload} from '../types';
-import type {LaunchResponse} from '../../launch-ops/types';
+import type {RemarkPayload} from '../types/remarksRepairsTypes';
+import type {LaunchResponse} from '../../launch-ops/types/launchOpsTypes';
 import {API_BASE_URL, handleApiError} from '../../winch-ops/api/utils';
 
 export const postRemarkToDb = async (payload: RemarkPayload): Promise<LaunchResponse> => {

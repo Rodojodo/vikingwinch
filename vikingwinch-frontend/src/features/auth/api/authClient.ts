@@ -1,4 +1,4 @@
-import type {OperatorRead} from '../types';
+import type {OperatorRead} from '../types/authTypes';
 import {API_BASE_URL, handleApiError} from '../../winch-ops/api/utils';
 
 export const getOperatorsForSquadron = async (squadronId: string, signal?: AbortSignal): Promise<OperatorRead[]> => {

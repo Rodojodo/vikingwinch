@@ -2,17 +2,17 @@ import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {describe, expect, it, vi} from 'vitest';
 import {WinchTab} from './WinchTab.tsx';
 import {useWinchSession} from '../features/winch-ops/hooks/useWinchSession';
-import {getDayLog} from '../features/day-ops/api';
-import {getLaunches} from '../features/launch-ops/api';
-import {getOperatorsForSquadron} from '../features/auth/api';
+import {getDayLog} from '../features/day-ops/api/dayOpsClient';
+import {getLaunches} from '../features/launch-ops/api/launchOpsClient';
+import {getOperatorsForSquadron} from '../features/auth/api/authClient';
 
 vi.mock('../features/winch-ops/hooks/useWinchSession', () => ({
     useWinchSession: vi.fn(),
 }));
 
-vi.mock('../features/day-ops/api', () => ({getDayLog: vi.fn()}));
-vi.mock('../features/launch-ops/api', () => ({getLaunches: vi.fn()}));
-vi.mock('../features/auth/api', () => ({getOperatorsForSquadron: vi.fn()}));
+vi.mock('../features/day-ops/api/dayOpsClient', () => ({getDayLog: vi.fn()}));
+vi.mock('../features/launch-ops/api/launchOpsClient', () => ({getLaunches: vi.fn()}));
+vi.mock('../features/auth/api/authClient', () => ({getOperatorsForSquadron: vi.fn()}));
 
 vi.mock('../features/launch-ops/components/LaunchPanel', () => ({
     LaunchPanel: ({ onViewSkylogValues }: any) => (

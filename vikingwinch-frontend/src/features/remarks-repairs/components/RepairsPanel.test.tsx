@@ -2,13 +2,13 @@ import {act, fireEvent, render, screen, waitFor, within} from '@testing-library/
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {RepairsPanel} from './RepairsPanel.tsx';
 import {useWinchSession} from '../../winch-ops/hooks/useWinchSession.ts';
-import {getOperatorsForSquadron} from '../../auth/api';
+import {getOperatorsForSquadron} from '../../auth/api/authClient';
 
 vi.mock('../../winch-ops/hooks/useWinchSession.ts', () => ({
     useWinchSession: vi.fn(),
 }));
 
-vi.mock('../../auth/api', () => ({getOperatorsForSquadron: vi.fn()}));
+vi.mock('../../auth/api/authClient', () => ({getOperatorsForSquadron: vi.fn()}));
 
 describe('RepairsPanel', () => {
     const mockAddRemark = vi.fn();

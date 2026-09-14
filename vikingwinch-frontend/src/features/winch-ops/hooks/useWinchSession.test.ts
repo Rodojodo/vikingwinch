@@ -1,15 +1,15 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {act, renderHook} from '@testing-library/react';
 import {useWinchSession} from './useWinchSession.ts';
-import {postLaunchToDb, removeLaunchFromDb} from '../../launch-ops/api';
-import {postDayLogToDb} from '../../day-ops/api';
+import {postLaunchToDb, removeLaunchFromDb} from '../../launch-ops/api/launchOpsClient';
+import {postDayLogToDb} from '../../day-ops/api/dayOpsClient';
 import {createInitialState} from '../state/winchReducer';
-import type {LaunchResponse} from '../../launch-ops/types';
-import type {DayLogResponse} from '../../day-ops/types';
+import type {LaunchResponse} from '../../launch-ops/types/launchOpsTypes';
+import type {DayLogResponse} from '../../day-ops/types/dayOpsTypes';
 
-vi.mock('../../launch-ops/api', () => ({postLaunchToDb: vi.fn(), removeLaunchFromDb: vi.fn()}));
-vi.mock('../../day-ops/api', () => ({postDayLogToDb: vi.fn()}));
-vi.mock('../../remarks-repairs/api', () => ({
+vi.mock('../../launch-ops/api/launchOpsClient', () => ({postLaunchToDb: vi.fn(), removeLaunchFromDb: vi.fn()}));
+vi.mock('../../day-ops/api/dayOpsClient', () => ({postDayLogToDb: vi.fn()}));
+vi.mock('../../remarks-repairs/api/remarksRepairsClient', () => ({
   postLaunchToDb: vi.fn(),
   removeLaunchFromDb: vi.fn(),
   postDayLogToDb: vi.fn(),
@@ -309,7 +309,7 @@ describe('useWinchSession', () => {
 
   it('adds a remark successfully to the last launch on the specified drum', async () => {
     vi.mocked(postLaunchToDb).mockResolvedValueOnce(createMockLaunchResponse('left', 101, '2026-08-30T09:00:00Z'));
-    const {postRemarkToDb} = await import('../../remarks-repairs/api');
+    const {postRemarkToDb} = await import('../../remarks-repairs/api/remarksRepairsClient');
     
     vi.mocked(postRemarkToDb).mockResolvedValueOnce({} as any);
     
@@ -349,7 +349,7 @@ describe('useWinchSession', () => {
 
   it('handles API rejection during addRemark and throws standard Error', async () => {
     vi.mocked(postLaunchToDb).mockResolvedValueOnce(createMockLaunchResponse('left', 101, '2026-08-30T09:00:00Z'));
-    const {postRemarkToDb} = await import('../../remarks-repairs/api');
+    const {postRemarkToDb} = await import('../../remarks-repairs/api/remarksRepairsClient');
     vi.mocked(postRemarkToDb).mockRejectedValueOnce(new Error('Network Error'));
 
     const { result } = renderHook(() => useWinchSession("123 VGS", "OFF-1001"));
@@ -368,7 +368,7 @@ describe('useWinchSession', () => {
 
   it('falls back to default error message if addRemark throws non-Error', async () => {
     vi.mocked(postLaunchToDb).mockResolvedValueOnce(createMockLaunchResponse('left', 101, '2026-08-30T09:00:00Z'));
-    const {postRemarkToDb} = await import('../../remarks-repairs/api');
+    const {postRemarkToDb} = await import('../../remarks-repairs/api/remarksRepairsClient');
     vi.mocked(postRemarkToDb).mockRejectedValueOnce('Some string error');
 
     const { result } = renderHook(() => useWinchSession("123 VGS", "OFF-1001"));

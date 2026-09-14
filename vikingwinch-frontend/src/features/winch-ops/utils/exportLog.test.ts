@@ -1,19 +1,19 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {exportLog} from './exportLog.ts';
 import * as fileSaver from 'file-saver';
-import {getWinch} from '../api';
-import {getDayLog} from '../../day-ops/api';
-import {getOperatorsForSquadron} from '../../auth/api';
-import {getBroughtForward} from '../../launch-ops/api';
+import {getWinch} from '../api/winchOpsClient';
+import {getDayLog} from '../../day-ops/api/dayOpsClient';
+import {getOperatorsForSquadron} from '../../auth/api/authClient';
+import {getBroughtForward} from '../../launch-ops/api/launchOpsClient';
 
 vi.mock('file-saver', () => ({
     saveAs: vi.fn(),
 }));
 
-vi.mock('../../winch-ops/api', () => ({getWinch: vi.fn()}));
-vi.mock('../../day-ops/api', () => ({getDayLog: vi.fn()}));
-vi.mock('../../auth/api', () => ({getOperatorsForSquadron: vi.fn()}));
-vi.mock('../../launch-ops/api', () => ({getBroughtForward: vi.fn()}));
+vi.mock('../../winch-ops/api/winchOpsClient', () => ({getWinch: vi.fn()}));
+vi.mock('../../day-ops/api/dayOpsClient', () => ({getDayLog: vi.fn()}));
+vi.mock('../../auth/api/authClient', () => ({getOperatorsForSquadron: vi.fn()}));
+vi.mock('../../launch-ops/api/launchOpsClient', () => ({getBroughtForward: vi.fn()}));
 
 vi.mock('exceljs', () => {
     class Workbook {

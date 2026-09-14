@@ -1,4 +1,4 @@
-import type {DayLogPayload, DayLogResponse} from '../types';
+import type {DayLogPayload, DayLogResponse} from '../types/dayOpsTypes';
 import {API_BASE_URL, handleApiError} from '../../winch-ops/api/utils';
 
 export const postDayLogToDb = async (payload: DayLogPayload, winchId: number): Promise<DayLogResponse> => {

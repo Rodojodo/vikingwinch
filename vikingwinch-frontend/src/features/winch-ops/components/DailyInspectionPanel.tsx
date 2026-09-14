@@ -1,8 +1,8 @@
 import React, {useState} from 'react';
 import {Box, Button, TextField, Typography} from '@mui/material';
-import {getBroughtForward} from '../../launch-ops/api';
-import {getWinchHours} from '../api';
-import {postDayLogToDb} from '../../day-ops/api';
+import {getBroughtForward} from '../../launch-ops/api/launchOpsClient';
+import {getWinchHours} from '../api/winchOpsClient';
+import {postDayLogToDb} from '../../day-ops/api/dayOpsClient';
 import {useWinchSession} from '../hooks/useWinchSession.ts';
 import {darkTextFieldStyles, errorBannerSx, glassPanelSx, glowingPrimaryButtonSx} from '../../../themes/styles.ts';
 import type {SxProps, Theme} from "@mui/material/styles";

@@ -1,4 +1,4 @@
-import type {LaunchPayload, LaunchResponse} from '../types';
+import type {LaunchPayload, LaunchResponse} from '../types/launchOpsTypes';
 import {API_BASE_URL, handleApiError} from '../../winch-ops/api/utils';
 
 export const postLaunchToDb = async (payload: LaunchPayload): Promise<LaunchResponse> => {

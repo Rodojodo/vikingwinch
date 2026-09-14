@@ -2,13 +2,13 @@ import {render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {DailyInspectionPanel} from '../../winch-ops/components/DailyInspectionPanel.tsx';
-import {getBroughtForward} from '../../launch-ops/api';
-import {getWinchHours} from '../../winch-ops/api';
-import {postDayLogToDb} from '../api';
+import {getBroughtForward} from '../../launch-ops/api/launchOpsClient';
+import {getWinchHours} from '../../winch-ops/api/winchOpsClient';
+import {postDayLogToDb} from '../api/dayOpsClient';
 
-vi.mock('../../launch-ops/api', () => ({getBroughtForward: vi.fn()}));
-vi.mock('../../winch-ops/api', () => ({getWinchHours: vi.fn()}));
-vi.mock('../api', () => ({postDayLogToDb: vi.fn()}));
+vi.mock('../../launch-ops/api/launchOpsClient', () => ({getBroughtForward: vi.fn()}));
+vi.mock('../../winch-ops/api/winchOpsClient', () => ({getWinchHours: vi.fn()}));
+vi.mock('../api/dayOpsClient', () => ({postDayLogToDb: vi.fn()}));
 
 describe('DailyInspectionPanel', () => {
     const mockOnComplete = vi.fn();

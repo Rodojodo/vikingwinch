@@ -7,11 +7,11 @@ import {useWinchSession} from '../features/winch-ops/hooks/useWinchSession';
 import {WinchSelectPanel} from '../features/winch-ops/components/WinchSelectPanel';
 import {SignOnPanel} from '../features/day-ops/components/SignOnPanel.tsx';
 import {DailyInspectionPanel} from '../features/winch-ops/components/DailyInspectionPanel';
-import {getDayLog} from '../features/day-ops/api';
-import {getLaunches} from '../features/launch-ops/api';
-import {getOperatorsForSquadron} from '../features/auth/api';
-import type {OperatorRead} from '../features/auth/types';
-import type {TabView} from '../features/winch-ops/types';
+import {getDayLog} from '../features/day-ops/api/dayOpsClient';
+import {getLaunches} from '../features/launch-ops/api/launchOpsClient';
+import {getOperatorsForSquadron} from '../features/auth/api/authClient';
+import type {OperatorRead} from '../features/auth/types/authTypes';
+import type {TabView} from '../features/winch-ops/types/winchOpsTypes';
 import {appBackgroundSx} from "../themes/styles.ts";
 
 

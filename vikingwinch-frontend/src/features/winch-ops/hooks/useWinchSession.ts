@@ -1,11 +1,11 @@
 import {useCallback, useEffect, useMemo, useReducer, useState} from 'react';
-import type {DayLogPayload} from '../../day-ops/types';
-import type {DrumPosition} from '../types';
-import type {LaunchPayload, LaunchResponse} from '../../launch-ops/types';
-import type {RemarkPayload} from '../../remarks-repairs/types';
-import {postDayLogToDb} from '../../day-ops/api';
-import {postLaunchToDb, removeLaunchFromDb} from '../../launch-ops/api';
-import {postRemarkToDb} from '../../remarks-repairs/api';
+import type {DayLogPayload} from '../../day-ops/types/dayOpsTypes';
+import type {DrumPosition} from '../types/winchOpsTypes';
+import type {LaunchPayload, LaunchResponse} from '../../launch-ops/types/launchOpsTypes';
+import type {RemarkPayload} from '../../remarks-repairs/types/remarksRepairsTypes';
+import {postDayLogToDb} from '../../day-ops/api/dayOpsClient';
+import {postLaunchToDb, removeLaunchFromDb} from '../../launch-ops/api/launchOpsClient';
+import {postRemarkToDb} from '../../remarks-repairs/api/remarksRepairsClient';
 import {createInitialState, winchReducer} from '../state/winchReducer';
 
 export const useWinchSession = (squadronId: string, operatorSn: string, initialWinchId: number | null = null) => {

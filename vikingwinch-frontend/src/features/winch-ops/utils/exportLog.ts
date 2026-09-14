@@ -1,11 +1,11 @@
 import ExcelJS from 'exceljs';
 import {saveAs} from 'file-saver';
 import winchLogTemplateUrl from '../../../assets/winch_log.xltx?url';
-import type {WinchLogState} from '../types';
-import {getWinch} from '../api';
-import {getDayLog} from '../../day-ops/api';
-import {getOperatorsForSquadron} from '../../auth/api';
-import {getBroughtForward} from '../../launch-ops/api';
+import type {WinchLogState} from '../types/winchOpsTypes';
+import {getWinch} from '../api/winchOpsClient';
+import {getDayLog} from '../../day-ops/api/dayOpsClient';
+import {getOperatorsForSquadron} from '../../auth/api/authClient';
+import {getBroughtForward} from '../../launch-ops/api/launchOpsClient';
 
 const CELLS = {
     UNIT: 'F2',

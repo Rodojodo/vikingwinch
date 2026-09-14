@@ -1,4 +1,4 @@
-import type {WinchRead} from '../types';
+import type {WinchRead} from '../types/winchOpsTypes';
 import {API_BASE_URL, handleApiError} from './utils';
 
 export const getWinchesForSquadron = async (squadronId: string, signal?: AbortSignal): Promise<WinchRead[]> => {

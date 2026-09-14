@@ -1,9 +1,9 @@
 import {fireEvent, render, screen} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {WinchSelectPanel} from './WinchSelectPanel';
-import {getWinchesForSquadron} from '../api';
+import {getWinchesForSquadron} from '../api/winchOpsClient';
 
-vi.mock('../api', () => ({
+vi.mock('../api/winchOpsClient', () => ({
     getWinchesForSquadron: vi.fn(),
 }));
 

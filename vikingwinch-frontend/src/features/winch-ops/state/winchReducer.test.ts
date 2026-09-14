@@ -1,8 +1,8 @@
 import {describe, expect, it} from 'vitest';
 import {createInitialState, winchReducer} from './winchReducer.ts';
-import type {WinchAction} from '../types';
-import type {LaunchResponse} from '../../launch-ops/types';
-import type {DayLogResponse} from '../../day-ops/types';
+import type {WinchAction} from '../types/winchOpsTypes';
+import type {LaunchResponse} from '../../launch-ops/types/launchOpsTypes';
+import type {DayLogResponse} from '../../day-ops/types/dayOpsTypes';
 
 describe('winchReducer', () => {
   const initialState = createInitialState('123 VGS', 'OFF-1001');

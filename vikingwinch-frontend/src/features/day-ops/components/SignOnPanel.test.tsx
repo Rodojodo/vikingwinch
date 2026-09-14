@@ -2,10 +2,10 @@ import {render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {SignOnPanel} from './SignOnPanel.tsx';
-import {getOperatorsForSquadron} from '../../auth/api';
+import {getOperatorsForSquadron} from '../../auth/api/authClient';
 
-vi.mock('../../auth/api', () => ({getOperatorsForSquadron: vi.fn()}));
-vi.mock('../api', () => ({
+vi.mock('../../auth/api/authClient', () => ({getOperatorsForSquadron: vi.fn()}));
+vi.mock('../api/dayOpsClient', () => ({
     getOperatorsForSquadron: vi.fn(),
 }));
 

@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {Box, Button, Paper, Typography} from '@mui/material';
-import {getOperatorsForSquadron} from '../../auth/api';
-import type {OperatorRead} from '../../auth/types';
+import {getOperatorsForSquadron} from '../../auth/api/authClient';
+import type {OperatorRead} from '../../auth/types/authTypes';
 import {useWinchSession} from '../../winch-ops/hooks/useWinchSession.ts';
 import {TraineeSelect} from '../../trainee-ops/components/TraineeSelect.tsx';
 import {elevatedPanel, errorBannerSx, glassPanelSx, glowingPrimaryButtonSx} from "../../../themes/styles.ts";

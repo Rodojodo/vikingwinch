@@ -1,9 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import {Alert, Box, Button, FormControl, MenuItem, Select, Stack, TextField, Typography} from '@mui/material';
 import {darkMenuStyles, darkSelectStyles, darkTextFieldStyles, getTabButtonStyles} from '../../../themes/styles.ts';
-import {getOperatorsForSquadron} from '../../auth/api';
-import type {OperatorRead} from '../../auth/types';
-import type {WinchLogState} from '../../winch-ops/types';
+import {getOperatorsForSquadron} from '../../auth/api/authClient';
+import type {OperatorRead} from '../../auth/types/authTypes';
+import type {WinchLogState} from '../../winch-ops/types/winchOpsTypes';
 import {exportLog} from '../../winch-ops/utils/exportLog.ts';
 
 type FinishDayPanelProps = {

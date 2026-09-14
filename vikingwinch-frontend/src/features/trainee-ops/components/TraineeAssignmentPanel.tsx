@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import {Box, Button, ButtonBase, Paper, Stack, Typography} from '@mui/material';
-import {getOperatorsForSquadron} from '../../auth/api';
-import type {DayLogResponse} from '../../day-ops/types';
-import type {OperatorRead} from '../../auth/types';
+import {getOperatorsForSquadron} from '../../auth/api/authClient';
+import type {DayLogResponse} from '../../day-ops/types/dayOpsTypes';
+import type {OperatorRead} from '../../auth/types/authTypes';
 import {TraineeSelect} from './TraineeSelect.tsx';
 import {elevatedPanel, getTabButtonStyles, glowingPrimaryButtonSx} from "../../../themes/styles.ts";
 

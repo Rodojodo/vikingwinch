@@ -3,13 +3,13 @@ import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {WinchOpsPage} from './WinchOpsPage.tsx';
 import {useMsal} from '@azure/msal-react';
-import {getWinchesForSquadron} from '../features/winch-ops/api';
+import {getWinchesForSquadron} from '../features/winch-ops/api/winchOpsClient';
 
 vi.mock('@azure/msal-react', () => ({
     useMsal: vi.fn(),
 }));
 
-vi.mock('../features/winch-ops/api', () => ({
+vi.mock('../features/winch-ops/api/winchOpsClient', () => ({
     getWinchesForSquadron: vi.fn(),
 }));
 

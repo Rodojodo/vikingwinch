@@ -2,7 +2,7 @@ import {render, screen, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {describe, expect, it, vi} from 'vitest';
 import {TraineeSelect} from './TraineeSelect.tsx';
-import type {OperatorRead} from '../../auth/types';
+import type {OperatorRead} from '../../auth/types/authTypes';
 
 describe('TraineeSelect', () => {
     const mockOperators: OperatorRead[] = [
