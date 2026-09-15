@@ -56,8 +56,9 @@ async def get_export_data(
     
     try:
         operators = await operator_repo.get_operators_from_sqn(db, squadron_id)
-    except ValueError:
-        operators = []
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
         
     bf_data = await launch_repo.get_brought_forward(db, winch_id, day)
     
