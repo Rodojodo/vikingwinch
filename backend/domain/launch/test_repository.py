@@ -1,18 +1,15 @@
-from datetime import date, datetime, timezone
-from typing import Literal
-
 import pytest
-
+from datetime import date, datetime, timezone
 from domain.launch.model import Launch
-from domain.operator.model import Operator
-from domain.squadron.model import Squadron
-from domain.winch.model import Winch
 from domain.launch.repository import (
     add_launch,
     get_launches_from_date,
     add_remark_to_launch,
     add_repair_to_launch,
 )
+from domain.squadron.model import Squadron
+from domain.winch.model import Winch
+from typing import Literal
 
 
 # Helper function to create test Launch objects with sensible defaults
@@ -97,7 +94,7 @@ async def test_add_remark_to_launch_left_success(db_session):
     db_session.add_all([squadron, winch, launch])
     await db_session.commit()
 
-    new_launch = await add_remark_to_launch(db_session, launch_id=launch_2.launch_id if 'launch_2' in locals() else launch.launch_id if 'launch' in locals() else 999 if "launch" in locals() else 999, remark="PLF")
+    new_launch = await add_remark_to_launch(db_session, launch_id=launch.launch_id, remark="PLF")
 
     assert new_launch.launch_number == launch.launch_number
     assert new_launch.winch_id == launch.winch_id
@@ -115,7 +112,7 @@ async def test_add_remark_to_launch_right_success(db_session):
     db_session.add_all([squadron, winch, launch])
     await db_session.commit()
 
-    new_launch = await add_remark_to_launch(db_session, launch_id=launch_2.launch_id if 'launch_2' in locals() else launch.launch_id if 'launch' in locals() else 999 if "launch" in locals() else 999, remark="PLF")
+    new_launch = await add_remark_to_launch(db_session, launch_id=launch.launch_id, remark="PLF")
 
     assert new_launch.launch_number == launch.launch_number
     assert new_launch.winch_id == launch.winch_id
@@ -133,9 +130,9 @@ async def test_add_remark_to_launch_add_2_remarks_success(db_session):
     db_session.add_all([squadron, winch, launch])
     await db_session.commit()
 
-    new_launch = await add_remark_to_launch(db_session, launch_id=launch_2.launch_id if 'launch_2' in locals() else launch.launch_id if 'launch' in locals() else 999 if "launch" in locals() else 999, remark="PLF")
+    await add_remark_to_launch(db_session, launch_id=launch.launch_id, remark="PLF")
 
-    newest_launch = await add_remark_to_launch(db_session, launch_id=launch_2.launch_id if 'launch_2' in locals() else launch.launch_id if 'launch' in locals() else 999 if "launch" in locals() else 999, remark="Making weird sounds")
+    newest_launch = await add_remark_to_launch(db_session, launch_id=launch.launch_id, remark="Making weird sounds")
 
     assert newest_launch.launch_number == launch.launch_number
     assert newest_launch.winch_id == launch.winch_id
@@ -154,7 +151,7 @@ async def test_add_remark_to_launch_ignore_previous_launches(db_session):
     db_session.add_all([squadron, winch, launch_1, launch_2])
     await db_session.commit()
 
-    new_launch = await add_remark_to_launch(db_session, launch_id=launch_2.launch_id if 'launch_2' in locals() else launch.launch_id if 'launch' in locals() else 999 if "launch" in locals() else 999, remark="PLF")
+    new_launch = await add_remark_to_launch(db_session, launch_id=launch_2.launch_id, remark="PLF")
 
     assert new_launch.launch_number == launch_2.launch_number
     assert new_launch.winch_id == launch_2.winch_id
@@ -172,7 +169,7 @@ async def test_add_repair_to_launch_left_success(db_session):
     db_session.add_all([squadron, winch, launch])
     await db_session.commit()
 
-    new_launch = await add_repair_to_launch(db_session, launch_id=launch_2.launch_id if 'launch_2' in locals() else launch.launch_id if 'launch' in locals() else 999 if "launch" in locals() else 999, repair="Weak link", supervisor_id="87654321")
+    new_launch = await add_repair_to_launch(db_session, launch_id=launch.launch_id, repair="Weak link", supervisor_id="87654321")
 
     assert new_launch.launch_number == launch.launch_number
     assert new_launch.winch_id == launch.winch_id
@@ -190,7 +187,7 @@ async def test_add_repair_to_launch_right_success(db_session):
     db_session.add_all([squadron, winch, launch])
     await db_session.commit()
 
-    new_launch = await add_repair_to_launch(db_session, launch_id=launch_2.launch_id if 'launch_2' in locals() else launch.launch_id if 'launch' in locals() else 999 if "launch" in locals() else 999, repair="Weak link", supervisor_id="87654321")
+    new_launch = await add_repair_to_launch(db_session, launch_id=launch.launch_id, repair="Weak link", supervisor_id="87654321")
 
     assert new_launch.launch_number == launch.launch_number
     assert new_launch.winch_id == launch.winch_id
@@ -209,7 +206,7 @@ async def test_add_repair_to_launch_ignore_previous_launches(db_session):
     db_session.add_all([squadron, winch, launch_1, launch_2])
     await db_session.commit()
 
-    new_launch = await add_repair_to_launch(db_session, launch_id=launch_2.launch_id if 'launch_2' in locals() else launch.launch_id if 'launch' in locals() else 999 if "launch" in locals() else 999, repair="Weak link", supervisor_id="87654321")
+    new_launch = await add_repair_to_launch(db_session, launch_id=launch_2.launch_id, repair="Weak link", supervisor_id="87654321")
 
     assert new_launch.launch_number == launch_2.launch_number
     assert new_launch.winch_id == launch_2.winch_id

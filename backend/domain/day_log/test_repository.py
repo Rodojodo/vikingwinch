@@ -1,6 +1,5 @@
 from datetime import date, datetime, timezone
 import pytest
-from sqlalchemy import select
 
 from domain.day_log.model import Day_Log
 from domain.day_log.repository import get_day_log_from_date

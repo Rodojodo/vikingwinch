@@ -12,11 +12,11 @@ from alembic import context
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from database.base import Base
 # Ensure all domain models are imported so Alembic sees them
-from domain.day_log.model import Day_Log
-from domain.launch.model import Launch
-from domain.operator.model import Operator
-from domain.squadron.model import Squadron
-from domain.winch.model import Winch
+from domain.day_log.model import Day_Log  # noqa: F401
+from domain.launch.model import Launch  # noqa: F401
+from domain.operator.model import Operator  # noqa: F401
+from domain.squadron.model import Squadron  # noqa: F401
+from domain.winch.model import Winch  # noqa: F401
 
 load_dotenv()
 
