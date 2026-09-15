@@ -1,7 +1,8 @@
+import type {DrumPosition} from '../../../core/types/common';
 import React, {useState} from 'react';
 import {Alert, Box, Button, TextField, Typography} from '@mui/material';
 import {DrumToggleGroup} from './DrumToggleGroup';
-import type {DerivedWinchState, DrumPosition} from '../../winch-ops/types/winchOpsTypes';
+import type {DerivedWinchState} from '../../winch-ops/types';
 import {darkTextFieldStyles} from "../../../themes/styles.ts";
 
 

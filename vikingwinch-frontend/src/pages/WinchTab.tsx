@@ -9,8 +9,8 @@ import {SignOnPanel} from '../features/day-ops/components/SignOnPanel.tsx';
 import {DailyInspectionPanel} from '../features/winch-ops/components/DailyInspectionPanel';
 import {getWinchDayData} from '../features/winch-ops/api/winchOpsClient';
 import {getOperatorsForSquadron} from '../features/auth/api/authClient';
-import type {OperatorRead} from '../features/auth/types/authTypes';
-import type {TabView} from '../features/winch-ops/types/winchOpsTypes';
+import type {OperatorRead} from '../features/auth/types';
+import type {TabView} from '../features/winch-ops/types';
 import {appBackgroundSx} from "../themes/styles.ts";
 
 

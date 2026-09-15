@@ -1,8 +1,8 @@
 import {Box, ButtonBase, Stack, Typography} from '@mui/material';
 import {ActiveDriverToggle} from './ActiveDriverToggle';
 import {TraineeAssignmentPanel} from './TraineeAssignmentPanel.tsx';
-import type {DayLogResponse} from '../../day-ops/types/dayOpsTypes';
-import type {OperatorRead} from '../../auth/types/authTypes';
+import type {DayLogResponse} from '../../day-ops/types';
+import type {OperatorRead} from '../../auth/types';
 import {wingPanel, wingPanelButton} from "../../../themes/styles.ts";
 
 

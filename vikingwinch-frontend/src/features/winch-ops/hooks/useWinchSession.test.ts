@@ -4,8 +4,8 @@ import {useWinchSession} from './useWinchSession.ts';
 import {postLaunchToDb, removeLaunchFromDb} from '../../launch-ops/api/launchOpsClient';
 import {postDayLogToDb} from '../../day-ops/api/dayOpsClient';
 import {createInitialState} from '../state/winchReducer';
-import type {LaunchResponse} from '../../launch-ops/types/launchOpsTypes';
-import type {DayLogResponse} from '../../day-ops/types/dayOpsTypes';
+import type {LaunchResponse} from '../../launch-ops/types';
+import type {DayLogResponse} from '../../day-ops/types';
 
 vi.mock('../../launch-ops/api/launchOpsClient', () => ({postLaunchToDb: vi.fn(), removeLaunchFromDb: vi.fn()}));
 vi.mock('../../day-ops/api/dayOpsClient', () => ({postDayLogToDb: vi.fn()}));

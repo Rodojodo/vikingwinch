@@ -1,7 +1,7 @@
 import ExcelJS from 'exceljs';
 import {saveAs} from 'file-saver';
 import winchLogTemplateUrl from '../../../assets/winch_log.xltx?url';
-import type {WinchLogState} from '../types/winchOpsTypes';
+import type {WinchLogState} from '../types';
 import {getExportData} from '../api/winchOpsClient';
 
 const CELLS = {

@@ -1,7 +1,7 @@
 import {Box, Button, CircularProgress, Typography} from "@mui/material";
 import {useEffect, useState} from "react";
 import {getWinchesForSquadron} from '../api/winchOpsClient';
-import type {WinchRead} from '../types/winchOpsTypes';
+import type {WinchRead} from '../types';
 import {darkBlueButton, glassPanelSx} from "../../../themes/styles.ts";
 import type {SxProps, Theme} from '@mui/material/styles';
 

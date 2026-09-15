@@ -1,8 +1,8 @@
-import type {LaunchResponse} from '../../launch-ops/types/launchOpsTypes';
-import type {DayLogResponse} from '../../day-ops/types/dayOpsTypes';
-import type {OperatorRead} from '../../auth/types/authTypes';
+import type {DrumPosition} from '../../../core/types/common';
+import type {LaunchResponse} from '../../launch-ops/types';
+import type {DayLogResponse} from '../../day-ops/types';
+import type {OperatorRead} from '../../auth/types';
 
-export type DrumPosition = 'left' | 'right';
 export type TabView = 'loading' | 'select_winch' | 'inspection' | 'sign_on' | 'launch' | 'skylog';
 
 export interface WinchRead {

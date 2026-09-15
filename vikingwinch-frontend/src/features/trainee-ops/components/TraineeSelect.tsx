@@ -1,6 +1,6 @@
 import React from 'react';
 import {FormControl, MenuItem, Select, type SelectChangeEvent} from '@mui/material';
-import type {OperatorRead} from '../../auth/types/authTypes';
+import type {OperatorRead} from '../../auth/types';
 import {darkMenuStyles, darkSelectStyles} from "../../../themes/styles.ts";
 
 export interface TraineeSelectProps {

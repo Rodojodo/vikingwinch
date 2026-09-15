@@ -1,18 +1,7 @@
-import type {OperatorRead} from '../types/authTypes';
-import {API_BASE_URL, handleApiError} from '../../winch-ops/api/utils';
+import type {OperatorRead} from '../types';
+import {request} from '../../../core/http/request';
 
 export const getOperatorsForSquadron = async (squadronId: string, signal?: AbortSignal): Promise<OperatorRead[]> => {
-    const response = await fetch(`${API_BASE_URL}/squadrons/${squadronId}/operators`, {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-        },
-        signal,
-    });
-
-    await handleApiError(response);
-
-    const text = await response.text();
-    if (!text) return [];
-    return JSON.parse(text) as OperatorRead[];
+    const res = await request<OperatorRead[]>(`/squadrons/${squadronId}/operators`, { signal });
+    return res || [];
 }

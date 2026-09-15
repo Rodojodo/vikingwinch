@@ -1,8 +1,8 @@
 import {useCallback, useEffect, useMemo, useReducer, useState} from 'react';
-import type {DayLogPayload} from '../../day-ops/types/dayOpsTypes';
-import type {DrumPosition} from '../types/winchOpsTypes';
-import type {LaunchPayload, LaunchResponse} from '../../launch-ops/types/launchOpsTypes';
-import type {RemarkPayload} from '../../remarks-repairs/types/remarksRepairsTypes';
+import type {DayLogPayload} from '../../day-ops/types';
+import type {DrumPosition} from '../../../core/types/common';
+import type {LaunchPayload, LaunchResponse} from '../../launch-ops/types';
+import type {RemarkPayload} from '../../remarks-repairs/types';
 import {postDayLogToDb} from '../../day-ops/api/dayOpsClient';
 import {postLaunchToDb, removeLaunchFromDb} from '../../launch-ops/api/launchOpsClient';
 import {postRemarkToDb} from '../../remarks-repairs/api/remarksRepairsClient';

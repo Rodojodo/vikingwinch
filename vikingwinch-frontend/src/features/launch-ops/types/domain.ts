@@ -1,4 +1,4 @@
-import type {DrumPosition} from '../../winch-ops/types/winchOpsTypes';
+import type {DrumPosition} from '../../../core/types/common';
 
 export interface LaunchPayload {
     squadron_id: string;

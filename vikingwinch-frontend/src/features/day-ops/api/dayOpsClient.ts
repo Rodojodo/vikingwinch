@@ -1,39 +1,17 @@
-import type {BroughtForwardInfoResponse, DayLogPayload, DayLogResponse} from '../types/dayOpsTypes';
-import {API_BASE_URL, handleApiError} from '../../winch-ops/api/utils';
+import type {BroughtForwardInfoResponse, DayLogPayload, DayLogResponse} from '../types';
+import {request} from '../../../core/http/request';
 
 export const postDayLogToDb = async (payload: DayLogPayload, winchId: number): Promise<DayLogResponse> => {
-    const response = await fetch(`${API_BASE_URL}/winch/${winchId}/day_log`, {
+    return request<DayLogResponse>(`/winch/${winchId}/day_log`, {
         method: 'POST',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-        },
         body: JSON.stringify(payload),
     });
-
-    await handleApiError(response);
-
-    return response.json();
 }
 
 export const getDayLog = async (winchId: number, day: string): Promise<DayLogResponse[]> => {
-    const response = await fetch(`${API_BASE_URL}/winch/${winchId}/day_log?day=${day}`, {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-        },
-    });
-    await handleApiError(response);
-    return response.json();
+    return request<DayLogResponse[]>(`/winch/${winchId}/day_log?day=${day}`);
 }
 
 export const getBroughtForwardInfo = async (winchId: number, day: string): Promise<BroughtForwardInfoResponse> => {
-    const response = await fetch(`${API_BASE_URL}/winch/${winchId}/bf_info?day=${day}`, {
-        method: 'GET',
-        headers: {
-            'Accept': 'application/json',
-        },
-    });
-    await handleApiError(response);
-    return response.json();
+    return request<BroughtForwardInfoResponse>(`/winch/${winchId}/bf_info?day=${day}`);
 }
