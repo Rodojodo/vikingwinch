@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 from pydantic import BaseModel
-from domain.day_log.schema import ORMModel
+from core.schemas import ORMModel
 
 class LaunchCreate(BaseModel):
     squadron_id: str

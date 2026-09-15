@@ -1,4 +1,4 @@
-from domain.day_log.schema import ORMModel
+from core.schemas import ORMModel
 
 class WinchRead(ORMModel):
     id: int

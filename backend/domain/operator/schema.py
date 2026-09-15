@@ -1,5 +1,5 @@
 from typing import Literal
-from domain.day_log.schema import ORMModel
+from core.schemas import ORMModel
 
 class OperatorRead(ORMModel):
     service_no: str

@@ -35,7 +35,7 @@ jobs:
 
       - name: Run tests with coverage
         if: steps.filter.outputs.backend == 'true'
-        run: coverage run -m pytest tests
+        run: coverage run -m pytest
 
       - name: Generate coverage report
         if: always() && steps.filter.outputs.backend == 'true'
