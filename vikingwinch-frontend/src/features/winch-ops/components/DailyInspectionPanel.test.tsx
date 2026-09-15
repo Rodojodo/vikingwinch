@@ -204,10 +204,7 @@ describe('DailyInspectionPanel', () => {
         vi.mocked(useSessionIdentity).mockReturnValue({ squadronId: null, winchId: null, operatorSn: null } as any);
 
         const user = userEvent.setup();
-        const incompleteSession = {
-            state: { winchId: null, squadron: null, operatorSn: null }
-        };
-        render(<DailyInspectionPanel  onComplete={mockOnComplete} />);
+                render(<DailyInspectionPanel  onComplete={mockOnComplete} />);
 
         const signBtn = screen.getByRole('button', { name: 'Sign DI' });
         await user.click(signBtn);
@@ -219,10 +216,7 @@ describe('DailyInspectionPanel', () => {
         vi.mocked(useSessionIdentity).mockReturnValue({ squadronId: 'sqn1', winchId: null, operatorSn: 'OP1' } as any);
 
         const user = userEvent.setup();
-        const incompleteSession = {
-            state: { winchId: null, squadron: null, operatorSn: null }
-        };
-        render(<DailyInspectionPanel  onComplete={mockOnComplete} />);
+                render(<DailyInspectionPanel  onComplete={mockOnComplete} />);
 
         const retrieveBtn = screen.getByRole('button', { name: 'Retrieve data from cloud' });
         await user.click(retrieveBtn);

@@ -1,4 +1,4 @@
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { WinchSelectPanel } from './WinchSelectPanel';
 import { getWinchesForSquadron } from "../..//winch-ops/api/winchClient.ts";
@@ -88,8 +88,8 @@ describe('WinchSelectPanel', () => {
 
     it('filters out winches that are already open', async () => {
         const mockWinches = [
-            { id: 1, squadron: squadronId, status: 'serviceable' },
-            { id: 2, squadron: squadronId, status: 'serviceable' }
+            { id: 1, squadron_id: squadronId, registration: 'W1', name: 'Winch 1' },
+            { id: 2, squadron_id: squadronId, registration: 'W1', name: 'Winch 1' }
         ];
         vi.mocked(getWinchesForSquadron).mockResolvedValue(mockWinches);
 

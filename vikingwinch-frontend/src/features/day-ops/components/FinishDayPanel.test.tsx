@@ -66,9 +66,7 @@ vi.mock('../../winch-ops/utils/exportLog.ts', () => ({
 }));
 
 describe('FinishDayPanel', () => {
-    const mockFinishDay = vi.fn().mockResolvedValue(undefined);
-    const mockState = { squadron: 'sqn1', winchId: 1 } as any;
-
+        
     beforeEach(() => {
         vi.clearAllMocks();
         vi.mocked(getOperatorsForSquadron).mockResolvedValue([{ service_no: 'OP1', name: 'Operator 1', squadron_id: 'sqn1' }]);
