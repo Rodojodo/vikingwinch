@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.session import get_db
 from domain.launch import repository as launch_repo
-from core.schemas import LaunchCreate, LaunchRead, RemarkCreate, RepairCreate
+from domain.launch.schema import LaunchCreate, LaunchRead, RemarkCreate, RepairCreate
 
 router = APIRouter(prefix="/launches", tags=["launches"])
 
@@ -23,7 +23,6 @@ async def create_launch(
         drum=payload.drum,
         is_burn=payload.is_burn,
     )
-    # add_launch only flushes; the route owns the transaction boundary.
     await db.commit()
     return launch
 
@@ -46,9 +45,11 @@ async def add_remark(
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        return await launch_repo.add_remark_to_launch(
+        launch = await launch_repo.add_remark_to_launch(
             db, payload.launch_id, payload.remark
         )
+        await db.commit()
+        return launch
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
@@ -59,9 +60,11 @@ async def add_repair(
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        return await launch_repo.add_repair_to_launch(
+        launch = await launch_repo.add_repair_to_launch(
             db, payload.launch_id, payload.repair, payload.supervisor_id
         )
+        await db.commit()
+        return launch
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 

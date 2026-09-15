@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.session import get_db
 from domain.operator import repository as operator_repo
-from core.schemas import OperatorRead
+from domain.operator.schema import OperatorRead
 
 router = APIRouter(tags=["operators"])
 

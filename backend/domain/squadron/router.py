@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.session import get_db
 from domain.squadron import repository as squadron_repo
-from core.schemas import SquadronExistsResponse
+from domain.squadron.schema import SquadronExistsResponse
 
 router = APIRouter(prefix="/squadrons", tags=["squadrons"])
 

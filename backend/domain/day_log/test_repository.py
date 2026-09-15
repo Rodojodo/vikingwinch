@@ -106,7 +106,7 @@ async def test_get_winch_hours_returns_none_when_no_records(db_session):
 @pytest.mark.asyncio
 async def test_add_day_log_success(db_session):
     from domain.day_log.repository import add_day_log
-    from core.schemas import DayLogCreate
+    from domain.day_log.schema import DayLogCreate
     
     
     
