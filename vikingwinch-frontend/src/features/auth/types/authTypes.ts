@@ -3,7 +3,3 @@ export interface OperatorRead {
     name: string;
     squadron_id: string;
 }
-
-export interface OperatorResponse {
-    operators: OperatorRead[]
-}

@@ -31,12 +31,8 @@ class DayLogCreate(BaseModel):
     hours: float | None = None
 
 
-class WinchHoursRead(BaseModel):
+class WinchHoursResponse(BaseModel):
     hours: float
-
-class BroughtForwardRead(BaseModel):
-    left: int | None
-    right: int | None
 
 
 # --- Launches ---
@@ -83,7 +79,7 @@ class OperatorRead(ORMModel):
 
 # --- Squadrons ---
 
-class SquadronExistsRead(BaseModel):
+class SquadronExistsResponse(BaseModel):
     id: str
     exists: bool
 

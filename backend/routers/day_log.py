@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.session import get_db
 from repositories import day_log_repo
-from core.schemas import DayLogRead, WinchHoursRead, DayLogCreate
+from core.schemas import DayLogRead, WinchHoursResponse, DayLogCreate
 
 router = APIRouter(prefix="/winch/{winch_id}", tags=["day-log"])
 
@@ -31,7 +31,7 @@ async def get_day_log(
     return await day_log_repo.get_day_log_from_date(db, winch_id, day)
 
 
-@router.get("/hours", response_model=WinchHoursRead)
+@router.get("/hours", response_model=WinchHoursResponse)
 async def get_winch_hours(
     winch_id: int,
     db: AsyncSession = Depends(get_db),
@@ -43,4 +43,4 @@ async def get_winch_hours(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No day-log entries for this winch",
         )
-    return WinchHoursRead(hours=hours)
+    return WinchHoursResponse(hours=hours)

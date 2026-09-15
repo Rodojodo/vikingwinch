@@ -1,5 +1,6 @@
 import type {LaunchResponse} from '../../launch-ops/types/launchOpsTypes';
 import type {DayLogResponse} from '../../day-ops/types/dayOpsTypes';
+import type {OperatorRead} from '../../auth/types/authTypes';
 
 export type DrumPosition = 'left' | 'right';
 export type TabView = 'loading' | 'select_winch' | 'inspection' | 'sign_on' | 'launch' | 'skylog';
@@ -8,6 +9,10 @@ export interface WinchRead {
     id: number;
     registration: string;
     squadron_id: string;
+}
+
+export interface WinchHoursResponse {
+    hours: number;
 }
 
 export interface LaunchRecord {
@@ -65,7 +70,7 @@ export interface WinchDayDataResponse {
 export interface ExportDataResponse {
     winch: WinchRead;
     logs: DayLogResponse[];
-    operators: any[]; // Or import OperatorRead from authTypes if needed
+    operators: OperatorRead[];
     brought_forward: {
         left: number;
         right: number;
