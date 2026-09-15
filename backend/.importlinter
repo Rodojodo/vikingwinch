@@ -1,0 +1,31 @@
+[importlinter]
+root_packages =
+    domain
+    database
+    core
+
+[importlinter:contract:layers]
+name = Layer contract
+type = layers
+layers =
+    domain
+    database
+    core
+
+[importlinter:contract:independence]
+name = Independence contract
+type = independence
+modules =
+    domain.day_log
+    domain.launch
+    domain.operator
+    domain.squadron
+    domain.winch
+ignore_imports =
+    domain.operator.repository -> domain.squadron.repository
+    domain.winch.repository -> domain.squadron.repository
+    domain.operator.test_repository -> domain.squadron.model
+    domain.winch.test_repository -> domain.squadron.model
+    domain.launch.test_repository -> domain.squadron.model
+    domain.launch.test_repository -> domain.operator.model
+    domain.launch.test_repository -> domain.winch.model

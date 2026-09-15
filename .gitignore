@@ -9,3 +9,4 @@ __pycache__/
 /.agent/skills/*
 /_bmad/*
 /_bmad-output/*
+/node_modules/*

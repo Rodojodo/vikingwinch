@@ -1,4 +1,5 @@
 import os
+import asyncio
 from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
@@ -37,7 +38,13 @@ SessionLocal = async_sessionmaker(
     expire_on_commit=False,
 )
 
-
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with SessionLocal() as session:
-        yield session
+        try:
+            yield session
+        except asyncio.CancelledError:
+            await session.rollback()
+            raise
+        except Exception:
+            await session.rollback()
+            raise
