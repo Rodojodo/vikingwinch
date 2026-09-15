@@ -1,0 +1,22 @@
+[importlinter]
+root_packages =
+    domain
+    database
+    main
+
+[importlinter:contract:layers]
+type = layers
+layers =
+    main
+    domain
+    database
+
+[importlinter:contract:independence]
+type = independence
+modules =
+    domain.day_log
+    domain.launch
+    domain.operator
+    domain.squadron
+    domain.winch
+    domain.root
