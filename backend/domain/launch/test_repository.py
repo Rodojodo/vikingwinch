@@ -3,11 +3,11 @@ from typing import Literal
 
 import pytest
 
-from models.launch import Launch
-from models.operator import Operator
-from models.squadron import Squadron
-from models.winch import Winch
-from repositories.launch_repo import (
+from domain.launch.model import Launch
+from domain.operator.model import Operator
+from domain.squadron.model import Squadron
+from domain.winch.model import Winch
+from domain.launch.repository import (
     add_launch,
     get_launches_from_date,
     add_remark_to_launch,
@@ -282,14 +282,14 @@ async def test_delete_launch_success(db_session):
     db_session.add_all([squadron, winch, launch])
     await db_session.commit()
     
-    from repositories.launch_repo import delete_launch
+    from domain.launch.repository import delete_launch
     deleted = await delete_launch(db_session, launch.launch_id)
     assert deleted is not None
     assert deleted.launch_id == launch.launch_id
     
     # Check it's gone
     from sqlalchemy import select
-    from models.launch import Launch
+    from domain.launch.model import Launch
     stmt = select(Launch).where(Launch.launch_id == launch.launch_id)
     res = await db_session.execute(stmt)
     assert res.scalars().first() is None
@@ -301,7 +301,7 @@ async def test_get_brought_forward(db_session):
     squadron = Squadron(id="123 VGS")
     winch = Winch(id=1, registration="EF 34 GH", squadron_id="123 VGS")
     
-    from repositories.launch_repo import get_brought_forward
+    from domain.launch.repository import get_brought_forward
     db_session.add_all([squadron, winch])
     
     # Add historical launches for previous days

@@ -1,6 +1,6 @@
 import pytest
-from repositories.squadron_repo import squadron_exists
-from models.squadron import Squadron
+from domain.squadron.repository import squadron_exists
+from domain.squadron.model import Squadron
 
 
 

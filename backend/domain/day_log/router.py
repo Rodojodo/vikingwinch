@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.session import get_db
-from repositories import day_log_repo
+from domain.day_log import repository as day_log_repo
 from core.schemas import DayLogRead, WinchHoursResponse, DayLogCreate
 
 router = APIRouter(prefix="/winch/{winch_id}", tags=["day-log"])

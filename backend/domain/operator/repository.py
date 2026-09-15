@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from models.operator import Operator
-from repositories.squadron_repo import squadron_exists
+from domain.operator.model import Operator
+from domain.squadron.repository import squadron_exists
 
 
 async def get_operator_from_sn(db: AsyncSession, service_no: str):

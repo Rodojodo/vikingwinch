@@ -1,6 +1,6 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from models.squadron import Squadron
+from domain.squadron.model import Squadron
 
 
 async def squadron_exists(db: AsyncSession, id: str):

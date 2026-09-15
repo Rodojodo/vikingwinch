@@ -2,7 +2,7 @@ from sqlalchemy import Integer, TIMESTAMP, Enum, UniqueConstraint, Text, Foreign
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
 
-from models.base import Base
+from database.base import Base
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:

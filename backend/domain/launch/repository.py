@@ -4,7 +4,7 @@ from typing import Literal
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from models.launch import Launch
+from domain.launch.model import Launch
 
 
 async def add_launch(db_session: AsyncSession, squadron_id: str, winch_id: int, operator_sn: str, drum: Literal['left', 'right'], is_burn: bool = False):

@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.session import get_db
-from repositories import launch_repo
+from domain.launch import repository as launch_repo
 from core.schemas import LaunchCreate, LaunchRead, RemarkCreate, RepairCreate
 
 router = APIRouter(prefix="/launches", tags=["launches"])

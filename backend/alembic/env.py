@@ -10,7 +10,13 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from models import Base
+from database.base import Base
+# Ensure all domain models are imported so Alembic sees them
+from domain.day_log.model import *
+from domain.launch.model import *
+from domain.operator.model import *
+from domain.squadron.model import *
+from domain.winch.model import *
 
 load_dotenv()
 

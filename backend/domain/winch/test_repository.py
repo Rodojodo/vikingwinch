@@ -1,8 +1,8 @@
 import pytest
 
-from models.squadron import Squadron
-from repositories.winch_repo import get_winch_from_id, get_winches_from_sqn
-from models.winch import Winch
+from domain.squadron.model import Squadron
+from domain.winch.repository import get_winch_from_id, get_winches_from_sqn
+from domain.winch.model import Winch
 
 
 

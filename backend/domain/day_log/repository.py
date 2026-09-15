@@ -1,7 +1,7 @@
 from datetime import date, datetime, time, timedelta
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from models.day_log import Day_Log
+from domain.day_log.model import Day_Log
 
 
 async def get_day_log_from_date(db: AsyncSession, winch_id: int, day: date):

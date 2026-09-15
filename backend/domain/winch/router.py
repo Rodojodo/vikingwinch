@@ -3,7 +3,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.session import get_db
-from repositories import winch_repo, day_log_repo, launch_repo, operator_repo
+from domain.winch import repository as winch_repo
+from domain.day_log import repository as day_log_repo
+from domain.launch import repository as launch_repo
+from domain.operator import repository as operator_repo
 from core.schemas import WinchRead, BroughtForwardInfoResponse, WinchDayDataResponse, ExportDataResponse
 
 router = APIRouter(tags=["winches"])

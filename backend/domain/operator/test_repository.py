@@ -1,8 +1,8 @@
 import pytest
 
-from models.squadron import Squadron
-from repositories.operator_repo import get_operator_from_sn, get_operators_from_sqn
-from models.operator import Operator
+from domain.squadron.model import Squadron
+from domain.operator.repository import get_operator_from_sn, get_operators_from_sqn
+from domain.operator.model import Operator
 
 
 

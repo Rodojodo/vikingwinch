@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.session import get_db
-from repositories import operator_repo
+from domain.operator import repository as operator_repo
 from core.schemas import OperatorRead
 
 router = APIRouter(tags=["operators"])

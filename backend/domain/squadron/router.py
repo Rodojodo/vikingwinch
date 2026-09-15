@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.session import get_db
-from repositories import squadron_repo
+from domain.squadron import repository as squadron_repo
 from core.schemas import SquadronExistsResponse
 
 router = APIRouter(prefix="/squadrons", tags=["squadrons"])

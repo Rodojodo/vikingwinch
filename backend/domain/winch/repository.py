@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from models.winch import Winch
-from repositories.squadron_repo import squadron_exists
+from domain.winch.model import Winch
+from domain.squadron.repository import squadron_exists
 
 
 async def get_winch_from_id(db: AsyncSession, id: str):

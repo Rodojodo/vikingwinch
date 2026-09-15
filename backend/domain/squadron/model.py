@@ -1,7 +1,7 @@
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from models.base import Base
+from database.base import Base
 
 class Squadron(Base):
     __tablename__ = "squadrons"

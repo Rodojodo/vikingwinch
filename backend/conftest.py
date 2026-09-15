@@ -12,7 +12,7 @@ os.environ.setdefault("ENVIRONMENT", "test")
 
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from database.session import get_db
-from models.base import Base
+from database.base import Base
 from main import app
 
 # 1. Define the transient in-memory SQLite engine

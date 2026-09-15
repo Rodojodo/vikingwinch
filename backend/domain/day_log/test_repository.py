@@ -2,8 +2,8 @@ from datetime import date, datetime, timezone
 import pytest
 from sqlalchemy import select
 
-from models.day_log import Day_Log
-from repositories.day_log_repo import get_day_log_from_date
+from domain.day_log.model import Day_Log
+from domain.day_log.repository import get_day_log_from_date
 
 
 def make_day_log(**overrides) -> Day_Log:
@@ -84,7 +84,7 @@ async def test_get_day_log_from_date_filters_out_other_winches(db_session):
 
 @pytest.mark.asyncio
 async def test_get_winch_hours_success(db_session):
-    from repositories.day_log_repo import get_winch_hours
+    from domain.day_log.repository import get_winch_hours
     db_session.add_all([
         make_day_log(winch_id=1, hours=100.0, timestamp=datetime(2026, 6, 6, 9, 15, 0)),
         make_day_log(winch_id=1, hours=105.5, timestamp=datetime(2026, 6, 6, 10, 15, 0)),
@@ -95,7 +95,7 @@ async def test_get_winch_hours_success(db_session):
 
 @pytest.mark.asyncio
 async def test_get_winch_hours_returns_none_when_no_records(db_session):
-    from repositories.day_log_repo import get_winch_hours
+    from domain.day_log.repository import get_winch_hours
     db_session.add_all([
         make_day_log(winch_id=2, hours=111.1, timestamp=datetime(2026, 6, 6, 9, 15, 0)),
     ])
@@ -105,7 +105,7 @@ async def test_get_winch_hours_returns_none_when_no_records(db_session):
 
 @pytest.mark.asyncio
 async def test_add_day_log_success(db_session):
-    from repositories.day_log_repo import add_day_log
+    from domain.day_log.repository import add_day_log
     from core.schemas import DayLogCreate
     
     

@@ -2,11 +2,11 @@ import pytest_asyncio
 import pytest
 from httpx import AsyncClient, ASGITransport
 from datetime import date, datetime, timezone, timedelta
-from models.squadron import Squadron
-from models.winch import Winch
-from models.operator import Operator
-from models.day_log import Day_Log
-from models.launch import Launch
+from domain.squadron.model import Squadron
+from domain.winch.model import Winch
+from domain.operator.model import Operator
+from domain.day_log.model import Day_Log
+from domain.launch.model import Launch
 from main import app
 
 @pytest_asyncio.fixture
