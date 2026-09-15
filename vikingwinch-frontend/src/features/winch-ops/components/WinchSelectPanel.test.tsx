@@ -64,8 +64,8 @@ describe('WinchSelectPanel', () => {
 
     it('filters out winches that are already open', async () => {
         const mockWinches = [
-            { id: 1, squadron: squadronId, status: 'serviceable' },
-            { id: 2, squadron: squadronId, status: 'serviceable' }
+            { id: 1, squadron_id: squadronId, registration: 'W1', status: 'serviceable' },
+            { id: 2, squadron_id: squadronId, registration: 'W1', status: 'serviceable' }
         ];
         vi.mocked(getWinchesForSquadron).mockResolvedValue(mockWinches);
 

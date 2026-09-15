@@ -51,7 +51,7 @@ describe('exportLog', () => {
                 {service_no: 'TR1', name: 'Trainee One'}
             ],
             brought_forward: {left: 15, right: 25}
-        });
+        } as any);
 
         const mockArrayBuffer = new ArrayBuffer(8);
         (globalThis.fetch as any).mockResolvedValue({

@@ -54,7 +54,7 @@ export const WinchSelectPanel = ({ squadronId, openWinchIds, onSelectWinch }: Wi
                             variant="outlined"
                             onClick={() => onSelectWinch(winch.id)}
                             sx={[
-                                darkBlueButton,
+                                darkBlueButton as any,
                                 {
                                     flexGrow: 1,
                                     flexBasis: 'calc(33.333% - 16px)',
