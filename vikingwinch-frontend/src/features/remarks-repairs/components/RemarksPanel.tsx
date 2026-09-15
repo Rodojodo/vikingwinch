@@ -1,7 +1,9 @@
 import React, {useState} from 'react';
 import {Alert, Box, Button, TextField, Typography} from '@mui/material';
 import {DrumToggleGroup} from './DrumToggleGroup';
-import type {DerivedWinchState, DrumPosition} from '../../winch-ops/types';
+// eslint-disable-next-line no-restricted-imports
+import type {DerivedWinchState} from '../../launch-ops/types';
+import type {DrumPosition} from '../../../core/types';
 import {darkTextFieldStyles} from "../../../themes/styles.ts";
 
 

@@ -1,7 +1,35 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { exportLog } from './exportLog.ts';
 import * as fileSaver from 'file-saver';
-import { getWinch, getDayLog, getOperatorsForSquadron, getBroughtForward } from '../api/dataClient.ts';
+import { getDayLog } from "../..//day-ops/api/dayOpsClient.ts";
+import { getWinch, getBroughtForward } from "../..//winch-ops/api/winchClient.ts";
+import { getOperatorsForSquadron } from "../../../core/http/operatorsClient.ts";
+
+
+vi.mock('../../../app/providers/SessionIdentityProvider.tsx', () => ({
+    useSessionIdentity: vi.fn(() => ({ squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1' }))
+}));
+vi.mock('../..//trainee-ops/hooks/useTraineeOps.tsx', () => ({
+    useTraineeOps: vi.fn(() => ({ traineeSn: null, setTrainee: vi.fn(), changeTrainee: vi.fn() }))
+}));
+vi.mock('../..//launch-ops/hooks/useLaunchOps.tsx', () => ({
+    useLaunchOps: vi.fn(() => ({ 
+        derived: { leftLastRecord: {}, rightLastRecord: {} }, 
+        leftHistory: [], 
+        rightHistory: [], 
+        executeLaunch: vi.fn(), 
+        undoLaunch: vi.fn(), 
+        addRemarkToState: vi.fn() 
+    }))
+}));
+vi.mock('../..//day-ops/hooks/useDayOps.tsx', () => ({
+    useDayOps: vi.fn(() => ({ dayFinished: false, finishDay: vi.fn() }))
+}));
+
+
+vi.mock("../..//day-ops/api/dayOpsClient.ts", () => ({ getDayLog: vi.fn() }));
+vi.mock("../..//winch-ops/api/winchClient.ts", () => ({ getWinch: vi.fn(), getBroughtForward: vi.fn() }));
+vi.mock("../../../core/http/operatorsClient.ts", () => ({ getOperatorsForSquadron: vi.fn() }));
 
 vi.mock('file-saver', () => ({
     saveAs: vi.fn(),

@@ -1,17 +1,18 @@
 import React, {useState} from 'react';
 import {Box, Button, TextField, Typography} from '@mui/material';
-import {getBroughtForward, getWinchHours, postDayLogToDb} from '../api/dataClient.ts';
-import {useWinchSession} from '../hooks/useWinchSession.ts';
+import {getBroughtForward, getWinchHours} from '../api/winchClient.ts';
+import {useSessionIdentity} from '../../../app/providers/SessionIdentityProvider.tsx';
+import {postDayLogToDb} from '../../day-ops/api/dayOpsClient.ts';
 import {darkTextFieldStyles, errorBannerSx, glassPanelSx, glowingPrimaryButtonSx} from '../../../themes/styles.ts';
 import type {SxProps, Theme} from "@mui/material/styles";
 
 interface DailyInspectionPanelProps {
-    session: ReturnType<typeof useWinchSession>;
+    
     onComplete: () => void;
 }
 
-export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ session, onComplete }) => {
-    const { state } = session;
+export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ onComplete }) => {
+    const {squadronId, operatorSn, winchId} = useSessionIdentity();
     const [leftDrum, setLeftDrum] = useState<string>('');
     const [rightDrum, setRightDrum] = useState<string>('');
     const [hours, setHours] = useState<string>('');
@@ -20,12 +21,12 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ sess
     const [error, setError] = useState<string | null>(null);
 
     const handleRetrieveData = async () => {
-        if (!state.winchId) return;
+        if (!winchId) return;
         setIsFetching(true);
         try {
             const today = new Date();
             const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-            const bf = await getBroughtForward(state.winchId, todayStr);
+            const bf = await getBroughtForward(winchId, todayStr);
             if (bf.left !== null && bf.left !== undefined) setLeftDrum(bf.left.toString());
             if (bf.right !== null && bf.right !== undefined) setRightDrum(bf.right.toString());
         } catch (e) {
@@ -34,7 +35,7 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ sess
         }
 
         try {
-            const h = await getWinchHours(state.winchId);
+            const h = await getWinchHours(winchId);
             if (h.hours !== null && h.hours !== undefined) setHours(h.hours.toString());
         } catch (e) {
             console.error("Failed to fetch hours", e);
@@ -44,19 +45,19 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ sess
     };
 
     const handleSignDI = async () => {
-        if (!state.winchId || !state.squadron || !state.operatorSn) return;
+        if (!winchId || !squadronId || !operatorSn) return;
         setIsSubmitting(true);
         try {
             const parsedHours = hours ? parseFloat(hours) : null;
             await postDayLogToDb({
-                squadron_id: state.squadron,
-                winch_id: state.winchId,
-                operator_sn: state.operatorSn,
+                squadron_id: squadronId,
+                winch_id: winchId,
+                operator_sn: operatorSn,
                 trainee: null,
                 type: 'di',
                 cable_check: null,
                 hours: (parsedHours !== null && !isNaN(parsedHours)) ? parsedHours : null,
-            }, state.winchId);
+            }, winchId);
             onComplete();
         } catch (e) {
             console.error("Failed to sign DI", e);
@@ -74,7 +75,7 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ sess
                 </Typography>
             )}
             <Typography variant="h2">
-                Winch {state.winchId}
+                Winch {winchId}
             </Typography>
 
             <Typography variant="subtitle1">

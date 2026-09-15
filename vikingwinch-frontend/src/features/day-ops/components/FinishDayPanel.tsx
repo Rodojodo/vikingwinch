@@ -1,17 +1,24 @@
 import React, {useEffect, useState} from 'react';
 import {Alert, Box, Button, FormControl, MenuItem, Select, Stack, TextField, Typography} from '@mui/material';
 import {darkMenuStyles, darkSelectStyles, darkTextFieldStyles, getTabButtonStyles} from '../../../themes/styles.ts';
-import {getOperatorsForSquadron} from '../../winch-ops/api/dataClient.ts';
-import type {OperatorRead, WinchLogState} from '../../winch-ops/types';
+import {getOperatorsForSquadron} from '../../../core/http/operatorsClient.ts';
+import type {OperatorRead} from '../../../core/types';
+import {useSessionIdentity} from '../../../app/providers/SessionIdentityProvider.tsx';
+import {useLaunchOps} from '../../launch-ops/hooks/useLaunchOps.tsx';
+import {useTraineeOps} from '../../trainee-ops/hooks/useTraineeOps.tsx';
+import {postDayLogToDb} from '../api/dayOpsClient.ts';
 import {exportLog} from '../../winch-ops/utils/exportLog.ts';
 
 type FinishDayPanelProps = {
-    finishDay: (cableCheck: string | null, hours: number | null) => Promise<any>;
+    
     isLoading: boolean;
-    state: WinchLogState;
+    
 };
 
-export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ finishDay, isLoading, state }) => {
+export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ isLoading }) => {
+    const {squadronId, winchId, operatorSn} = useSessionIdentity();
+    const {traineeSn, activeLauncherSn} = useTraineeOps();
+    const {leftHistory, rightHistory} = useLaunchOps();
     const [isOpen, setIsOpen] = useState(false);
     const [hoursStop, setHoursStop] = useState<string>('');
     const [cableCheckBy, setCableCheckBy] = useState<string>('');
@@ -20,13 +27,13 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ finishDay, isLoa
     const [isFetchingOperators, setIsFetchingOperators] = useState(false);
 
     useEffect(() => {
-        if (!state.squadron || !isOpen) return;
+        if (!squadronId || !isOpen) return;
 
         const controller = new AbortController();
         setIsFetchingOperators(true);
         setLocalError(null);
 
-        getOperatorsForSquadron(state.squadron, controller.signal)
+        getOperatorsForSquadron(squadronId, controller.signal)
             .then((data) => {
                 if (!controller.signal.aborted) {
                     setOperators(data);
@@ -44,32 +51,48 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ finishDay, isLoa
             });
 
         return () => controller.abort();
-    }, [state.squadron, isOpen]);
+    }, [squadronId, isOpen]);
 
     const handleToggle = () => {
         setIsOpen((prev) => !prev);
     };
 
     const handleSubmit = async () => {
+        if (!winchId) return;
         setLocalError(null);
-
         const hours = hoursStop ? parseFloat(hoursStop) : null;
-
         try {
-            await finishDay(cableCheckBy || null, hours);
-            setHoursStop('');
-            setCableCheckBy('');
+            await postDayLogToDb({
+                squadron_id: squadronId,
+                winch_id: winchId,
+                operator_sn: operatorSn,
+                trainee: traineeSn,
+                type: "finish_day",
+                cable_check: cableCheckBy || null,
+                hours
+            }, winchId);
+            setHoursStop("");
+            setCableCheckBy("");
             setIsOpen(false);
         } catch (err) {
-            setLocalError(err instanceof Error ? err.message : 'Failed to submit finish day');
+            setLocalError(err instanceof Error ? err.message : "Failed to submit finish day");
         }
     };
 
     const handleDownloadLog = async () => {
         try {
-            await exportLog(state);
+            await exportLog({
+                squadron: squadronId,
+                winchId,
+                operatorSn,
+                traineeSn,
+                leftHistory,
+                rightHistory,
+                dayFinished: false,
+                activeLauncherSn: activeLauncherSn || operatorSn
+            });
         } catch (err) {
-            setLocalError(err instanceof Error ? err.message : 'Failed to download log');
+            setLocalError(err instanceof Error ? err.message : "Failed to download log");
         }
     };
 

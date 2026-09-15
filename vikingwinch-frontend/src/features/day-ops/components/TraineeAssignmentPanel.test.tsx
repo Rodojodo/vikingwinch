@@ -2,7 +2,31 @@ import {render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {TraineeAssignmentPanel} from './TraineeAssignmentPanel.tsx';
-import {getOperatorsForSquadron} from '../../winch-ops/api/dataClient.ts';
+import { getOperatorsForSquadron } from "../../../core/http/operatorsClient.ts";
+
+
+vi.mock('../../../app/providers/SessionIdentityProvider.tsx', () => ({
+    useSessionIdentity: vi.fn(() => ({ squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1' }))
+}));
+vi.mock('../..//trainee-ops/hooks/useTraineeOps.tsx', () => ({
+    useTraineeOps: vi.fn(() => ({ traineeSn: null, setTrainee: vi.fn(), changeTrainee: vi.fn() }))
+}));
+vi.mock('../..//launch-ops/hooks/useLaunchOps.tsx', () => ({
+    useLaunchOps: vi.fn(() => ({ 
+        derived: { leftLastRecord: {}, rightLastRecord: {} }, 
+        leftHistory: [], 
+        rightHistory: [], 
+        executeLaunch: vi.fn().mockResolvedValue(undefined), 
+        undoLaunch: vi.fn().mockResolvedValue(undefined), 
+        addRemarkToState: vi.fn() 
+    }))
+}));
+vi.mock('../..//day-ops/hooks/useDayOps.tsx', () => ({
+    useDayOps: vi.fn(() => ({ dayFinished: false, finishDay: vi.fn() }))
+}));
+
+
+vi.mock("../../../core/http/operatorsClient.ts", () => ({ getOperatorsForSquadron: vi.fn() }));
 
 vi.mock('../../winch-ops/api/dataClient.ts', () => ({
     getOperatorsForSquadron: vi.fn(),

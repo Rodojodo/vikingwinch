@@ -1,12 +1,38 @@
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {describe, expect, it, vi} from 'vitest';
 import {WinchTab} from './WinchTab.tsx';
-import {useWinchSession} from '../features/winch-ops/hooks/useWinchSession';
-import {getDayLog, getLaunches, getOperatorsForSquadron} from '../features/winch-ops/api/dataClient';
 
-vi.mock('../features/winch-ops/hooks/useWinchSession', () => ({
-    useWinchSession: vi.fn(),
+import { getDayLog } from "../features/day-ops/api/dayOpsClient.ts";
+import { getLaunches } from "../features/launch-ops/api/launchClient.ts";
+import { getOperatorsForSquadron } from "../core/http/operatorsClient.ts";
+
+
+vi.mock('../app/providers/SessionIdentityProvider.tsx', () => ({
+    useSessionIdentity: vi.fn(() => ({ squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1' }))
 }));
+vi.mock('../features/trainee-ops/hooks/useTraineeOps.tsx', () => ({
+    useTraineeOps: vi.fn(() => ({ traineeSn: null, setTrainee: vi.fn(), changeTrainee: vi.fn() }))
+}));
+vi.mock('../features/launch-ops/hooks/useLaunchOps.tsx', () => ({
+    useLaunchOps: vi.fn(() => ({ 
+        derived: { leftLastRecord: {}, rightLastRecord: {} }, 
+        leftHistory: [], 
+        rightHistory: [], 
+        executeLaunch: vi.fn().mockResolvedValue(undefined), 
+        undoLaunch: vi.fn().mockResolvedValue(undefined), 
+        addRemarkToState: vi.fn() 
+    }))
+}));
+vi.mock('../features/day-ops/hooks/useDayOps.tsx', () => ({
+    useDayOps: vi.fn(() => ({ dayFinished: false, finishDay: vi.fn() }))
+}));
+
+
+vi.mock("../features/day-ops/api/dayOpsClient.ts", () => ({ getDayLog: vi.fn() }));
+vi.mock("../features/launch-ops/api/launchClient.ts", () => ({ getLaunches: vi.fn() }));
+vi.mock("../core/http/operatorsClient.ts", () => ({ getOperatorsForSquadron: vi.fn() }));
+
+
 
 vi.mock('../features/winch-ops/api/dataClient', () => ({
     getDayLog: vi.fn(),
@@ -40,11 +66,7 @@ vi.mock('../features/winch-ops/components/WinchSelectPanel', () => ({
 
 describe('WinchTab', () => {
     it('renders LaunchPanel initially and toggles to SkylogValues', async () => {
-        vi.mocked(useWinchSession).mockReturnValue({
-            state: { winchId: 1, squadron: 'sqn1' },
-            derived: { leftLaunches: 10, rightLaunches: 15 },
-            hydrateHistory: vi.fn(),
-        } as any);
+        
 
         vi.mocked(getDayLog).mockResolvedValue([
             { id: 1, type: 'di', operator_sn: 'OFF-1001', squadron_id: 'sqn1', winch_id: 1, cable_check: 'OFF-1001', hours: 0, trainee: null, timestamp: null },
@@ -70,12 +92,7 @@ describe('WinchTab', () => {
 
     it('renders WinchSelectPanel initially if winchId is null', () => {
         const setWinchIdMock = vi.fn();
-        vi.mocked(useWinchSession).mockReturnValue({
-            state: { winchId: null, squadron: 'sqn1' },
-            setWinchId: setWinchIdMock,
-            derived: { leftLaunches: 10, rightLaunches: 15 },
-            hydrateHistory: vi.fn(),
-        } as any);
+        
 
         render(<WinchTab tabId="1" squadronId="123 VGS" operatorSn="OFF-1001" winchId={null} openWinchIds={[]} onWinchSelect={vi.fn()} />);
         

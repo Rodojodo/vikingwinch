@@ -1,7 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import {Box, Button, ButtonBase, Paper, Stack, Typography} from '@mui/material';
-import {getOperatorsForSquadron} from '../../winch-ops/api/dataClient.ts';
-import type {DayLogResponse, OperatorRead} from '../../winch-ops/types';
+import {getOperatorsForSquadron} from '../../../core/http/operatorsClient.ts';
+import type {OperatorRead} from '../../../core/types';
+import type {DayLogResponse} from '../types/index.ts';
 import {TraineeSelect} from './TraineeSelect.tsx';
 import {elevatedPanel, getTabButtonStyles, glowingPrimaryButtonSx} from "../../../themes/styles.ts";
 

@@ -1,8 +1,21 @@
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import winchLogTemplateUrl from '../../../assets/winch_log.xltx?url';
-import type { WinchLogState } from '../types';
-import { getWinch, getDayLog, getOperatorsForSquadron, getBroughtForward } from '../api/dataClient.ts';
+// eslint-disable-next-line no-restricted-imports
+import type { LaunchRecord } from '../../launch-ops/types';
+export interface WinchLogState {
+  squadron: string;
+  winchId: number | null;
+  operatorSn: string;
+  traineeSn: string | null;
+  leftHistory: LaunchRecord[];
+  rightHistory: LaunchRecord[];
+  dayFinished: boolean;
+  activeLauncherSn: string;
+}
+import { getWinch, getBroughtForward } from '../api/winchClient.ts';
+import { getDayLog } from '../../day-ops/api/dayOpsClient.ts';
+import { getOperatorsForSquadron } from '../../../core/http/operatorsClient.ts';
 
 const CELLS = {
     UNIT: 'F2',

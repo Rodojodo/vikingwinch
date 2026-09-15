@@ -1,6 +1,6 @@
 import {Box, Button, CircularProgress, Typography} from "@mui/material";
 import {useEffect, useState} from "react";
-import {getWinchesForSquadron} from "../api/dataClient";
+import {getWinchesForSquadron} from "../api/winchClient";
 import type {WinchRead} from "../types";
 import {darkBlueButton, glassPanelSx} from "../../../themes/styles.ts";
 import type {SxProps, Theme} from '@mui/material/styles';
@@ -53,14 +53,14 @@ export const WinchSelectPanel = ({ squadronId, openWinchIds, onSelectWinch }: Wi
                             key={winch.id}
                             variant="outlined"
                             onClick={() => onSelectWinch(winch.id)}
-                            sx={[
+                            sx={([
                                 darkBlueButton,
                                 {
                                     flexGrow: 1,
                                     flexBasis: 'calc(33.333% - 16px)',
                                     py: 2.5,
                                 }
-                            ]}
+                            ] as SxProps<Theme>)}
                         >
                             Winch {winch.id}
                         </Button>

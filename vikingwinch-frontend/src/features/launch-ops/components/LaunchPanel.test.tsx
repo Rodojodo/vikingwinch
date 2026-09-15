@@ -1,11 +1,31 @@
 import {act, fireEvent, render, screen} from '@testing-library/react';
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import LaunchPanel from './LaunchPanel.tsx';
-import {useWinchSession} from '../../winch-ops/hooks/useWinchSession.ts';
 
-vi.mock('../../winch-ops/hooks/useWinchSession.ts', () => ({
-    useWinchSession: vi.fn(),
+
+
+vi.mock('../../../app/providers/SessionIdentityProvider.tsx', () => ({
+    useSessionIdentity: vi.fn(() => ({ squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1' }))
 }));
+vi.mock('../..//trainee-ops/hooks/useTraineeOps.tsx', () => ({
+    useTraineeOps: vi.fn(() => ({ traineeSn: null, setTrainee: vi.fn(), changeTrainee: vi.fn() }))
+}));
+vi.mock('../..//launch-ops/hooks/useLaunchOps.tsx', () => ({
+    useLaunchOps: vi.fn(() => ({ 
+        derived: { leftLastRecord: {}, rightLastRecord: {} }, 
+        leftHistory: [], 
+        rightHistory: [], 
+        executeLaunch: vi.fn().mockResolvedValue(undefined), 
+        undoLaunch: vi.fn().mockResolvedValue(undefined), 
+        addRemarkToState: vi.fn() 
+    }))
+}));
+vi.mock('../..//day-ops/hooks/useDayOps.tsx', () => ({
+    useDayOps: vi.fn(() => ({ dayFinished: false, finishDay: vi.fn() }))
+}));
+
+
+
 
 // Mock subcomponents to simplify LaunchPanel testing
 vi.mock('../../day-ops/components/TraineeAssignmentPanel.tsx', () => ({
@@ -28,21 +48,7 @@ describe('LaunchPanel', () => {
         vi.clearAllMocks();
         vi.useFakeTimers();
         
-        vi.mocked(useWinchSession).mockReturnValue({
-            derived: {
-                leftLaunches: 0,
-                rightLaunches: 0,
-                leftLast: null,
-                rightLast: null,
-            },
-            isLoading: false,
-            executeLaunch: mockExecuteLaunch,
-            undoLaunch: mockUndoLaunch,
-            recordSignOn: mockRecordSignOn,
-            addRemark: mockAddRemark,
-            state: { squadron: 'sqn1', winchNum: 42 },
-            error: null
-        } as any);
+        
     });
 
     afterEach(() => {
@@ -50,7 +56,7 @@ describe('LaunchPanel', () => {
     });
 
     it('renders LaunchPanel correctly', () => {
-        render(<LaunchPanel session={useWinchSession() as any} />);
+        render(<LaunchPanel />);
         expect(screen.getByText('Left Drum')).toBeInTheDocument();
         expect(screen.getByText('Right Drum')).toBeInTheDocument();
         expect(screen.getByTestId('winch-sticker')).toBeInTheDocument();
@@ -58,63 +64,51 @@ describe('LaunchPanel', () => {
     });
 
     it('handles left launch click', () => {
-        render(<LaunchPanel session={useWinchSession() as any} />);
+        render(<LaunchPanel />);
         const launchBtn = screen.getByText('Left Drum').closest('button');
         fireEvent.click(launchBtn!);
         expect(mockExecuteLaunch).toHaveBeenCalledWith('left');
     });
 
     it('handles left burn click', () => {
-        render(<LaunchPanel session={useWinchSession() as any} />);
+        render(<LaunchPanel />);
         const burnBtn = screen.getByRole('button', { name: /Burn Left/i });
         fireEvent.click(burnBtn!);
         expect(mockExecuteLaunch).toHaveBeenCalledWith('left', true);
     });
 
     it('handles right launch click', () => {
-        render(<LaunchPanel session={useWinchSession() as any} />);
+        render(<LaunchPanel />);
         const launchBtn = screen.getByText('Right Drum').closest('button');
         fireEvent.click(launchBtn!);
         expect(mockExecuteLaunch).toHaveBeenCalledWith('right');
     });
 
     it('handles right burn click', () => {
-        render(<LaunchPanel session={useWinchSession() as any} />);
+        render(<LaunchPanel />);
         const burnBtn = screen.getByRole('button', { name: /Burn Right/i });
         fireEvent.click(burnBtn!);
         expect(mockExecuteLaunch).toHaveBeenCalledWith('right', true);
     });
 
     it('handles undo left click', () => {
-        vi.mocked(useWinchSession).mockReturnValue({
-            derived: { leftLaunches: 1, rightLaunches: 0 },
-            isLoading: false,
-            executeLaunch: mockExecuteLaunch,
-            undoLaunch: mockUndoLaunch,
-            state: { squadron: 'sqn1', winchNum: 42 }
-        } as any);
-        render(<LaunchPanel session={useWinchSession() as any} />);
+        
+        render(<LaunchPanel />);
         const undoBtn = screen.getByText('− Undo Left');
         fireEvent.click(undoBtn);
         expect(mockUndoLaunch).toHaveBeenCalledWith('left');
     });
 
     it('handles undo right click', () => {
-        vi.mocked(useWinchSession).mockReturnValue({
-            derived: { leftLaunches: 0, rightLaunches: 1 },
-            isLoading: false,
-            executeLaunch: mockExecuteLaunch,
-            undoLaunch: mockUndoLaunch,
-            state: { squadron: 'sqn1', winchNum: 42 }
-        } as any);
-        render(<LaunchPanel session={useWinchSession() as any} />);
+        
+        render(<LaunchPanel />);
         const undoBtn = screen.getByText('− Undo Right');
         fireEvent.click(undoBtn);
         expect(mockUndoLaunch).toHaveBeenCalledWith('right');
     });
 
     it('disables undo buttons when no launches', () => {
-        render(<LaunchPanel session={useWinchSession() as any} />);
+        render(<LaunchPanel />);
         const undoLeft = screen.getByText('− Undo Left');
         const undoRight = screen.getByText('− Undo Right');
         expect(undoLeft).toBeDisabled();
@@ -125,15 +119,9 @@ describe('LaunchPanel', () => {
         const now = new Date();
         const recentTime = new Date(now.getTime() - 1000).toISOString(); // 1 second ago
 
-        vi.mocked(useWinchSession).mockReturnValue({
-            derived: { leftLaunches: 1, rightLaunches: 0, leftLast: recentTime, rightLast: null },
-            isLoading: false,
-            state: { squadron: 'sqn1', winchNum: 42 },
-            executeLaunch: mockExecuteLaunch,
-            undoLaunch: mockUndoLaunch
-        } as any);
+        
 
-        render(<LaunchPanel session={useWinchSession() as any} />);
+        render(<LaunchPanel />);
         expect(screen.getByTestId('winch-sticker')).toHaveAttribute('data-recent', 'true');
 
         // Fast forward 16 minutes
@@ -145,28 +133,16 @@ describe('LaunchPanel', () => {
     });
 
     it('triggers reset animation when launches become equal and increase', () => {
-        const mockUseWinchSession = vi.mocked(useWinchSession);
         
-        mockUseWinchSession.mockReturnValue({
-            derived: { leftLaunches: 1, rightLaunches: 0, leftLast: null, rightLast: null },
-            isLoading: false,
-            state: { squadron: 'sqn1', winchNum: 42 },
-            executeLaunch: mockExecuteLaunch,
-            undoLaunch: mockUndoLaunch
-        } as any);
+        
+        
 
-        const { rerender } = render(<LaunchPanel session={useWinchSession() as any} />);
+        const { rerender } = render(<LaunchPanel />);
 
         // Now make them equal and increase
-        mockUseWinchSession.mockReturnValue({
-            derived: { leftLaunches: 1, rightLaunches: 1, leftLast: null, rightLast: null },
-            isLoading: false,
-            state: { squadron: 'sqn1', winchNum: 42 },
-            executeLaunch: mockExecuteLaunch,
-            undoLaunch: mockUndoLaunch
-        } as any);
+        
 
-        rerender(<LaunchPanel session={useWinchSession() as any} />);
+        rerender(<LaunchPanel />);
 
         // Fast forward to trigger the reset animation setTimeout
         act(() => {
@@ -180,7 +156,7 @@ describe('LaunchPanel', () => {
     });
     it('calls onViewSkylogValues when button is clicked', () => {
         const onViewSkylogValues = vi.fn();
-        render(<LaunchPanel session={useWinchSession() as any} onViewSkylogValues={onViewSkylogValues} />);
+        render(<LaunchPanel onViewSkylogValues={onViewSkylogValues} />);
         const btn = screen.getByText('Show skylog values');
         fireEvent.click(btn);
         expect(onViewSkylogValues).toHaveBeenCalled();
@@ -191,15 +167,9 @@ describe('LaunchPanel', () => {
         const mockExecuteReject = vi.fn().mockRejectedValue(new Error('Launch error'));
         const mockUndoReject = vi.fn().mockRejectedValue(new Error('Undo error'));
 
-        vi.mocked(useWinchSession).mockReturnValue({
-            derived: { leftLaunches: 1, rightLaunches: 1 },
-            isLoading: false,
-            executeLaunch: mockExecuteReject,
-            undoLaunch: mockUndoReject,
-            state: { squadron: 'sqn1', winchNum: 42 }
-        } as any);
+        
 
-        render(<LaunchPanel session={useWinchSession() as any} />);
+        render(<LaunchPanel />);
         
         // click left launch
         fireEvent.click(screen.getByText('Left Drum').closest('button')!);
@@ -225,27 +195,15 @@ describe('LaunchPanel', () => {
     });
 
     it('does not trigger reset animation when launches change but are not equal', () => {
-        const mockUseWinchSession = vi.mocked(useWinchSession);
-        mockUseWinchSession.mockReturnValue({
-            derived: { leftLaunches: 0, rightLaunches: 0, leftLast: null, rightLast: null, leftTotal: 0, rightTotal: 0 },
-            isLoading: false,
-            state: { squadron: 'sqn1', winchNum: 42 },
-            executeLaunch: mockExecuteLaunch,
-            undoLaunch: mockUndoLaunch
-        } as any);
+        
+        
 
-        const { rerender } = render(<LaunchPanel session={useWinchSession() as any} />);
+        const { rerender } = render(<LaunchPanel />);
 
         // Increase one
-        mockUseWinchSession.mockReturnValue({
-            derived: { leftLaunches: 1, rightLaunches: 0, leftLast: null, rightLast: null, leftTotal: 1, rightTotal: 0 },
-            isLoading: false,
-            state: { squadron: 'sqn1', winchNum: 42 },
-            executeLaunch: mockExecuteLaunch,
-            undoLaunch: mockUndoLaunch
-        } as any);
+        
 
-        rerender(<LaunchPanel session={useWinchSession() as any} />);
+        rerender(<LaunchPanel />);
         
         // Fast forward
         act(() => {
@@ -255,27 +213,15 @@ describe('LaunchPanel', () => {
     });
 
     it('does not trigger reset animation when launches are equal but decrease (undo)', () => {
-        const mockUseWinchSession = vi.mocked(useWinchSession);
-        mockUseWinchSession.mockReturnValue({
-            derived: { leftLaunches: 1, rightLaunches: 1, leftLast: null, rightLast: null, leftTotal: 1, rightTotal: 1 },
-            isLoading: false,
-            state: { squadron: 'sqn1', winchNum: 42 },
-            executeLaunch: mockExecuteLaunch,
-            undoLaunch: mockUndoLaunch
-        } as any);
+        
+        
 
-        const { rerender } = render(<LaunchPanel session={useWinchSession() as any} />);
+        const { rerender } = render(<LaunchPanel />);
 
         // Decrease both (not realistic at the exact same time, but tests the logic)
-        mockUseWinchSession.mockReturnValue({
-            derived: { leftLaunches: 0, rightLaunches: 0, leftLast: null, rightLast: null, leftTotal: 0, rightTotal: 0 },
-            isLoading: false,
-            state: { squadron: 'sqn1', winchNum: 42 },
-            executeLaunch: mockExecuteLaunch,
-            undoLaunch: mockUndoLaunch
-        } as any);
+        
 
-        rerender(<LaunchPanel session={useWinchSession() as any} />);
+        rerender(<LaunchPanel />);
         
         act(() => {
             vi.advanceTimersByTime(1000);
@@ -283,25 +229,13 @@ describe('LaunchPanel', () => {
     });
 
     it('clears timers on unmount', () => {
-        const mockUseWinchSession = vi.mocked(useWinchSession);
-        mockUseWinchSession.mockReturnValue({
-            derived: { leftLaunches: 0, rightLaunches: 0, leftTotal: 0, rightTotal: 0 },
-            isLoading: false,
-            state: { squadron: 'sqn1', winchNum: 42 },
-            executeLaunch: mockExecuteLaunch,
-            undoLaunch: mockUndoLaunch
-        } as any);
+        
+        
 
-        const { rerender, unmount } = render(<LaunchPanel session={useWinchSession() as any} />);
+        const { rerender, unmount } = render(<LaunchPanel />);
 
-        mockUseWinchSession.mockReturnValue({
-            derived: { leftLaunches: 1, rightLaunches: 1, leftTotal: 1, rightTotal: 1 },
-            isLoading: false,
-            state: { squadron: 'sqn1', winchNum: 42 },
-            executeLaunch: mockExecuteLaunch,
-            undoLaunch: mockUndoLaunch
-        } as any);
-        rerender(<LaunchPanel session={useWinchSession() as any} />);
+        
+        rerender(<LaunchPanel />);
 
         // Unmount while timeouts are pending
         unmount();
@@ -312,15 +246,9 @@ describe('LaunchPanel', () => {
     });
 
     it.skip('handles checkRecent correctly when both rightLast and leftLast are missing', () => {
-        vi.mocked(useWinchSession).mockReturnValue({
-            derived: { leftLaunches: 0, rightLaunches: 0, leftLast: undefined, rightLast: undefined },
-            isLoading: false,
-            executeLaunch: mockExecuteLaunch,
-            undoLaunch: mockUndoLaunch,
-            state: { squadron: 'sqn1', winchNum: 42 }
-        } as any);
+        
 
-        render(<LaunchPanel session={useWinchSession() as any} />);
+        render(<LaunchPanel />);
         expect(screen.getByTestId('winch-sticker')).toHaveAttribute('data-recent', 'false');
     });
 });

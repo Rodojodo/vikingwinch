@@ -1,6 +1,9 @@
 import React, {useState} from 'react';
 import {Box, Button, Stack} from '@mui/material';
-import type {DerivedWinchState, DrumPosition, PanelType, WinchLogState} from '../../winch-ops/types';
+// eslint-disable-next-line no-restricted-imports
+import type {DerivedWinchState} from '../../launch-ops/types';
+import type {DrumPosition} from '../../../core/types';
+import type {PanelType} from '../types';
 import {RemarksPanel} from './RemarksPanel.tsx';
 import {RepairsPanel} from './RepairsPanel.tsx';
 import {elevatedPanel, getTabButtonStyles} from '../../../themes/styles.ts';
@@ -10,10 +13,10 @@ type RemarksRepairsPanelProps = {
     addRemark: (remark: string | null, drum: DrumPosition) => Promise<void>;
     isLoading: boolean;
     derived: DerivedWinchState;
-    state: WinchLogState;
+    squadronId: string;
 };
 
-export const RemarksRepairsPanel: React.FC<RemarksRepairsPanelProps> = ({ addRemark, isLoading, derived, state }) => {
+export const RemarksRepairsPanel: React.FC<RemarksRepairsPanelProps> = ({ addRemark, isLoading, derived, squadronId }) => {
     const [activePanel, setActivePanel] = useState<PanelType>(null);
 
     const handleToggle = (panel: PanelType) => {
@@ -52,7 +55,7 @@ export const RemarksRepairsPanel: React.FC<RemarksRepairsPanelProps> = ({ addRem
                     <RemarksPanel addRemark={addRemark} isLoading={isLoading} derived={derived}/>
                 </Box>
                 <Box sx={{display: activePanel === 'repairs' ? 'block' : 'none'}}>
-                    <RepairsPanel addRemark={addRemark} isLoading={isLoading} derived={derived} state={state}/>
+                    <RepairsPanel addRemark={addRemark} isLoading={isLoading} derived={derived} squadronId={squadronId}/>
                 </Box>
             </Box>
         </Box>

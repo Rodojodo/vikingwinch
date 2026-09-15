@@ -1,12 +1,34 @@
 import {act, fireEvent, render, screen, waitFor, within} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {RepairsPanel} from './RepairsPanel.tsx';
-import {useWinchSession} from '../../winch-ops/hooks/useWinchSession.ts';
-import {getOperatorsForSquadron} from '../../winch-ops/api/dataClient.ts';
 
-vi.mock('../../winch-ops/hooks/useWinchSession.ts', () => ({
-    useWinchSession: vi.fn(),
+import { getOperatorsForSquadron } from "../../../core/http/operatorsClient.ts";
+
+
+vi.mock('../../../app/providers/SessionIdentityProvider.tsx', () => ({
+    useSessionIdentity: vi.fn(() => ({ squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1' }))
 }));
+vi.mock('../..//trainee-ops/hooks/useTraineeOps.tsx', () => ({
+    useTraineeOps: vi.fn(() => ({ traineeSn: null, setTrainee: vi.fn(), changeTrainee: vi.fn() }))
+}));
+vi.mock('../..//launch-ops/hooks/useLaunchOps.tsx', () => ({
+    useLaunchOps: vi.fn(() => ({ 
+        derived: { leftLastRecord: {}, rightLastRecord: {} }, 
+        leftHistory: [], 
+        rightHistory: [], 
+        executeLaunch: vi.fn().mockResolvedValue(undefined), 
+        undoLaunch: vi.fn().mockResolvedValue(undefined), 
+        addRemarkToState: vi.fn() 
+    }))
+}));
+vi.mock('../..//day-ops/hooks/useDayOps.tsx', () => ({
+    useDayOps: vi.fn(() => ({ dayFinished: false, finishDay: vi.fn() }))
+}));
+
+
+vi.mock("../../../core/http/operatorsClient.ts", () => ({ getOperatorsForSquadron: vi.fn() }));
+
+
 
 vi.mock('../../winch-ops/api/dataClient.ts', () => ({
     getOperatorsForSquadron: vi.fn(),
@@ -21,24 +43,13 @@ describe('RepairsPanel', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        vi.mocked(useWinchSession).mockReturnValue({
-            addRemark: mockAddRemark,
-            isLoading: false,
-            error: null,
-            derived: {
-                leftLaunches: 1,
-                rightLaunches: 1,
-            },
-            state: {
-                squadron: 'sqn1'
-            }
-        } as any);
+        
 
         vi.mocked(getOperatorsForSquadron).mockResolvedValue(mockOperators);
     });
 
     it('renders RepairsPanel correctly', async () => {
-        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} state={{ squadron: 'sqn1' } as any} />);
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} squadronId="sqn1" />);
         expect(screen.getByText('Repair details')).toBeInTheDocument();
         expect(screen.getByPlaceholderText('Describe the repair carried out...')).toBeInTheDocument();
 
@@ -48,7 +59,7 @@ describe('RepairsPanel', () => {
     });
 
     it('submits repair as remark when button is clicked with worker and supervisor', async () => {
-        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} state={{ squadron: 'sqn1' } as any} />);
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} squadronId="sqn1" />);
 
         await waitFor(() => {
             expect(getOperatorsForSquadron).toHaveBeenCalled();
@@ -81,7 +92,7 @@ describe('RepairsPanel', () => {
     });
 
     it('disables submit button if supervisor is missing', async () => {
-        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} state={{ squadron: 'sqn1' } as any} />);
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} squadronId="sqn1" />);
 
         await waitFor(() => {
             expect(getOperatorsForSquadron).toHaveBeenCalled();
@@ -107,7 +118,7 @@ describe('RepairsPanel', () => {
     it('shows error alert when submission fails', async () => {
         const mockErrorAdd = vi.fn().mockRejectedValue(new Error('Test local Error'));
 
-        render(<RepairsPanel addRemark={mockErrorAdd} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} state={{ squadron: 'sqn1' } as any} />);
+        render(<RepairsPanel addRemark={mockErrorAdd} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} squadronId="sqn1" />);
 
         await waitFor(() => {
             expect(getOperatorsForSquadron).toHaveBeenCalled();
@@ -143,7 +154,7 @@ describe('RepairsPanel', () => {
     it('shows fetch error alert when getOperators fails', async () => {
         vi.mocked(getOperatorsForSquadron).mockRejectedValue(new Error('API fail'));
 
-        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} state={{ squadron: 'sqn1' } as any} />);
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} squadronId="sqn1" />);
 
         await waitFor(() => {
             expect(screen.getByText('Failed to load operators')).toBeInTheDocument();
@@ -151,7 +162,7 @@ describe('RepairsPanel', () => {
     });
 
     it('disables submit button and shows text when no launches', async () => {
-        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: null, rightLastRecord: null } as any} state={{ squadron: 'sqn1' } as any} />);
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: null, rightLastRecord: null } as any} squadronId="sqn1" />);
 
         await waitFor(() => {
             expect(getOperatorsForSquadron).toHaveBeenCalled();
@@ -163,7 +174,7 @@ describe('RepairsPanel', () => {
     });
 
     it('does not submit if repair details are empty', async () => {
-        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} state={{ squadron: 'sqn1' } as any} />);
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} squadronId="sqn1" />);
 
         await waitFor(() => {
             expect(getOperatorsForSquadron).toHaveBeenCalled();
@@ -174,12 +185,12 @@ describe('RepairsPanel', () => {
     });
 
     it('does not fetch operators if no squadron is set', () => {
-        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} state={{ squadron: '' } as any} />);
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} squadronId="" />);
         expect(getOperatorsForSquadron).not.toHaveBeenCalled();
     });
 
     it('submits repair for right drum', async () => {
-        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} state={{ squadron: 'sqn1' } as any} />);
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} squadronId="sqn1" />);
 
         await waitFor(() => expect(getOperatorsForSquadron).toHaveBeenCalled());
 
@@ -213,7 +224,7 @@ describe('RepairsPanel', () => {
 
     it('handles non-Error exception during submit', async () => {
         mockAddRemark.mockRejectedValue('String Error');
-        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} state={{ squadron: 'sqn1' } as any} />);
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} squadronId="sqn1" />);
 
         await waitFor(() => expect(getOperatorsForSquadron).toHaveBeenCalled());
 
@@ -253,7 +264,7 @@ describe('RepairsPanel', () => {
             });
         });
 
-        const { unmount } = render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} state={{ squadron: 'sqn1' } as any} />);
+        const { unmount } = render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} squadronId="sqn1" />);
 
         unmount();
         await new Promise(r => setTimeout(r, 100));
@@ -266,13 +277,13 @@ describe('RepairsPanel', () => {
             });
         });
 
-        const { unmount: unmount2 } = render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} state={{ squadron: 'sqn1' } as any} />);
+        const { unmount: unmount2 } = render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} squadronId="sqn1" />);
         unmount2();
         await new Promise(r => setTimeout(r, 100));
     });
 
     it('returns early in handleSubmit if hasLaunches is false or worker is empty', async () => {
-        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: null, rightLastRecord: null } as any} state={{ squadron: 'sqn1' } as any} />);
+        render(<RepairsPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: null, rightLastRecord: null } as any} squadronId="sqn1" />);
 
         await waitFor(() => expect(getOperatorsForSquadron).toHaveBeenCalled());
 

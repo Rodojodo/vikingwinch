@@ -1,31 +1,35 @@
 import React, {useEffect, useState} from 'react';
 import {Box, Button, Paper, Typography} from '@mui/material';
-import {getOperatorsForSquadron} from '../../winch-ops/api/dataClient.ts';
-import type {OperatorRead} from '../../winch-ops/types';
-import {useWinchSession} from '../../winch-ops/hooks/useWinchSession.ts';
+import {getOperatorsForSquadron} from '../../../core/http/operatorsClient.ts';
+import type {OperatorRead} from '../../../core/types';
+import {useSessionIdentity} from '../../../app/providers/SessionIdentityProvider.tsx';
+import {postDayLogToDb} from '../api/dayOpsClient.ts';
+import {useTraineeOps} from '../../trainee-ops/hooks/useTraineeOps.tsx';
 import {TraineeSelect} from './TraineeSelect.tsx';
 import {elevatedPanel, errorBannerSx, glassPanelSx, glowingPrimaryButtonSx} from "../../../themes/styles.ts";
 import type {SxProps, Theme} from "@mui/material/styles";
 
 interface SignOnPanelProps {
-    session: ReturnType<typeof useWinchSession>;
+    
     onComplete: () => void;
     lastOperatorSn: string | null;
     lastTraineeSn: string | null;
 }
 
-export const SignOnPanel: React.FC<SignOnPanelProps> = ({ session, onComplete, lastOperatorSn, lastTraineeSn }) => {
-    const { state, recordSignOn, isLoading } = session;
+export const SignOnPanel: React.FC<SignOnPanelProps> = ({ onComplete, lastOperatorSn, lastTraineeSn }) => {
+    const {squadronId, winchId, operatorSn} = useSessionIdentity();
+    const {setTrainee} = useTraineeOps();
+    const [isLoading, setIsLoading] = useState(false);
     const [operators, setOperators] = useState<OperatorRead[]>([]);
     const [selectedTraineeSn, setSelectedTraineeSn] = useState<string>('');
     const [error, setError] = useState<string | null>(null);
     const [isFetching, setIsFetching] = useState(false);
 
     useEffect(() => {
-        if (!state.squadron) return;
+        if (!squadronId) return;
         setIsFetching(true);
         const controller = new AbortController();
-        getOperatorsForSquadron(state.squadron, controller.signal)
+        getOperatorsForSquadron(squadronId, controller.signal)
             .then(data => {
                 if (!controller.signal.aborted) {
                     setOperators(data);
@@ -38,16 +42,29 @@ export const SignOnPanel: React.FC<SignOnPanelProps> = ({ session, onComplete, l
                 }
             });
         return () => controller.abort();
-    }, [state.squadron]);
+    }, [squadronId]);
 
     const handleSignOn = async () => {
+        if (!winchId) return;
+        setIsLoading(true);
         setError(null);
         try {
-            await recordSignOn(selectedTraineeSn || null);
+            await postDayLogToDb({
+                squadron_id: squadronId,
+                winch_id: winchId,
+                operator_sn: operatorSn,
+                trainee: selectedTraineeSn || null,
+                type: "sign_on",
+                cable_check: null,
+                hours: null
+            }, winchId);
+            setTrainee(selectedTraineeSn || null);
             onComplete();
         } catch (e) {
             console.error("Sign on failed", e);
             setError("Failed to record sign-on.");
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -69,7 +86,7 @@ export const SignOnPanel: React.FC<SignOnPanelProps> = ({ session, onComplete, l
                 </Typography>
             )}
             <Typography variant="h2">
-                Winch {state.winchId}
+                Winch {winchId}
             </Typography>
 
             <Typography variant="subtitle2" sx={{mb: 1}}>
@@ -96,7 +113,7 @@ export const SignOnPanel: React.FC<SignOnPanelProps> = ({ session, onComplete, l
                     value={selectedTraineeSn}
                     onChange={setSelectedTraineeSn}
                     operators={operators}
-                    operatorSn={state.operatorSn}
+                    operatorSn={operatorSn}
                     isFetching={isFetching}
                 />
             </Paper>

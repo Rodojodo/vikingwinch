@@ -1,8 +1,61 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FinishDayPanel } from './FinishDayPanel.tsx';
-import { getOperatorsForSquadron } from '../../winch-ops/api/dataClient.ts';
+import { getOperatorsForSquadron } from "../../../core/http/operatorsClient.ts";
+import { postDayLogToDb } from '../../day-ops/api/dayOpsClient.ts';
+vi.mock('../../day-ops/api/dayOpsClient.ts', () => ({ postDayLogToDb: vi.fn() }));
 import { exportLog } from '../../winch-ops/utils/exportLog.ts';
+
+
+vi.mock('../../../app/providers/SessionIdentityProvider.tsx', () => ({
+    useSessionIdentity: vi.fn(() => ({ squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1' }))
+}));
+vi.mock('../../app/providers/SessionIdentityProvider.tsx', () => ({
+    useSessionIdentity: vi.fn(() => ({ squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1' }))
+}));
+vi.mock('../app/providers/SessionIdentityProvider.tsx', () => ({
+    useSessionIdentity: vi.fn(() => ({ squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1' }))
+}));
+
+vi.mock('../../trainee-ops/hooks/useTraineeOps.tsx', () => ({
+    useTraineeOps: vi.fn(() => ({ traineeSn: null, setTrainee: vi.fn(), changeTrainee: vi.fn() }))
+}));
+vi.mock('../trainee-ops/hooks/useTraineeOps.tsx', () => ({
+    useTraineeOps: vi.fn(() => ({ traineeSn: null, setTrainee: vi.fn(), changeTrainee: vi.fn() }))
+}));
+vi.mock('../features/trainee-ops/hooks/useTraineeOps.tsx', () => ({
+    useTraineeOps: vi.fn(() => ({ traineeSn: null, setTrainee: vi.fn(), changeTrainee: vi.fn() }))
+}));
+
+vi.mock('../../launch-ops/hooks/useLaunchOps.tsx', () => ({
+    useLaunchOps: vi.fn(() => ({ 
+        derived: { leftLastRecord: {}, rightLastRecord: {} }, 
+        leftHistory: [], 
+        rightHistory: [], 
+        executeLaunch: vi.fn().mockResolvedValue(undefined), 
+        undoLaunch: vi.fn().mockResolvedValue(undefined), 
+        addRemarkToState: vi.fn() 
+    }))
+}));
+vi.mock('../launch-ops/hooks/useLaunchOps.tsx', () => ({
+    useLaunchOps: vi.fn(() => ({ derived: { leftLastRecord: {}, rightLastRecord: {} }, leftHistory: [], rightHistory: [], executeLaunch: vi.fn().mockResolvedValue(undefined), undoLaunch: vi.fn().mockResolvedValue(undefined), addRemarkToState: vi.fn() }))
+}));
+vi.mock('../features/launch-ops/hooks/useLaunchOps.tsx', () => ({
+    useLaunchOps: vi.fn(() => ({ derived: { leftLastRecord: {}, rightLastRecord: {} }, leftHistory: [], rightHistory: [], executeLaunch: vi.fn().mockResolvedValue(undefined), undoLaunch: vi.fn().mockResolvedValue(undefined), addRemarkToState: vi.fn() }))
+}));
+
+vi.mock('../../day-ops/hooks/useDayOps.tsx', () => ({
+    useDayOps: vi.fn(() => ({ dayFinished: false, finishDay: vi.fn() }))
+}));
+vi.mock('../day-ops/hooks/useDayOps.tsx', () => ({
+    useDayOps: vi.fn(() => ({ dayFinished: false, finishDay: vi.fn() }))
+}));
+vi.mock('../features/day-ops/hooks/useDayOps.tsx', () => ({
+    useDayOps: vi.fn(() => ({ dayFinished: false, finishDay: vi.fn() }))
+}));
+
+
+vi.mock("../../../core/http/operatorsClient.ts", () => ({ getOperatorsForSquadron: vi.fn() }));
 
 vi.mock('../../winch-ops/api/dataClient.ts', () => ({
     getOperatorsForSquadron: vi.fn(),
@@ -22,7 +75,7 @@ describe('FinishDayPanel', () => {
     });
 
     it('renders Finish Day button and toggles panel', () => {
-        render(<FinishDayPanel finishDay={mockFinishDay} isLoading={false} state={mockState} />);
+        render(<FinishDayPanel isLoading={false} />);
         
         expect(screen.queryByText('Hours Stop')).not.toBeVisible();
         
@@ -33,7 +86,7 @@ describe('FinishDayPanel', () => {
     });
 
     it('submits correctly when fields are valid', async () => {
-        render(<FinishDayPanel finishDay={mockFinishDay} isLoading={false} state={mockState} />);
+        render(<FinishDayPanel isLoading={false} />);
         
         fireEvent.click(screen.getByRole('button', { name: 'Finish Day' }));
         
@@ -52,14 +105,14 @@ describe('FinishDayPanel', () => {
         fireEvent.click(submitBtns[1]); // The second one is inside the panel
 
         await waitFor(() => {
-            expect(mockFinishDay).toHaveBeenCalledWith('OP1', 12.5);
+            expect(postDayLogToDb).toHaveBeenCalledWith(expect.objectContaining({ cable_check: 'OP1', hours: 12.5 }), 42);
             expect(screen.queryByText('Hours Stop')).not.toBeVisible();
         });
     });
 
     it('handles finishDay error', async () => {
-        mockFinishDay.mockRejectedValueOnce(new Error('Backend error'));
-        render(<FinishDayPanel finishDay={mockFinishDay} isLoading={false} state={mockState} />);
+        vi.mocked(postDayLogToDb).mockRejectedValueOnce(new Error('Backend error'));
+        render(<FinishDayPanel isLoading={false} />);
         
         fireEvent.click(screen.getByRole('button', { name: 'Finish Day' }));
         
@@ -70,7 +123,7 @@ describe('FinishDayPanel', () => {
     });
 
     it('calls exportLog when Download Log is clicked', async () => {
-        render(<FinishDayPanel finishDay={mockFinishDay} isLoading={false} state={mockState} />);
+        render(<FinishDayPanel isLoading={false} />);
         
         fireEvent.click(screen.getByRole('button', { name: 'Finish Day' }));
         
@@ -79,13 +132,13 @@ describe('FinishDayPanel', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Download Log' }));
 
         await waitFor(() => {
-            expect(exportLog).toHaveBeenCalledWith(mockState);
+            expect(exportLog).toHaveBeenCalledWith(expect.objectContaining({ squadron: 'sqn1', winchId: 42 }));
         });
     });
 
     it('handles operator fetch error', async () => {
         vi.mocked(getOperatorsForSquadron).mockRejectedValueOnce(new Error('Failed to load'));
-        render(<FinishDayPanel finishDay={mockFinishDay} isLoading={false} state={mockState} />);
+        render(<FinishDayPanel isLoading={false} />);
         
         fireEvent.click(screen.getByRole('button', { name: 'Finish Day' }));
         
@@ -94,7 +147,7 @@ describe('FinishDayPanel', () => {
 
     it('handles exportLog error', async () => {
         vi.mocked(exportLog).mockRejectedValueOnce(new Error('Export failed'));
-        render(<FinishDayPanel finishDay={mockFinishDay} isLoading={false} state={mockState} />);
+        render(<FinishDayPanel isLoading={false} />);
         
         fireEvent.click(screen.getByRole('button', { name: 'Finish Day' }));
         fireEvent.click(screen.getByRole('button', { name: 'Download Log' }));
@@ -103,8 +156,8 @@ describe('FinishDayPanel', () => {
     });
 
     it('handles finishDay error with non-Error object', async () => {
-        mockFinishDay.mockRejectedValueOnce('String error');
-        render(<FinishDayPanel finishDay={mockFinishDay} isLoading={false} state={mockState} />);
+        vi.mocked(postDayLogToDb).mockRejectedValueOnce('String error');
+        render(<FinishDayPanel isLoading={false} />);
         fireEvent.click(screen.getByRole('button', { name: 'Finish Day' }));
         const submitBtns = screen.getAllByRole('button', { name: 'Finish Day' });
         fireEvent.click(submitBtns[1]);
@@ -113,14 +166,14 @@ describe('FinishDayPanel', () => {
 
     it('handles exportLog error with non-Error object', async () => {
         vi.mocked(exportLog).mockRejectedValueOnce({ msg: 'Export failed' });
-        render(<FinishDayPanel finishDay={mockFinishDay} isLoading={false} state={mockState} />);
+        render(<FinishDayPanel isLoading={false} />);
         fireEvent.click(screen.getByRole('button', { name: 'Finish Day' }));
         fireEvent.click(screen.getByRole('button', { name: 'Download Log' }));
         expect(await screen.findByText('Failed to download log')).toBeInTheDocument();
     });
 
     it('shows Submitting... when isLoading is true', () => {
-        render(<FinishDayPanel finishDay={mockFinishDay} isLoading={true} state={mockState} />);
+        render(<FinishDayPanel isLoading={true} />);
         fireEvent.click(screen.getByRole('button', { name: 'Finish Day' }));
         expect(screen.getByRole('button', { name: 'Submitting...' })).toBeInTheDocument();
     });
@@ -130,7 +183,7 @@ describe('FinishDayPanel', () => {
         const promise = new Promise((resolve) => { resolvePromise = resolve; });
         vi.mocked(getOperatorsForSquadron).mockReturnValue(promise as any);
         
-        const { unmount } = render(<FinishDayPanel finishDay={mockFinishDay} isLoading={false} state={mockState} />);
+        const { unmount } = render(<FinishDayPanel isLoading={false} />);
         fireEvent.click(screen.getByRole('button', { name: 'Finish Day' }));
         
         unmount(); // Unmount before resolve
@@ -145,7 +198,7 @@ describe('FinishDayPanel', () => {
         const promise = new Promise((_, reject) => { rejectPromise = reject; });
         vi.mocked(getOperatorsForSquadron).mockReturnValue(promise as any);
         
-        const { unmount } = render(<FinishDayPanel finishDay={mockFinishDay} isLoading={false} state={mockState} />);
+        const { unmount } = render(<FinishDayPanel isLoading={false} />);
         fireEvent.click(screen.getByRole('button', { name: 'Finish Day' }));
         
         unmount(); // Unmount before reject

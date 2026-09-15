@@ -3,7 +3,31 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { WinchOpsPage } from './WinchOpsPage.tsx';
 import { useMsal } from '@azure/msal-react';
-import { getWinchesForSquadron } from '../features/winch-ops/api/dataClient.ts';
+import { getWinchesForSquadron } from "../features/winch-ops/api/winchClient.ts";
+
+
+vi.mock('../app/providers/SessionIdentityProvider.tsx', () => ({
+    useSessionIdentity: vi.fn(() => ({ squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1' }))
+}));
+vi.mock('../features/trainee-ops/hooks/useTraineeOps.tsx', () => ({
+    useTraineeOps: vi.fn(() => ({ traineeSn: null, setTrainee: vi.fn(), changeTrainee: vi.fn() }))
+}));
+vi.mock('../features/launch-ops/hooks/useLaunchOps.tsx', () => ({
+    useLaunchOps: vi.fn(() => ({ 
+        derived: { leftLastRecord: {}, rightLastRecord: {} }, 
+        leftHistory: [], 
+        rightHistory: [], 
+        executeLaunch: vi.fn().mockResolvedValue(undefined), 
+        undoLaunch: vi.fn().mockResolvedValue(undefined), 
+        addRemarkToState: vi.fn() 
+    }))
+}));
+vi.mock('../features/day-ops/hooks/useDayOps.tsx', () => ({
+    useDayOps: vi.fn(() => ({ dayFinished: false, finishDay: vi.fn() }))
+}));
+
+
+vi.mock("../features/winch-ops/api/winchClient.ts", () => ({ getWinchesForSquadron: vi.fn() }));
 
 vi.mock('@azure/msal-react', () => ({
     useMsal: vi.fn(),

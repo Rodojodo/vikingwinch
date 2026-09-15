@@ -1,26 +1,38 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RemarksPanel } from './RemarksPanel.tsx';
-import { useWinchSession } from '../../winch-ops/hooks/useWinchSession.ts';
 
-vi.mock('../../winch-ops/hooks/useWinchSession.ts', () => ({
-    useWinchSession: vi.fn(),
+
+
+vi.mock('../../../app/providers/SessionIdentityProvider.tsx', () => ({
+    useSessionIdentity: vi.fn(() => ({ squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1' }))
 }));
+vi.mock('../..//trainee-ops/hooks/useTraineeOps.tsx', () => ({
+    useTraineeOps: vi.fn(() => ({ traineeSn: null, setTrainee: vi.fn(), changeTrainee: vi.fn() }))
+}));
+vi.mock('../..//launch-ops/hooks/useLaunchOps.tsx', () => ({
+    useLaunchOps: vi.fn(() => ({ 
+        derived: { leftLastRecord: {}, rightLastRecord: {} }, 
+        leftHistory: [], 
+        rightHistory: [], 
+        executeLaunch: vi.fn().mockResolvedValue(undefined), 
+        undoLaunch: vi.fn().mockResolvedValue(undefined), 
+        addRemarkToState: vi.fn() 
+    }))
+}));
+vi.mock('../..//day-ops/hooks/useDayOps.tsx', () => ({
+    useDayOps: vi.fn(() => ({ dayFinished: false, finishDay: vi.fn() }))
+}));
+
+
+
 
 describe('RemarksPanel', () => {
     const mockAddRemark = vi.fn();
 
     beforeEach(() => {
         vi.clearAllMocks();
-        vi.mocked(useWinchSession).mockReturnValue({
-            addRemark: mockAddRemark,
-            isLoading: false,
-            error: null,
-            derived: {
-                leftLaunches: 1,
-                rightLaunches: 1,
-            },
-        } as any);
+        
     });
 
     it('renders RemarksPanel correctly', () => {
@@ -63,12 +75,7 @@ describe('RemarksPanel', () => {
     });
 
     it('disables submit button and shows text when no launches', () => {
-        vi.mocked(useWinchSession).mockReturnValue({
-            addRemark: mockAddRemark,
-            isLoading: false,
-            error: null,
-            derived: { leftLastRecord: null, rightLastRecord: null },
-        } as any);
+        
 
         render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: null, rightLastRecord: null } as any} />);
         expect(screen.getByText('No launches yet')).toBeInTheDocument();

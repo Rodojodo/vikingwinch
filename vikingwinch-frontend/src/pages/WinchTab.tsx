@@ -1,14 +1,22 @@
+import {SessionIdentityProvider, useSessionIdentity} from "../app/providers/SessionIdentityProvider.tsx";
+import {LaunchOpsProvider, useLaunchOps} from "../features/launch-ops/hooks/useLaunchOps.tsx";
+import {TraineeOpsProvider, useTraineeOps} from "../features/trainee-ops/hooks/useTraineeOps.tsx";
+import {RemarksRepairsPanel} from "../features/remarks-repairs/components/RemarksRepairsPanel.tsx";
+import {FinishDayPanel} from "../features/day-ops/components/FinishDayPanel.tsx";
 import {useEffect, useState} from 'react';
 import {Box} from '@mui/material';
 import {LaunchPanel} from '../features/launch-ops/components/LaunchPanel';
 import {TraineeWing} from '../features/trainee-ops/components/TraineeWing.tsx'
 import {SkylogValues} from '../features/day-ops/components/SkylogValues';
-import {useWinchSession} from '../features/winch-ops/hooks/useWinchSession';
+
 import {WinchSelectPanel} from '../features/winch-ops/components/WinchSelectPanel';
 import {SignOnPanel} from '../features/day-ops/components/SignOnPanel.tsx';
 import {DailyInspectionPanel} from '../features/winch-ops/components/DailyInspectionPanel';
-import {getDayLog, getLaunches, getOperatorsForSquadron} from '../features/winch-ops/api/dataClient';
-import type {OperatorRead, TabView} from '../features/winch-ops/types'
+import {getDayLog} from '../features/day-ops/api/dayOpsClient.ts';
+import {getLaunches} from '../features/launch-ops/api/launchClient.ts';
+import {getOperatorsForSquadron} from '../core/http/operatorsClient.ts';
+import type {TabView} from '../features/winch-ops/types';
+import type {OperatorRead} from '../core/types';
 import {appBackgroundSx} from "../themes/styles.ts";
 
 
@@ -21,7 +29,10 @@ interface WinchTabProps {
     onWinchSelect: (tabId: string, winchId: number) => void;
 }
 
-export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, openWinchIds, onWinchSelect }: WinchTabProps) => {
+const WinchTabContent = ({ tabId, openWinchIds, onWinchSelect }: Omit<WinchTabProps, "squadronId" | "operatorSn" | "winchId">) => {
+    const {squadronId, winchId, operatorSn} = useSessionIdentity();
+    const {hydrateHistory, derived, addRemarkToState} = useLaunchOps();
+    const {traineeSn, activeLauncherSn, setActiveLauncher, setTrainee} = useTraineeOps();
     const [view, setView] = useState<TabView>('loading');
     const [lastOperatorSn, setLastOperatorSn] = useState<string | null>(null);
     const [lastTraineeSn, setLastTraineeSn] = useState<string | null>(null);
@@ -29,13 +40,12 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, openWinchIds,
     const [operators, setOperators] = useState<OperatorRead[]>([]);
     const [isFetchingOperators, setIsFetchingOperators] = useState(false);
 
-    const session = useWinchSession(squadronId, operatorSn, winchId);
 
     useEffect(() => {
-        if (session.state.winchId && session.state.winchId !== winchId) {
-            onWinchSelect(tabId, session.state.winchId);
+        if (winchId && winchId !== winchId) {
+            onWinchSelect(tabId, winchId);
         }
-    }, [session.state.winchId, winchId, tabId, onWinchSelect]);
+    }, [winchId, winchId, tabId, onWinchSelect]);
 
     useEffect(() => {
         if (!squadronId) return;
@@ -53,7 +63,7 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, openWinchIds,
     }, [squadronId]);
 
     useEffect(() => {
-        if (!session.state.winchId) {
+        if (!winchId) {
             setView('select_winch');
             return;
         }
@@ -68,12 +78,12 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, openWinchIds,
                 const todayStr = localDate.toISOString().split('T')[0];
 
                 const [logs, launches] = await Promise.all([
-                    getDayLog(session.state.winchId!, todayStr),
-                    getLaunches(session.state.winchId!, todayStr)
+                    getDayLog(winchId!, todayStr),
+                    getLaunches(winchId!, todayStr)
                 ]);
 
                 const traineeSn = logs.findLast(l => l.type === 'sign_on')?.trainee ?? null;
-                session.hydrateHistory(launches, traineeSn);
+                hydrateHistory(launches); setTrainee(traineeSn);
                 const signOnLogs = logs.filter(l => l.type === 'sign_on');
                 const diLogs = logs.filter(l => l.type === 'di');
 
@@ -103,11 +113,20 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, openWinchIds,
         };
 
         fetchDayLog();
-    }, [session.state.winchId, operatorSn]);
+    }, [winchId, operatorSn]);
 
-    const operatorName = operators.find(o => o.service_no === session.state.operatorSn)?.name ?? 'Instructor';
-    const traineeName = session.state.traineeSn
-        ? operators.find(o => o.service_no === session.state.traineeSn)?.name
+    const addRemark = async (remark: string | null, drum: "left" | "right") => {
+        if (!winchId) return;
+        const record = drum === "left" ? derived.leftLastRecord : derived.rightLastRecord;
+        if (!record) throw new Error("No launch record found to remark");
+        const newRemarkStr = record.remark ? `${record.remark} | ${remark}` : remark;
+        await import("../features/remarks-repairs/api/remarksClient").then(m => m.postRemarkToDb({launch_id: record.id, winch_id: winchId, remark: newRemarkStr}));
+        addRemarkToState(drum, record.id, newRemarkStr);
+    };
+
+    const operatorName = operators.find(o => o.service_no === operatorSn)?.name ?? 'Instructor';
+    const traineeName = traineeSn
+        ? operators.find(o => o.service_no === traineeSn)?.name
         : undefined;
 
     const renderView = () => {
@@ -117,22 +136,22 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, openWinchIds,
             case 'select_winch':
                 return (
                     <WinchSelectPanel
-                        squadronId={session.state.squadron}
-                        onSelectWinch={session.setWinchId}
+                        squadronId={squadronId}
+                        onSelectWinch={(newWinchId) => onWinchSelect(tabId, newWinchId)}
                         openWinchIds={openWinchIds}
                     />
                 );
             case 'inspection':
                 return (
                     <DailyInspectionPanel
-                        session={session}
+                        
                         onComplete={() => setView('sign_on')}
                     />
                 );
             case 'sign_on':
                 return (
                     <SignOnPanel
-                        session={session}
+                        
                         lastOperatorSn={lastOperatorSn}
                         lastTraineeSn={lastTraineeSn}
                         onComplete={() => setView('launch')}
@@ -142,23 +161,24 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, openWinchIds,
                 return (
                     <Box sx={{position: 'relative', width: '100%', maxWidth: 540}}>
                         <LaunchPanel
-                            onViewSkylogValues={() => setView('skylog')}
-                            session={session}
-                        />
+                        >
+                            <RemarksRepairsPanel addRemark={addRemark} squadronId={squadronId} isLoading={false} derived={derived} />
+                            <FinishDayPanel isLoading={false} />
+                        </LaunchPanel>
                         <TraineeWing
                             open={wingOpen}
                             onToggle={() => setWingOpen(o => !o)}
-                            isLoading={session.isLoading}
-                            squadron={session.state.squadron}
-                            operatorSn={session.state.operatorSn}
+                            isLoading={false}
+                            squadron={squadronId}
+                            operatorSn={operatorSn}
                             operatorName={operatorName}
-                            traineeSn={session.state.traineeSn}
+                            traineeSn={traineeSn}
                             traineeName={traineeName}
-                            ActiveDriverSn={session.state.activeLauncherSn}
+                            ActiveDriverSn={activeLauncherSn || operatorSn}
                             operators={operators}
                             isFetchingOperators={isFetchingOperators}
-                            setActiveDriver={session.setActiveLauncher}
-                            recordSignOn={session.recordSignOn}
+                            setActiveDriver={setActiveLauncher}
+                            
                         />
                     </Box>
                 );
@@ -166,10 +186,10 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, openWinchIds,
                 return (
                     <SkylogValues
                         onBack={() => setView('launch')}
-                        winchId={session.state.winchId}
-                        squadron={session.state.squadron}
-                        leftLaunches={session.derived.leftLaunches}
-                        rightLaunches={session.derived.rightLaunches}
+                        winchId={winchId}
+                        squadron={squadronId}
+                        leftLaunches={derived.leftLaunches}
+                        rightLaunches={derived.rightLaunches}
                     />
                 );
             default:
@@ -183,3 +203,16 @@ export const WinchTab = ({ tabId, squadronId, operatorSn, winchId, openWinchIds,
         </Box>
     );
 };
+
+export const WinchTab = (props: WinchTabProps) => {
+    return (
+        <SessionIdentityProvider squadronId={props.squadronId} operatorSn={props.operatorSn} winchId={props.winchId}>
+            <TraineeOpsProvider>
+                <LaunchOpsProvider>
+                    <WinchTabContent tabId={props.tabId} openWinchIds={props.openWinchIds} onWinchSelect={props.onWinchSelect} />
+                </LaunchOpsProvider>
+            </TraineeOpsProvider>
+        </SessionIdentityProvider>
+    );
+};
+

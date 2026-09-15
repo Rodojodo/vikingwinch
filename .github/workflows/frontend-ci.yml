@@ -35,4 +35,6 @@ jobs:
 
       - name: Run Vitest
         if: steps.filter.outputs.frontend == 'true'
-        run: npx vitest run --coverage
+        run: npx vitest run --coverage      - name: Run oxlint
+        if: steps.filter.outputs.frontend == 'true'
+        run: npx oxlint -c .oxlintrc.json

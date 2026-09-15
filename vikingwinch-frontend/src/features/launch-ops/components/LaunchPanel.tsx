@@ -1,12 +1,13 @@
-import {Box, ButtonBase, Divider, Stack, Typography} from '@mui/material';
+import {Box, Stack, Typography} from '@mui/material';
 import {useEffect, useRef, useState} from 'react';
-import {RemarksRepairsPanel} from '../../remarks-repairs/components/RemarksRepairsPanel.tsx';
-import {FinishDayPanel} from '../../day-ops/components/FinishDayPanel.tsx';
+
+
 import {WinchDetailsSticker} from './WinchDetailsSticker.tsx';
-import {useWinchSession} from '../../winch-ops/hooks/useWinchSession.ts';
+import {useLaunchOps} from '../hooks/useLaunchOps.tsx';
+import {useSessionIdentity} from '../../../app/providers/SessionIdentityProvider.tsx';
 import './LaunchPanel.css';
 import {DrumControl} from "./DrumControl.tsx";
-import {getTabButtonStyles, glassPanelSx} from "../../../themes/styles.ts";
+import {glassPanelSx} from "../../../themes/styles.ts";
 import type {SxProps, Theme} from "@mui/material/styles";
 
 const ANIMATIONS = [
@@ -27,12 +28,15 @@ const ANIMATIONS = [
 const POST_LAUNCH_COOLDOWN_THRESHOLD_MS = 2.5 * 60 * 1000; // 2.5 minutes
 
 interface LaunchPanelProps {
-    onViewSkylogValues?: () => void;
-    session: ReturnType<typeof useWinchSession>;
+    children?: React.ReactNode;
+    
 }
 
-export const LaunchPanel = ({ onViewSkylogValues, session }: LaunchPanelProps) => {
-    const {derived, isLoading, error, executeLaunch, undoLaunch, addRemark, state} = session;
+export const LaunchPanel = ({children }: LaunchPanelProps) => {
+    const {derived, executeLaunch, undoLaunch} = useLaunchOps();
+    const {squadronId, winchId} = useSessionIdentity();
+    const isLoading = false;
+    const error = null;
     
     const { leftTotal, rightTotal, leftLaunches, rightLaunches, leftLast, rightLast } = derived;
 
@@ -118,8 +122,8 @@ export const LaunchPanel = ({ onViewSkylogValues, session }: LaunchPanelProps) =
                 
                 <WinchDetailsSticker 
                     isRecentLaunch={isRecentLaunch} 
-                    squadron={state.squadron}
-                    winchId={state.winchId}
+                    squadron={squadronId}
+                    winchId={winchId}
                 />
             </Box>
 
@@ -158,17 +162,7 @@ export const LaunchPanel = ({ onViewSkylogValues, session }: LaunchPanelProps) =
             </Stack>
 
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Divider sx={{borderColor: 'border.main', my: 0.5}}/>
-                <RemarksRepairsPanel addRemark={addRemark} isLoading={isLoading} derived={derived} state={state} />
-                <Divider sx={{borderColor: 'border.main', my: 0.5}}/>
-
-                <ButtonBase
-                    onClick={onViewSkylogValues}
-                    sx={getTabButtonStyles(false)}
-                >
-                        Show skylog values
-                </ButtonBase>
-                <FinishDayPanel finishDay={session.finishDay} isLoading={isLoading} state={state} />
+                {children}
             </Box>
         </Box>
     );

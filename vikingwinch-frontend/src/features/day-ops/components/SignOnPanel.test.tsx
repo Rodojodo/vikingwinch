@@ -2,7 +2,31 @@ import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SignOnPanel } from './SignOnPanel.tsx';
-import { getOperatorsForSquadron } from '../../winch-ops/api/dataClient.ts';
+import { getOperatorsForSquadron } from "../../../core/http/operatorsClient.ts";
+
+
+vi.mock('../../../app/providers/SessionIdentityProvider.tsx', () => ({
+    useSessionIdentity: vi.fn(() => ({ squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1' }))
+}));
+vi.mock('../..//trainee-ops/hooks/useTraineeOps.tsx', () => ({
+    useTraineeOps: vi.fn(() => ({ traineeSn: null, setTrainee: vi.fn(), changeTrainee: vi.fn() }))
+}));
+vi.mock('../..//launch-ops/hooks/useLaunchOps.tsx', () => ({
+    useLaunchOps: vi.fn(() => ({ 
+        derived: { leftLastRecord: {}, rightLastRecord: {} }, 
+        leftHistory: [], 
+        rightHistory: [], 
+        executeLaunch: vi.fn().mockResolvedValue(undefined), 
+        undoLaunch: vi.fn().mockResolvedValue(undefined), 
+        addRemarkToState: vi.fn() 
+    }))
+}));
+vi.mock('../..//day-ops/hooks/useDayOps.tsx', () => ({
+    useDayOps: vi.fn(() => ({ dayFinished: false, finishDay: vi.fn() }))
+}));
+
+
+vi.mock("../../../core/http/operatorsClient.ts", () => ({ getOperatorsForSquadron: vi.fn() }));
 
 vi.mock('../../winch-ops/api/dataClient.ts', () => ({
     getOperatorsForSquadron: vi.fn(),
@@ -32,7 +56,7 @@ describe('SignOnPanel', () => {
     });
 
     it('renders winch ID, operators, and already inspected message', async () => {
-        render(<SignOnPanel session={mockSession as any} onComplete={mockOnComplete} lastOperatorSn="OP1" lastTraineeSn="OP2" />);
+        render(<SignOnPanel lastOperatorSn="OP1" lastTraineeSn="OP2" />);
 
         // Wait for fetching to finish
         await waitFor(() => {
@@ -46,7 +70,7 @@ describe('SignOnPanel', () => {
 
     it('allows selecting a trainee but it does not change the current operator text', async () => {
         const user = userEvent.setup();
-        render(<SignOnPanel session={mockSession as any} onComplete={mockOnComplete} lastOperatorSn="OP1" lastTraineeSn={null} />);
+        render(<SignOnPanel lastOperatorSn="OP1" lastTraineeSn={null} />);
 
         await waitFor(() => {
             expect(screen.getByRole('combobox')).toBeInTheDocument();
@@ -65,7 +89,7 @@ describe('SignOnPanel', () => {
 
     it('submits sign on and calls onComplete when clicking Walkaround complete', async () => {
         const user = userEvent.setup();
-        render(<SignOnPanel session={mockSession as any} onComplete={mockOnComplete} lastOperatorSn="OP1" lastTraineeSn={null} />);
+        render(<SignOnPanel lastOperatorSn="OP1" lastTraineeSn={null} />);
 
         await waitFor(() => {
             expect(screen.getByRole('combobox')).toBeInTheDocument();
@@ -86,7 +110,7 @@ describe('SignOnPanel', () => {
         mockRecordSignOn.mockRejectedValue(new Error('Network error'));
         
         const user = userEvent.setup();
-        render(<SignOnPanel session={mockSession as any} onComplete={mockOnComplete} lastOperatorSn="OP1" lastTraineeSn={null} />);
+        render(<SignOnPanel lastOperatorSn="OP1" lastTraineeSn={null} />);
 
         await waitFor(() => {
             expect(screen.getByRole('combobox')).toBeInTheDocument();
@@ -103,7 +127,7 @@ describe('SignOnPanel', () => {
     });
 
     it('disables the submit button when isLoading is true', () => {
-        render(<SignOnPanel session={{ ...mockSession, isLoading: true } as any} onComplete={mockOnComplete} lastOperatorSn="OP1" lastTraineeSn={null} />);
+        render(<SignOnPanel as any} lastOperatorSn="OP1" lastTraineeSn={null} />);
         
         const btn = screen.getByRole('button', { name: /Walkaround complete/i });
         expect(btn).toBeDisabled();
@@ -113,7 +137,7 @@ describe('SignOnPanel', () => {
         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         vi.mocked(getOperatorsForSquadron).mockRejectedValueOnce(new Error('Fetch failed'));
 
-        render(<SignOnPanel session={mockSession as any} onComplete={mockOnComplete} lastOperatorSn="OP1" lastTraineeSn={null} />);
+        render(<SignOnPanel lastOperatorSn="OP1" lastTraineeSn={null} />);
 
         await waitFor(() => {
             expect(consoleSpy).toHaveBeenCalledWith(expect.any(Error));
