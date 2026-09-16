@@ -10,3 +10,4 @@ __pycache__/
 /_bmad/*
 /_bmad-output/*
 /node_modules/*
+.coverage

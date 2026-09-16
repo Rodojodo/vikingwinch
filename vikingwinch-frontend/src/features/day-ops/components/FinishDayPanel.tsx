@@ -1,17 +1,19 @@
 import React, {useEffect, useState} from 'react';
 import {Alert, Box, Button, FormControl, MenuItem, Select, Stack, TextField, Typography} from '@mui/material';
 import {darkMenuStyles, darkSelectStyles, darkTextFieldStyles, getTabButtonStyles} from '../../../themes/styles.ts';
-import {getOperatorsForSquadron} from '../../winch-ops/api/dataClient.ts';
-import type {OperatorRead, WinchLogState} from '../../winch-ops/types';
-import {exportLog} from '../../winch-ops/utils/exportLog.ts';
+import {getOperatorsForSquadron} from '../../../core/http/operatorsClient.ts';
+import type {OperatorRead} from '../../../core/types';
+import {useSessionIdentity} from '../../../app/hooks/useSessionIdentity.ts';
+import {useDayOps} from '../hooks/useDayOps.ts';
 
 type FinishDayPanelProps = {
-    finishDay: (cableCheck: string | null, hours: number | null) => Promise<any>;
     isLoading: boolean;
-    state: WinchLogState;
+    onExportLog?: () => Promise<void>;
 };
 
-export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ finishDay, isLoading, state }) => {
+export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({isLoading, onExportLog}) => {
+    const {squadronId, winchId} = useSessionIdentity();
+    const {finishDay} = useDayOps();
     const [isOpen, setIsOpen] = useState(false);
     const [hoursStop, setHoursStop] = useState<string>('');
     const [cableCheckBy, setCableCheckBy] = useState<string>('');
@@ -19,14 +21,21 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ finishDay, isLoa
     const [localError, setLocalError] = useState<string | null>(null);
     const [isFetchingOperators, setIsFetchingOperators] = useState(false);
 
+    const [prevFetchKey, setPrevFetchKey] = useState({ squadronId, isOpen });
+    if (squadronId !== prevFetchKey.squadronId || isOpen !== prevFetchKey.isOpen) {
+        setPrevFetchKey({ squadronId, isOpen });
+        if (squadronId && isOpen) {
+            setIsFetchingOperators(true);
+            setLocalError(null);
+        }
+    }
+
     useEffect(() => {
-        if (!state.squadron || !isOpen) return;
+        if (!squadronId || !isOpen) return;
 
         const controller = new AbortController();
-        setIsFetchingOperators(true);
-        setLocalError(null);
 
-        getOperatorsForSquadron(state.squadron, controller.signal)
+        getOperatorsForSquadron(squadronId, controller.signal)
             .then((data) => {
                 if (!controller.signal.aborted) {
                     setOperators(data);
@@ -44,17 +53,16 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ finishDay, isLoa
             });
 
         return () => controller.abort();
-    }, [state.squadron, isOpen]);
+    }, [squadronId, isOpen]);
 
     const handleToggle = () => {
         setIsOpen((prev) => !prev);
     };
 
     const handleSubmit = async () => {
+        if (!winchId) return;
         setLocalError(null);
-
         const hours = hoursStop ? parseFloat(hoursStop) : null;
-
         try {
             await finishDay(cableCheckBy || null, hours);
             setHoursStop('');
@@ -66,8 +74,9 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ finishDay, isLoa
     };
 
     const handleDownloadLog = async () => {
+        if (!onExportLog) return;
         try {
-            await exportLog(state);
+            await onExportLog();
         } catch (err) {
             setLocalError(err instanceof Error ? err.message : 'Failed to download log');
         }

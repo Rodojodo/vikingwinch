@@ -1,14 +1,14 @@
 import React, {useState} from 'react';
 import {Alert, Box, Button, TextField, Typography} from '@mui/material';
 import {DrumToggleGroup} from './DrumToggleGroup';
-import type {DerivedWinchState, DrumPosition} from '../../winch-ops/types';
-import {darkTextFieldStyles} from "../../../themes/styles.ts";
-
+import type {DrumPosition} from '../../../core/types';
+import type {DrumLaunchStatus} from '../types';
+import {darkTextFieldStyles} from '../../../themes/styles.ts';
 
 type RemarksPanelProps = {
-  addRemark: (remark: string | null, drum: DrumPosition) => Promise<void>;
-  isLoading: boolean;
-  derived: DerivedWinchState;
+    addRemark: (remark: string | null, drum: DrumPosition) => Promise<void>;
+    isLoading: boolean;
+    derived: DrumLaunchStatus;
 };
 
 export const RemarksPanel: React.FC<RemarksPanelProps> = ({ addRemark, isLoading, derived }) => {
@@ -22,12 +22,12 @@ export const RemarksPanel: React.FC<RemarksPanelProps> = ({ addRemark, isLoading
 
     const handleSubmit = async () => {
         if (!remark.trim() || !hasLaunches) return;
-        
+
         if (remark.toLowerCase().startsWith('repair')) {
             setLocalError('Repairs should be logged in the Repairs tab');
             return;
         }
-        
+
         setLocalError(null);
         try {
             await addRemark(remark, drum);

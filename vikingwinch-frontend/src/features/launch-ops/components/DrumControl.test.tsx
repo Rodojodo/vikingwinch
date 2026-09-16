@@ -53,21 +53,27 @@ describe('DrumControl', () => {
     it('triggers onLaunch when main button is clicked', () => {
         render(<DrumControl {...defaultProps} />);
         const launchBtn = screen.getByText('Left Drum').closest('button');
-        fireEvent.click(launchBtn!);
+        expect(launchBtn).not.toBeNull();
+        if (launchBtn) {
+            fireEvent.click(launchBtn);
+        }
         expect(mockOnLaunch).toHaveBeenCalledTimes(1);
     });
 
     it('triggers onBurn when burn button is clicked', () => {
         render(<DrumControl {...defaultProps} />);
         const burnBtn = screen.getByRole('button', { name: /Burn Left/i });
-        fireEvent.click(burnBtn!);
+        fireEvent.click(burnBtn);
         expect(mockOnBurn).toHaveBeenCalledTimes(1);
     });
 
     it('triggers onUndo when undo button is clicked', () => {
         render(<DrumControl {...defaultProps} />);
         const undoBtn = screen.getByText('− Undo Left').closest('button');
-        fireEvent.click(undoBtn!);
+        expect(undoBtn).not.toBeNull();
+        if (undoBtn) {
+            fireEvent.click(undoBtn);
+        }
         expect(mockOnUndo).toHaveBeenCalledTimes(1);
     });
 
