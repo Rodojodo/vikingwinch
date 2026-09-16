@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import App from './App.tsx';
-import { getUserDepartment } from '../features/auth/api/graphAPI';
+import { getUserDepartment, getUserProfile } from '../features/auth/api/graphAPI';
 
 // Mock MSAL
 const mockUseMsal = vi.fn();
@@ -19,7 +19,8 @@ vi.mock('@azure/msal-react', () => ({
 
 // Mock Graph API
 vi.mock('../features/auth/api/graphAPI', () => ({
-    getUserDepartment: vi.fn()
+    getUserDepartment: vi.fn(),
+    getUserProfile: vi.fn(),
 }));
 
 // Mock Pages
@@ -36,9 +37,10 @@ vi.mock('./LoginPage', () => ({
 describe('App', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.mocked(getUserProfile).mockResolvedValue(null as any);
     });
 
-    it.skip('renders login page when unauthenticated', () => {
+    it('renders login page when unauthenticated', () => {
         mockUseMsal.mockReturnValue({
             instance: { acquireTokenSilent: vi.fn() },
             accounts: [],
@@ -50,7 +52,7 @@ describe('App', () => {
         expect(screen.queryByText('Loading profile...')).not.toBeInTheDocument();
     });
 
-    it.skip('shows loading state while fetching graph data when authenticated', () => {
+    it('shows loading state while fetching graph data when authenticated', () => {
         mockUseMsal.mockReturnValue({
             instance: { acquireTokenSilent: vi.fn().mockResolvedValue({ accessToken: 'token123' }) },
             accounts: [{ name: 'Test User' }],
@@ -65,7 +67,7 @@ describe('App', () => {
         expect(screen.queryByTestId('login-page')).not.toBeInTheDocument();
     });
 
-    it.skip('renders WinchOpsPage with user data after successful fetch', async () => {
+    it('renders WinchOpsPage with user data after successful fetch', async () => {
         mockUseMsal.mockReturnValue({
             instance: { acquireTokenSilent: vi.fn().mockResolvedValue({ accessToken: 'token123' }) },
             accounts: [{ name: 'Test User' }],
@@ -86,7 +88,7 @@ describe('App', () => {
         expect(screen.getByText('999 VGS - Test Operator')).toBeInTheDocument();
     });
     
-    it.skip('handles Graph API error gracefully and shows error message', async () => {
+    it('handles Graph API error gracefully and shows error message', async () => {
         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         mockUseMsal.mockReturnValue({
             instance: { acquireTokenSilent: vi.fn().mockResolvedValue({ accessToken: 'token123' }) },
@@ -108,7 +110,7 @@ describe('App', () => {
         consoleSpy.mockRestore();
     });
 
-    it.skip('renders WinchOpsPage with fallbacks when graph data is missing', async () => {
+    it('renders WinchOpsPage with fallbacks when graph data is missing', async () => {
         mockUseMsal.mockReturnValue({
             instance: { acquireTokenSilent: vi.fn().mockResolvedValue({ accessToken: 'token123' }) },
             accounts: [{ name: 'Test User' }],

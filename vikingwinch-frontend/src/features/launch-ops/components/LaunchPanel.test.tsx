@@ -1,8 +1,21 @@
-import {act, fireEvent, render, screen} from '@testing-library/react';
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import LaunchPanel from './LaunchPanel.tsx';
 
+let mockDerived: any = {
+    leftTotal: 0,
+    rightTotal: 0,
+    leftLaunches: 0,
+    rightLaunches: 0,
+    leftLast: null,
+    rightLast: null,
+    lastDrum: null,
+    leftLastRecord: undefined,
+    rightLastRecord: undefined,
+};
 
+const mockExecuteLaunch = vi.fn().mockResolvedValue(undefined);
+const mockUndoLaunch = vi.fn().mockResolvedValue(undefined);
 
 vi.mock('../../../app/providers/SessionIdentityProvider.tsx', () => ({
     useSessionIdentity: vi.fn(() => ({ squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1' }))
@@ -11,101 +24,108 @@ vi.mock('../../trainee-ops/hooks/useTraineeOps.tsx', () => ({
     useTraineeOps: vi.fn(() => ({ traineeSn: null, setTrainee: vi.fn(), changeTrainee: vi.fn() }))
 }));
 vi.mock('../hooks/useLaunchOps.tsx', () => ({
-    useLaunchOps: vi.fn(() => ({ 
-        derived: { leftLastRecord: {}, rightLastRecord: {} }, 
-        leftHistory: [], 
-        rightHistory: [], 
-        executeLaunch: vi.fn().mockResolvedValue(undefined), 
-        undoLaunch: vi.fn().mockResolvedValue(undefined), 
-        addRemarkToState: vi.fn() 
-    }))
+    useLaunchOps: () => ({
+        derived: mockDerived,
+        leftHistory: [],
+        rightHistory: [],
+        executeLaunch: mockExecuteLaunch,
+        undoLaunch: mockUndoLaunch,
+        addRemarkToState: vi.fn(),
+    })
 }));
 vi.mock('../../day-ops/hooks/useDayOps.tsx', () => ({
     useDayOps: vi.fn(() => ({ dayFinished: false, finishDay: vi.fn() }))
 }));
 
-
-
-
 // Mock subcomponents to simplify LaunchPanel testing
-vi.mock('../../trainee-ops/components/TraineeAssignmentPanel.tsx', () => ({
-    TraineeAssignmentPanel: () => <div data-testid="trainee-panel" />
-}));
-vi.mock('../../remarks-repairs/components/RemarksRepairsPanel.tsx', () => ({
-    RemarksRepairsPanel: () => <div data-testid="remarks-panel" />
-}));
 vi.mock('./WinchDetailsSticker.tsx', () => ({
     WinchDetailsSticker: (props: any) => <div data-testid="winch-sticker" data-recent={props.isRecentLaunch.toString()} />
 }));
 
 describe('LaunchPanel', () => {
-    const mockExecuteLaunch = vi.fn().mockResolvedValue(undefined);
-    const mockUndoLaunch = vi.fn().mockResolvedValue(undefined);
-        
     beforeEach(() => {
         vi.clearAllMocks();
         vi.useFakeTimers();
-        
-        
+        mockDerived = {
+            leftTotal: 0,
+            rightTotal: 0,
+            leftLaunches: 0,
+            rightLaunches: 0,
+            leftLast: null,
+            rightLast: null,
+            lastDrum: null,
+            leftLastRecord: undefined,
+            rightLastRecord: undefined,
+        };
+        mockExecuteLaunch.mockResolvedValue(undefined);
+        mockUndoLaunch.mockResolvedValue(undefined);
     });
 
     afterEach(() => {
         vi.useRealTimers();
     });
 
-    it.skip('renders LaunchPanel correctly', () => {
-        render(<LaunchPanel />);
+    it('renders LaunchPanel correctly with children', () => {
+        render(
+            <LaunchPanel>
+                <div data-testid="remarks-panel" />
+            </LaunchPanel>
+        );
         expect(screen.getByText('Left Drum')).toBeInTheDocument();
         expect(screen.getByText('Right Drum')).toBeInTheDocument();
         expect(screen.getByTestId('winch-sticker')).toBeInTheDocument();
         expect(screen.getByTestId('remarks-panel')).toBeInTheDocument();
     });
 
-    it.skip('handles left launch click', () => {
+    it('handles left launch click', () => {
         render(<LaunchPanel />);
         const launchBtn = screen.getByText('Left Drum').closest('button');
         fireEvent.click(launchBtn!);
         expect(mockExecuteLaunch).toHaveBeenCalledWith('left');
     });
 
-    it.skip('handles left burn click', () => {
+    it('handles left burn click', () => {
         render(<LaunchPanel />);
         const burnBtn = screen.getByRole('button', { name: /Burn Left/i });
         fireEvent.click(burnBtn!);
         expect(mockExecuteLaunch).toHaveBeenCalledWith('left', true);
     });
 
-    it.skip('handles right launch click', () => {
+    it('handles right launch click', () => {
         render(<LaunchPanel />);
         const launchBtn = screen.getByText('Right Drum').closest('button');
         fireEvent.click(launchBtn!);
         expect(mockExecuteLaunch).toHaveBeenCalledWith('right');
     });
 
-    it.skip('handles right burn click', () => {
+    it('handles right burn click', () => {
         render(<LaunchPanel />);
         const burnBtn = screen.getByRole('button', { name: /Burn Right/i });
         fireEvent.click(burnBtn!);
         expect(mockExecuteLaunch).toHaveBeenCalledWith('right', true);
     });
 
-    it.skip('handles undo left click', () => {
-        
+    it('handles undo left click', () => {
+        mockDerived.leftLaunches = 2;
+        mockDerived.leftTotal = 2;
+
         render(<LaunchPanel />);
         const undoBtn = screen.getByText('− Undo Left');
         fireEvent.click(undoBtn);
         expect(mockUndoLaunch).toHaveBeenCalledWith('left');
     });
 
-    it.skip('handles undo right click', () => {
-        
+    it('handles undo right click', () => {
+        mockDerived.rightLaunches = 2;
+        mockDerived.rightTotal = 2;
+
         render(<LaunchPanel />);
         const undoBtn = screen.getByText('− Undo Right');
         fireEvent.click(undoBtn);
         expect(mockUndoLaunch).toHaveBeenCalledWith('right');
     });
 
-    it.skip('disables undo buttons when no launches', () => {
+    it('disables undo buttons when no launches', () => {
         render(<LaunchPanel />);
         const undoLeft = screen.getByText('− Undo Left');
         const undoRight = screen.getByText('− Undo Right');
@@ -113,30 +133,29 @@ describe('LaunchPanel', () => {
         expect(undoRight).toBeDisabled();
     });
 
-    it.skip('updates isRecentLaunch based on last launch time', () => {
-        
-        
+    it('updates isRecentLaunch based on last launch time', () => {
+        mockDerived.leftLast = new Date().toISOString();
 
         render(<LaunchPanel />);
         expect(screen.getByTestId('winch-sticker')).toHaveAttribute('data-recent', 'true');
 
-        // Fast forward 16 minutes
+        // Fast forward past cooldown threshold (2.5 minutes)
         act(() => {
-            vi.advanceTimersByTime(16 * 60 * 1000);
+            vi.advanceTimersByTime(3 * 60 * 1000);
         });
 
         expect(screen.getByTestId('winch-sticker')).toHaveAttribute('data-recent', 'false');
     });
 
-    it.skip('triggers reset animation when launches become equal and increase', () => {
-        
-        
-        
+    it('triggers reset animation when launches become equal and increase', () => {
+        mockDerived.leftTotal = 1;
+        mockDerived.rightTotal = 0;
 
         const { rerender } = render(<LaunchPanel />);
 
         // Now make them equal and increase
-        
+        mockDerived.leftTotal = 1;
+        mockDerived.rightTotal = 1;
 
         rerender(<LaunchPanel />);
 
@@ -150,18 +169,29 @@ describe('LaunchPanel', () => {
             vi.advanceTimersByTime(700);
         });
     });
-    it.skip('calls onViewSkylogValues when button is clicked', () => {
+
+    it('renders children like Show skylog values button and handles clicks', () => {
         const onViewSkylogValues = vi.fn();
-        render(<LaunchPanel />);
+        render(
+            <LaunchPanel>
+                <button onClick={onViewSkylogValues}>Show skylog values</button>
+            </LaunchPanel>
+        );
         const btn = screen.getByText('Show skylog values');
         fireEvent.click(btn);
-        expect(onViewSkylogValues).toHaveBeenCalled();
+        expect(onViewSkylogValues).toHaveBeenCalledTimes(1);
     });
 
-    it.skip('handles promise rejections for launches and undo', async () => {
+    it('handles promise rejections for launches and undo', async () => {
+        vi.useRealTimers();
         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-                
-        
+        mockExecuteLaunch.mockRejectedValue(new Error('Launch error'));
+        mockUndoLaunch.mockRejectedValue(new Error('Undo error'));
+
+        mockDerived.leftLaunches = 1;
+        mockDerived.leftTotal = 1;
+        mockDerived.rightLaunches = 1;
+        mockDerived.rightTotal = 1;
 
         render(<LaunchPanel />);
         
@@ -179,23 +209,22 @@ describe('LaunchPanel', () => {
         // click right undo
         fireEvent.click(screen.getByText('− Undo Right'));
 
-        // wait for promises to reject
-        await act(async () => {
-            await new Promise(resolve => setTimeout(resolve, 0));
+        await waitFor(() => {
+            expect(consoleSpy).toHaveBeenCalledTimes(6);
         });
 
-        expect(consoleSpy).toHaveBeenCalledTimes(6);
         consoleSpy.mockRestore();
     });
 
-    it.skip('does not trigger reset animation when launches change but are not equal', () => {
-        
-        
+    it('does not trigger reset animation when launches change but are not equal', () => {
+        mockDerived.leftTotal = 0;
+        mockDerived.rightTotal = 0;
 
         const { rerender } = render(<LaunchPanel />);
 
         // Increase one
-        
+        mockDerived.leftTotal = 1;
+        mockDerived.rightTotal = 0;
 
         rerender(<LaunchPanel />);
         
@@ -203,17 +232,17 @@ describe('LaunchPanel', () => {
         act(() => {
             vi.advanceTimersByTime(1000);
         });
-        // We just ensure it doesn't crash and we hit the branch.
     });
 
-    it.skip('does not trigger reset animation when launches are equal but decrease (undo)', () => {
-        
-        
+    it('does not trigger reset animation when launches are equal but decrease (undo)', () => {
+        mockDerived.leftTotal = 2;
+        mockDerived.rightTotal = 2;
 
         const { rerender } = render(<LaunchPanel />);
 
         // Decrease both (not realistic at the exact same time, but tests the logic)
-        
+        mockDerived.leftTotal = 1;
+        mockDerived.rightTotal = 1;
 
         rerender(<LaunchPanel />);
         
@@ -222,13 +251,14 @@ describe('LaunchPanel', () => {
         });
     });
 
-    it.skip('clears timers on unmount', () => {
-        
-        
+    it('clears timers on unmount', () => {
+        mockDerived.leftTotal = 1;
+        mockDerived.rightTotal = 0;
 
         const { rerender, unmount } = render(<LaunchPanel />);
 
-        
+        mockDerived.leftTotal = 1;
+        mockDerived.rightTotal = 1;
         rerender(<LaunchPanel />);
 
         // Unmount while timeouts are pending
@@ -239,9 +269,7 @@ describe('LaunchPanel', () => {
         });
     });
 
-    it.skip('handles checkRecent correctly when both rightLast and leftLast are missing', () => {
-        
-
+    it('handles checkRecent correctly when both rightLast and leftLast are missing', () => {
         render(<LaunchPanel />);
         expect(screen.getByTestId('winch-sticker')).toHaveAttribute('data-recent', 'false');
     });
