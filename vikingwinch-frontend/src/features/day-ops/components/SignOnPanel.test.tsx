@@ -1,40 +1,57 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import {render, screen, waitFor, within} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { SignOnPanel } from './SignOnPanel.tsx';
-import { getOperatorsForSquadron } from '../../winch-ops/api/dataClient.ts';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {SignOnPanel} from './SignOnPanel.tsx';
+import {getOperatorsForSquadron} from '../../../core/http/operatorsClient.ts';
+import {postDayLogToDb} from '../api/dayOpsClient.ts';
+import type {DayLogResponse} from '../types';
 
-vi.mock('../../winch-ops/api/dataClient.ts', () => ({
+const mockSetTrainee = vi.fn();
+
+vi.mock('../../../app/hooks/useSessionIdentity.ts', () => ({
+    useSessionIdentity: vi.fn(() => ({squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1'})),
+}));
+
+vi.mock('../../../core/http/operatorsClient.ts', () => ({
     getOperatorsForSquadron: vi.fn(),
 }));
 
-describe('SignOnPanel', () => {
-    const mockRecordSignOn = vi.fn();
-    const mockOnComplete = vi.fn();
+vi.mock('../api/dayOpsClient.ts', () => ({
+    postDayLogToDb: vi.fn(),
+}));
 
-    const mockSession = {
-        state: {
-            squadron: 'sqn1',
-            operatorSn: 'OP1',
-            winchId: 42
-        },
-        recordSignOn: mockRecordSignOn,
-        isLoading: false
-    };
+describe('SignOnPanel', () => {
+    const mockOnComplete = vi.fn();
 
     beforeEach(() => {
         vi.clearAllMocks();
         vi.mocked(getOperatorsForSquadron).mockResolvedValue([
             { service_no: 'OP1', name: 'Geronimo Jones', squadron_id: 'sqn1' },
-            { service_no: 'OP2', name: 'Charlie Bloggs', squadron_id: 'sqn1' }
+            {service_no: 'OP2', name: 'Charlie Bloggs', squadron_id: 'sqn1'},
         ]);
-        mockRecordSignOn.mockResolvedValue(undefined);
+        vi.mocked(postDayLogToDb).mockResolvedValue({
+            id: 1,
+            squadron_id: 'sqn1',
+            winch_id: 42,
+            operator_sn: 'OP1',
+            trainee: null,
+            type: 'sign_on',
+            cable_check: null,
+            hours: null,
+            timestamp: '2026-09-16T08:00:00Z',
+        });
     });
 
     it('renders winch ID, operators, and already inspected message', async () => {
-        render(<SignOnPanel session={mockSession as any} onComplete={mockOnComplete} lastOperatorSn="OP1" lastTraineeSn="OP2" />);
+        render(
+            <SignOnPanel
+                lastOperatorSn="OP1"
+                lastTraineeSn="OP2"
+                onComplete={mockOnComplete}
+                onSetTrainee={mockSetTrainee}
+            />
+        );
 
-        // Wait for fetching to finish
         await waitFor(() => {
             expect(screen.queryByText('— None —')).toBeInTheDocument();
         });
@@ -46,7 +63,14 @@ describe('SignOnPanel', () => {
 
     it('allows selecting a trainee but it does not change the current operator text', async () => {
         const user = userEvent.setup();
-        render(<SignOnPanel session={mockSession as any} onComplete={mockOnComplete} lastOperatorSn="OP1" lastTraineeSn={null} />);
+        render(
+            <SignOnPanel
+                lastOperatorSn="OP1"
+                lastTraineeSn={null}
+                onComplete={mockOnComplete}
+                onSetTrainee={mockSetTrainee}
+            />
+        );
 
         await waitFor(() => {
             expect(screen.getByRole('combobox')).toBeInTheDocument();
@@ -59,13 +83,19 @@ describe('SignOnPanel', () => {
         const traineeOption = within(listbox).getByRole('option', { name: 'Charlie Bloggs' });
         await user.click(traineeOption);
 
-        // Text shouldn't change to include Charlie Bloggs since it's the PREVIOUS operator shown
         expect(screen.getByText('Current operator: Geronimo Jones')).toBeInTheDocument();
     });
 
     it('submits sign on and calls onComplete when clicking Walkaround complete', async () => {
         const user = userEvent.setup();
-        render(<SignOnPanel session={mockSession as any} onComplete={mockOnComplete} lastOperatorSn="OP1" lastTraineeSn={null} />);
+        render(
+            <SignOnPanel
+                lastOperatorSn="OP1"
+                lastTraineeSn={null}
+                onComplete={mockOnComplete}
+                onSetTrainee={mockSetTrainee}
+            />
+        );
 
         await waitFor(() => {
             expect(screen.getByRole('combobox')).toBeInTheDocument();
@@ -77,16 +107,32 @@ describe('SignOnPanel', () => {
         const btn = screen.getByRole('button', { name: /Walkaround complete/i });
         await user.click(btn);
 
-        expect(mockRecordSignOn).toHaveBeenCalledWith('OP2');
+        expect(postDayLogToDb).toHaveBeenCalledWith({
+            squadron_id: 'sqn1',
+            winch_id: 42,
+            operator_sn: 'OP1',
+            trainee: 'OP2',
+            type: 'sign_on',
+            cable_check: null,
+            hours: null,
+        }, 42);
+        expect(mockSetTrainee).toHaveBeenCalledWith('OP2');
         expect(mockOnComplete).toHaveBeenCalledTimes(1);
     });
 
     it('handles sign on failure gracefully without calling onComplete', async () => {
         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-        mockRecordSignOn.mockRejectedValue(new Error('Network error'));
-        
+        vi.mocked(postDayLogToDb).mockRejectedValueOnce(new Error('Network error'));
+
         const user = userEvent.setup();
-        render(<SignOnPanel session={mockSession as any} onComplete={mockOnComplete} lastOperatorSn="OP1" lastTraineeSn={null} />);
+        render(
+            <SignOnPanel
+                lastOperatorSn="OP1"
+                lastTraineeSn={null}
+                onComplete={mockOnComplete}
+                onSetTrainee={mockSetTrainee}
+            />
+        );
 
         await waitFor(() => {
             expect(screen.getByRole('combobox')).toBeInTheDocument();
@@ -95,25 +141,77 @@ describe('SignOnPanel', () => {
         const btn = screen.getByRole('button', { name: /Walkaround complete/i });
         await user.click(btn);
 
-        expect(mockRecordSignOn).toHaveBeenCalledWith(null);
+        expect(postDayLogToDb).toHaveBeenCalledWith({
+            squadron_id: 'sqn1',
+            winch_id: 42,
+            operator_sn: 'OP1',
+            trainee: null,
+            type: 'sign_on',
+            cable_check: null,
+            hours: null,
+        }, 42);
         expect(mockOnComplete).not.toHaveBeenCalled();
+        expect(screen.getByText('Failed to record sign-on.')).toBeInTheDocument();
         expect(consoleSpy).toHaveBeenCalledWith('Sign on failed', expect.any(Error));
-        
+
         consoleSpy.mockRestore();
     });
 
-    it('disables the submit button when isLoading is true', () => {
-        render(<SignOnPanel session={{ ...mockSession, isLoading: true } as any} onComplete={mockOnComplete} lastOperatorSn="OP1" lastTraineeSn={null} />);
-        
+    it('disables the submit button while sign-on is in flight', async () => {
+        let resolvePromise: (val: DayLogResponse) => void = () => {};
+        vi.mocked(postDayLogToDb).mockReturnValueOnce(new Promise<DayLogResponse>((resolve) => {
+            resolvePromise = resolve;
+        }));
+
+        const user = userEvent.setup();
+        render(
+            <SignOnPanel
+                lastOperatorSn="OP1"
+                lastTraineeSn={null}
+                onComplete={mockOnComplete}
+                onSetTrainee={mockSetTrainee}
+            />
+        );
+
+        await waitFor(() => {
+            expect(screen.getByRole('combobox')).toBeInTheDocument();
+        });
+
         const btn = screen.getByRole('button', { name: /Walkaround complete/i });
+        expect(btn).not.toBeDisabled();
+
+        await user.click(btn);
+
         expect(btn).toBeDisabled();
+
+        resolvePromise({
+            id: 1,
+            squadron_id: 'sqn1',
+            winch_id: 42,
+            operator_sn: 'OP1',
+            trainee: null,
+            type: 'sign_on',
+            cable_check: null,
+            hours: null,
+            timestamp: '2026-09-16T08:00:00Z',
+        });
+        await waitFor(() => {
+            expect(mockOnComplete).toHaveBeenCalled();
+        });
     });
 
     it('handles fetch operators rejection', async () => {
         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         vi.mocked(getOperatorsForSquadron).mockRejectedValueOnce(new Error('Fetch failed'));
 
-        render(<SignOnPanel session={mockSession as any} onComplete={mockOnComplete} lastOperatorSn="OP1" lastTraineeSn={null} />);
+        render(
+            <SignOnPanel
+                lastOperatorSn="OP1"
+                lastTraineeSn={null}
+                onComplete={mockOnComplete}
+                onSetTrainee={mockSetTrainee}
+            />
+        );
 
         await waitFor(() => {
             expect(consoleSpy).toHaveBeenCalledWith(expect.any(Error));

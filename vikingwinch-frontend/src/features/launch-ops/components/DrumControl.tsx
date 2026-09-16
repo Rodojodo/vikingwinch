@@ -1,6 +1,6 @@
 import {Box, Button, Chip, Stack, Typography} from '@mui/material';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
-import type {DrumPosition} from '../../winch-ops/types';
+import type {DrumPosition} from '../../../core/types';
 import {useEffect, useState} from 'react';
 import {burnButtonSx, darkBlueButton, giantLaunchButtonSx, launchCountChipSx} from "../../../themes/styles.ts";
 

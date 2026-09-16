@@ -1,17 +1,17 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import App from './App.tsx';
-import { getUserDepartment } from '../features/auth/api/graphAPI';
+import { getUserDepartment, getUserProfile } from '../features/auth/api/graphAPI';
 
 // Mock MSAL
 const mockUseMsal = vi.fn();
 vi.mock('@azure/msal-react', () => ({
     useMsal: () => mockUseMsal(),
-    AuthenticatedTemplate: ({ children }: any) => {
+    AuthenticatedTemplate: ({ children }: { children?: React.ReactNode }) => {
         const { accounts } = mockUseMsal();
         return accounts.length > 0 ? <>{children}</> : null;
     },
-    UnauthenticatedTemplate: ({ children }: any) => {
+    UnauthenticatedTemplate: ({ children }: { children?: React.ReactNode }) => {
         const { accounts } = mockUseMsal();
         return accounts.length === 0 ? <>{children}</> : null;
     }
@@ -19,12 +19,13 @@ vi.mock('@azure/msal-react', () => ({
 
 // Mock Graph API
 vi.mock('../features/auth/api/graphAPI', () => ({
-    getUserDepartment: vi.fn()
+    getUserDepartment: vi.fn(),
+    getUserProfile: vi.fn(),
 }));
 
 // Mock Pages
 vi.mock('./WinchOpsPage', () => ({
-    WinchOpsPage: ({ squadronId, operatorSn }: any) => (
+    WinchOpsPage: ({ squadronId, operatorSn }: { squadronId: string; operatorSn: string }) => (
         <div data-testid="winch-ops-page">{squadronId} - {operatorSn}</div>
     )
 }));
@@ -36,6 +37,7 @@ vi.mock('./LoginPage', () => ({
 describe('App', () => {
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.mocked(getUserProfile).mockResolvedValue(null);
     });
 
     it('renders login page when unauthenticated', () => {

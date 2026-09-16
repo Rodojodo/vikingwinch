@@ -1,11 +1,13 @@
+import React from "react";
 import {Box, ButtonBase, Stack, Typography} from '@mui/material';
 import {ActiveDriverToggle} from './ActiveDriverToggle';
-import {TraineeAssignmentPanel} from '../../day-ops/components/TraineeAssignmentPanel.tsx';
-import type {DayLogResponse, OperatorRead} from '../../winch-ops/types';
+
+import type {OperatorRead} from '../../../core/types';
 import {wingPanel, wingPanelButton} from "../../../themes/styles.ts";
 
 
 interface TraineeWingProps {
+    children?: React.ReactNode;
     open: boolean;
     onToggle: () => void;
     isLoading: boolean;
@@ -18,7 +20,6 @@ interface TraineeWingProps {
     operators: OperatorRead[];
     isFetchingOperators: boolean;
     setActiveDriver: (sn: string) => void;
-    recordSignOn: (traineeSn: string | null) => Promise<DayLogResponse>;
 }
 
 const WING_WIDTH = 320;
@@ -26,15 +27,13 @@ const WING_WIDTH = 320;
 export const TraineeWing: React.FC<TraineeWingProps> = ({
                                                             open,
                                                             onToggle,
-                                                            isLoading,
-                                                            squadron,
                                                             operatorSn,
                                                             operatorName,
                                                             traineeSn,
                                                             traineeName,
                                                             ActiveDriverSn,
                                                             setActiveDriver,
-                                                            recordSignOn,
+children,
                                                         }) => {
     return (
         <Box
@@ -73,13 +72,7 @@ export const TraineeWing: React.FC<TraineeWingProps> = ({
                                 value={ActiveDriverSn}
                                 onChange={setActiveDriver}
                             />
-                            <TraineeAssignmentPanel
-                                isLoading={isLoading}
-                                recordSignOn={recordSignOn}
-                                squadron={squadron}
-                                operatorSn={operatorSn}
-                                traineeSn={traineeSn}
-                            />
+                            {children}
                         </Stack>
                     </Box>
                 </Box>

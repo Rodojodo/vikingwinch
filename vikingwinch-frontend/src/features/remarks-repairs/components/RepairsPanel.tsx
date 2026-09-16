@@ -2,17 +2,18 @@ import React, {useEffect, useState} from 'react';
 import {Alert, Box, Button, FormControl, Grid, MenuItem, Select, TextField, Typography} from '@mui/material';
 import {DrumToggleGroup} from './DrumToggleGroup';
 import {darkMenuStyles, darkSelectStyles, darkTextFieldStyles} from '../../../themes/styles.ts';
-import type {DerivedWinchState, DrumPosition, OperatorRead, WinchLogState} from '../../winch-ops/types';
-import {getOperatorsForSquadron} from "../../winch-ops/api/dataClient.ts";
+import type {DrumPosition, OperatorRead} from '../../../core/types';
+import type {DrumLaunchStatus} from '../types';
+import {getOperatorsForSquadron} from '../../../core/http/operatorsClient.ts';
 
 type RepairsPanelProps = {
     addRemark: (remark: string | null, drum: DrumPosition) => Promise<void>;
     isLoading: boolean;
-    derived: DerivedWinchState;
-    state: WinchLogState;
+    derived: DrumLaunchStatus;
+    squadronId: string;
 };
 
-export const RepairsPanel: React.FC<RepairsPanelProps> = ({ addRemark, isLoading, derived, state }) => {
+export const RepairsPanel: React.FC<RepairsPanelProps> = ({ addRemark, isLoading, derived, squadronId }) => {
     const [repair, setRepair] = useState<string>('');
     const [drum, setDrum] = useState<DrumPosition>('left');
 
@@ -21,19 +22,26 @@ export const RepairsPanel: React.FC<RepairsPanelProps> = ({ addRemark, isLoading
     const [supervisor, setSupervisor] = useState<string>('');
 
     const [localError, setLocalError] = useState<string | null>(null);
-    const [isFetchingOperators, setIsFetchingOperators] = useState(false);
+    const [isFetchingOperators, setIsFetchingOperators] = useState(Boolean(squadronId));
+
+    const [prevSquadronId, setPrevSquadronId] = useState(squadronId);
+    if (squadronId !== prevSquadronId) {
+        setPrevSquadronId(squadronId);
+        if (squadronId) {
+            setIsFetchingOperators(true);
+            setLocalError(null);
+        }
+    }
 
     const targetRecord = drum === 'left' ? derived.leftLastRecord : derived.rightLastRecord;
     const hasLaunches = !!targetRecord;
 
     useEffect(() => {
-        if (!state.squadron) return;
+        if (!squadronId) return;
 
         const controller = new AbortController();
-        setIsFetchingOperators(true);
-        setLocalError(null);
 
-        getOperatorsForSquadron(state.squadron, controller.signal)
+        getOperatorsForSquadron(squadronId, controller.signal)
             .then((data) => {
                 if (!controller.signal.aborted) {
                     setOperators(data);
@@ -51,7 +59,7 @@ export const RepairsPanel: React.FC<RepairsPanelProps> = ({ addRemark, isLoading
             });
 
         return () => controller.abort();
-    }, [state.squadron]);
+    }, [squadronId]);
 
     const handleSubmit = async () => {
         if (!repair.trim() || !hasLaunches || !worker || !supervisor) return;

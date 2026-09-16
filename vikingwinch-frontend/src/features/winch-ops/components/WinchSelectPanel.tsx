@@ -1,8 +1,9 @@
-import {Box, Button, CircularProgress, Typography} from "@mui/material";
-import {useEffect, useState} from "react";
-import {getWinchesForSquadron} from "../api/dataClient";
-import type {WinchRead} from "../types";
-import {darkBlueButton, glassPanelSx} from "../../../themes/styles.ts";
+import {Box, Button, CircularProgress, Typography} from '@mui/material';
+import {useEffect, useState} from 'react';
+import {getWinchesForSquadron} from '../api/winchClient.ts';
+import {toWinch} from '../api/winchMapper.ts';
+import type {Winch} from '../types/domain.ts';
+import {darkBlueButton, glassPanelSx} from '../../../themes/styles.ts';
 import type {SxProps, Theme} from '@mui/material/styles';
 
 interface WinchSelectPanelProps {
@@ -12,24 +13,38 @@ interface WinchSelectPanelProps {
 }
 
 export const WinchSelectPanel = ({ squadronId, openWinchIds, onSelectWinch }: WinchSelectPanelProps) => {
-    const [winches, setWinches] = useState<WinchRead[]>([]);
+    const [winches, setWinches] = useState<Winch[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [prevSquadronId, setPrevSquadronId] = useState(squadronId);
+
+    if (squadronId !== prevSquadronId) {
+        setPrevSquadronId(squadronId);
+        setLoading(true);
+        setError(null);
+    }
 
     useEffect(() => {
+        let isMounted = true;
         const fetchWinches = async () => {
             try {
-                setLoading(true);
                 const data = await getWinchesForSquadron(squadronId);
-                setWinches(data);
-            } catch (err) {
-                setError("Failed to load winches");
-            } finally {
-                setLoading(false);
+                if (isMounted) {
+                    setWinches(data.map(toWinch));
+                    setLoading(false);
+                }
+            } catch {
+                if (isMounted) {
+                    setError('Failed to load winches');
+                    setLoading(false);
+                }
             }
         };
-        
+
         fetchWinches();
+        return () => {
+            isMounted = false;
+        };
     }, [squadronId]);
 
     const availableWinches = winches.filter(winch => !openWinchIds.includes(winch.id));
@@ -53,14 +68,14 @@ export const WinchSelectPanel = ({ squadronId, openWinchIds, onSelectWinch }: Wi
                             key={winch.id}
                             variant="outlined"
                             onClick={() => onSelectWinch(winch.id)}
-                            sx={[
+                            sx={([
                                 darkBlueButton,
                                 {
                                     flexGrow: 1,
                                     flexBasis: 'calc(33.333% - 16px)',
                                     py: 2.5,
-                                }
-                            ]}
+                                },
+                            ] as SxProps<Theme>)}
                         >
                             Winch {winch.id}
                         </Button>
