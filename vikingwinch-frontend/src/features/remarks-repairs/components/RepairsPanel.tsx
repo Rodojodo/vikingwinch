@@ -22,7 +22,16 @@ export const RepairsPanel: React.FC<RepairsPanelProps> = ({ addRemark, isLoading
     const [supervisor, setSupervisor] = useState<string>('');
 
     const [localError, setLocalError] = useState<string | null>(null);
-    const [isFetchingOperators, setIsFetchingOperators] = useState(false);
+    const [isFetchingOperators, setIsFetchingOperators] = useState(Boolean(squadronId));
+
+    const [prevSquadronId, setPrevSquadronId] = useState(squadronId);
+    if (squadronId !== prevSquadronId) {
+        setPrevSquadronId(squadronId);
+        if (squadronId) {
+            setIsFetchingOperators(true);
+            setLocalError(null);
+        }
+    }
 
     const targetRecord = drum === 'left' ? derived.leftLastRecord : derived.rightLastRecord;
     const hasLaunches = !!targetRecord;
@@ -31,8 +40,6 @@ export const RepairsPanel: React.FC<RepairsPanelProps> = ({ addRemark, isLoading
         if (!squadronId) return;
 
         const controller = new AbortController();
-        setIsFetchingOperators(true);
-        setLocalError(null);
 
         getOperatorsForSquadron(squadronId, controller.signal)
             .then((data) => {

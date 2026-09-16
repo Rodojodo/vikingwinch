@@ -22,17 +22,21 @@ export async function handleApiError(response: Response): Promise<void> {
 }
 
 export async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
+    const headers = new Headers(options?.headers);
+    if (!headers.has('Accept')) {
+        headers.set('Accept', 'application/json');
+    }
+    if (options?.body && !headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json');
+    }
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...options,
-        headers: {
-            'Accept': 'application/json',
-            ...(options?.headers || {}),
-        },
+        headers,
     });
 
     await handleApiError(response);
 
     const text = await response.text();
-    if (!text) return null as unknown as T;
-    return JSON.parse(text) as T;
+    return JSON.parse(text || 'null') as T;
 }

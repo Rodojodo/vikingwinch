@@ -3,7 +3,7 @@ import {Alert, Box, Button, FormControl, MenuItem, Select, Stack, TextField, Typ
 import {darkMenuStyles, darkSelectStyles, darkTextFieldStyles, getTabButtonStyles} from '../../../themes/styles.ts';
 import {getOperatorsForSquadron} from '../../../core/http/operatorsClient.ts';
 import type {OperatorRead} from '../../../core/types';
-import {useSessionIdentity} from '../../../app/providers/SessionIdentityProvider.tsx';
+import {useSessionIdentity} from '../../../app/hooks/useSessionIdentity.ts';
 import {useDayOps} from '../hooks/useDayOps.tsx';
 
 type FinishDayPanelProps = {
@@ -21,12 +21,19 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({isLoading, onExpo
     const [localError, setLocalError] = useState<string | null>(null);
     const [isFetchingOperators, setIsFetchingOperators] = useState(false);
 
+    const [prevFetchKey, setPrevFetchKey] = useState({ squadronId, isOpen });
+    if (squadronId !== prevFetchKey.squadronId || isOpen !== prevFetchKey.isOpen) {
+        setPrevFetchKey({ squadronId, isOpen });
+        if (squadronId && isOpen) {
+            setIsFetchingOperators(true);
+            setLocalError(null);
+        }
+    }
+
     useEffect(() => {
         if (!squadronId || !isOpen) return;
 
         const controller = new AbortController();
-        setIsFetchingOperators(true);
-        setLocalError(null);
 
         getOperatorsForSquadron(squadronId, controller.signal)
             .then((data) => {

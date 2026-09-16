@@ -1,7 +1,8 @@
 import {Box, Button, CircularProgress, Typography} from '@mui/material';
 import {useEffect, useState} from 'react';
 import {getWinchesForSquadron} from '../api/winchClient.ts';
-import type {WinchRead} from '../types/api.ts';
+import {toWinch} from '../api/winchMapper.ts';
+import type {Winch} from '../types/domain.ts';
 import {darkBlueButton, glassPanelSx} from '../../../themes/styles.ts';
 import type {SxProps, Theme} from '@mui/material/styles';
 
@@ -12,24 +13,38 @@ interface WinchSelectPanelProps {
 }
 
 export const WinchSelectPanel = ({ squadronId, openWinchIds, onSelectWinch }: WinchSelectPanelProps) => {
-    const [winches, setWinches] = useState<WinchRead[]>([]);
+    const [winches, setWinches] = useState<Winch[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [prevSquadronId, setPrevSquadronId] = useState(squadronId);
+
+    if (squadronId !== prevSquadronId) {
+        setPrevSquadronId(squadronId);
+        setLoading(true);
+        setError(null);
+    }
 
     useEffect(() => {
+        let isMounted = true;
         const fetchWinches = async () => {
             try {
-                setLoading(true);
                 const data = await getWinchesForSquadron(squadronId);
-                setWinches(data);
+                if (isMounted) {
+                    setWinches(data.map(toWinch));
+                    setLoading(false);
+                }
             } catch {
-                setError('Failed to load winches');
-            } finally {
-                setLoading(false);
+                if (isMounted) {
+                    setError('Failed to load winches');
+                    setLoading(false);
+                }
             }
         };
 
         fetchWinches();
+        return () => {
+            isMounted = false;
+        };
     }, [squadronId]);
 
     const availableWinches = winches.filter(winch => !openWinchIds.includes(winch.id));

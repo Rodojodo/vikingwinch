@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {Box, Button, FormControl, MenuItem, Paper, Select, Typography} from '@mui/material';
 import {getOperatorsForSquadron} from '../../../core/http/operatorsClient.ts';
 import type {OperatorRead} from '../../../core/types';
-import {useSessionIdentity} from '../../../app/providers/SessionIdentityProvider.tsx';
+import {useSessionIdentity} from '../../../app/hooks/useSessionIdentity.ts';
 import {postDayLogToDb} from '../api/dayOpsClient.ts';
 import {
     darkMenuStyles,
@@ -32,11 +32,18 @@ export const SignOnPanel: React.FC<SignOnPanelProps> = ({
     const [operators, setOperators] = useState<OperatorRead[]>([]);
     const [selectedTraineeSn, setSelectedTraineeSn] = useState<string>('');
     const [error, setError] = useState<string | null>(null);
-    const [isFetching, setIsFetching] = useState(false);
+    const [isFetching, setIsFetching] = useState(Boolean(squadronId));
+    const [prevSquadronId, setPrevSquadronId] = useState(squadronId);
+
+    if (squadronId !== prevSquadronId) {
+        setPrevSquadronId(squadronId);
+        if (squadronId) {
+            setIsFetching(true);
+        }
+    }
 
     useEffect(() => {
         if (!squadronId) return;
-        setIsFetching(true);
         const controller = new AbortController();
         getOperatorsForSquadron(squadronId, controller.signal)
             .then(data => {

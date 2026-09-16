@@ -7,11 +7,11 @@ import { getUserDepartment, getUserProfile } from '../features/auth/api/graphAPI
 const mockUseMsal = vi.fn();
 vi.mock('@azure/msal-react', () => ({
     useMsal: () => mockUseMsal(),
-    AuthenticatedTemplate: ({ children }: any) => {
+    AuthenticatedTemplate: ({ children }: { children?: React.ReactNode }) => {
         const { accounts } = mockUseMsal();
         return accounts.length > 0 ? <>{children}</> : null;
     },
-    UnauthenticatedTemplate: ({ children }: any) => {
+    UnauthenticatedTemplate: ({ children }: { children?: React.ReactNode }) => {
         const { accounts } = mockUseMsal();
         return accounts.length === 0 ? <>{children}</> : null;
     }
@@ -25,7 +25,7 @@ vi.mock('../features/auth/api/graphAPI', () => ({
 
 // Mock Pages
 vi.mock('./WinchOpsPage', () => ({
-    WinchOpsPage: ({ squadronId, operatorSn }: any) => (
+    WinchOpsPage: ({ squadronId, operatorSn }: { squadronId: string; operatorSn: string }) => (
         <div data-testid="winch-ops-page">{squadronId} - {operatorSn}</div>
     )
 }));
@@ -37,7 +37,7 @@ vi.mock('./LoginPage', () => ({
 describe('App', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        vi.mocked(getUserProfile).mockResolvedValue(null as any);
+        vi.mocked(getUserProfile).mockResolvedValue(null);
     });
 
     it('renders login page when unauthenticated', () => {

@@ -1,7 +1,8 @@
 import React, {useEffect} from 'react';
 import {act, render, screen} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {DayOpsProvider, useDayOps} from './useDayOps';
+import {useDayOps} from './useDayOps';
+import {DayOpsProvider} from '../providers/DayOpsProvider';
 import {SessionIdentityProvider} from '../../../app/providers/SessionIdentityProvider';
 import {postDayLogToDb} from '../api/dayOpsClient';
 
@@ -16,7 +17,6 @@ const ConsumerComponent: React.FC = () => {
     useEffect(() => {
         dayOpsContext = context;
     });
-    dayOpsContext = context;
     return (
         <div>
             <span data-testid="day-finished">{context.dayFinished ? 'yes' : 'no'}</span>
@@ -31,11 +31,15 @@ const getDayContext = (): ReturnType<typeof useDayOps> => {
     return dayOpsContext;
 };
 
-const renderWithProviders = (winchId: number | null = 1, operatorSn: string = 'OP-1234') => {
+const renderWithProviders = (
+    winchId: number | null = 1,
+    operatorSn: string = 'OP-1234',
+    onDayFinished?: () => void
+) => {
     dayOpsContext = null;
     return render(
         <SessionIdentityProvider squadronId="621 VGS" operatorSn={operatorSn} winchId={winchId}>
-            <DayOpsProvider>
+            <DayOpsProvider onDayFinished={onDayFinished}>
                 <ConsumerComponent/>
             </DayOpsProvider>
         </SessionIdentityProvider>
@@ -62,7 +66,8 @@ describe('useDayOps', () => {
         expect(screen.getByTestId('di-completed')).toHaveTextContent('no');
     });
 
-    it('handles finishDay successfully', async () => {
+    it('handles finishDay successfully and invokes onDayFinished callback', async () => {
+        const onDayFinished = vi.fn();
         vi.mocked(postDayLogToDb).mockResolvedValue({
             id: 1,
             squadron_id: '621 VGS',
@@ -75,13 +80,14 @@ describe('useDayOps', () => {
             timestamp: '2026-09-16T10:00:00Z',
         });
 
-        renderWithProviders();
+        renderWithProviders(1, 'OP-1234', onDayFinished);
 
         await act(async () => {
             await getDayContext().finishDay('OK');
         });
 
         expect(postDayLogToDb).toHaveBeenCalled();
+        expect(onDayFinished).toHaveBeenCalledTimes(1);
         expect(screen.getByTestId('day-finished')).toHaveTextContent('yes');
     });
 

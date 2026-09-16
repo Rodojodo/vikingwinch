@@ -1,7 +1,8 @@
 import React, {useEffect} from 'react';
 import {act, render, screen} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {LaunchOpsProvider, useLaunchOps} from './useLaunchOps';
+import {useLaunchOps} from './useLaunchOps';
+import {LaunchOpsProvider} from '../providers/LaunchOpsProvider';
 import {SessionIdentityProvider} from '../../../app/providers/SessionIdentityProvider';
 import {postLaunchToDb, removeLaunchFromDb} from '../api/launchClient';
 import type {LaunchResponse} from '../types';
@@ -18,7 +19,6 @@ const ConsumerComponent: React.FC = () => {
     useEffect(() => {
         opsContext = context;
     });
-    opsContext = context;
     return (
         <div>
             <span data-testid="left-total">{context.derived.leftTotal}</span>

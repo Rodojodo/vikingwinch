@@ -8,7 +8,7 @@ import type {DayLogResponse} from '../types';
 
 const mockSetTrainee = vi.fn();
 
-vi.mock('../../../app/providers/SessionIdentityProvider.tsx', () => ({
+vi.mock('../../../app/hooks/useSessionIdentity.ts', () => ({
     useSessionIdentity: vi.fn(() => ({squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1'})),
 }));
 
@@ -158,7 +158,7 @@ describe('SignOnPanel', () => {
     });
 
     it('disables the submit button while sign-on is in flight', async () => {
-        let resolvePromise!: (val: DayLogResponse) => void;
+        let resolvePromise: (val: DayLogResponse) => void = () => {};
         vi.mocked(postDayLogToDb).mockReturnValueOnce(new Promise<DayLogResponse>((resolve) => {
             resolvePromise = resolve;
         }));

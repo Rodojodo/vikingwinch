@@ -1,14 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { render, screen, act } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { TraineeOpsProvider, useTraineeOps } from './useTraineeOps';
+import { useTraineeOps } from './useTraineeOps';
+import { TraineeOpsProvider } from '../providers/TraineeOpsProvider';
 import { SessionIdentityProvider } from '../../../app/providers/SessionIdentityProvider';
 
 const ConsumerComponent: React.FC<{
     onReady?: (ops: ReturnType<typeof useTraineeOps>) => void;
 }> = ({ onReady }) => {
     const ops = useTraineeOps();
-    if (onReady) onReady(ops);
+    useEffect(() => {
+        if (onReady) onReady(ops);
+    });
     return (
         <div>
             <span data-testid="trainee-sn">{ops.traineeSn ?? 'none'}</span>

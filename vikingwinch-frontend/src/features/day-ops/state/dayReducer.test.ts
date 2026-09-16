@@ -1,9 +1,9 @@
 import {describe, expect, it} from 'vitest';
-import {type DayOpsAction, dayReducer, initialDayOpsState} from './dayReducer';
+import {dayReducer, initialDayOpsState} from './dayReducer';
 
 describe('dayReducer', () => {
     it('returns default initial state for unknown action', () => {
-        const unknownAction = {type: 'UNKNOWN'} as unknown as DayOpsAction;
+        const unknownAction = {type: 'UNKNOWN'} as never;
         const state = dayReducer(initialDayOpsState, unknownAction);
         expect(state).toEqual(initialDayOpsState);
     });

@@ -2,11 +2,12 @@ import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {FinishDayPanel} from './FinishDayPanel.tsx';
 import {getOperatorsForSquadron} from '../../../core/http/operatorsClient.ts';
+import type {OperatorRead} from '../../../core/types';
 
 const mockFinishDay = vi.fn();
 const mockExportLog = vi.fn();
 
-vi.mock('../../../app/providers/SessionIdentityProvider.tsx', () => ({
+vi.mock('../../../app/hooks/useSessionIdentity.ts', () => ({
     useSessionIdentity: vi.fn(() => ({squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1'})),
 }));
 
@@ -139,9 +140,9 @@ describe('FinishDayPanel', () => {
     });
 
     it('aborts fetch operators if unmounted before completion', async () => {
-        let resolvePromise!: (val: unknown) => void;
-        const promise = new Promise((resolve) => { resolvePromise = resolve; });
-        vi.mocked(getOperatorsForSquadron).mockReturnValue(promise as any);
+        let resolvePromise: (val: OperatorRead[]) => void = () => {};
+        const promise = new Promise<OperatorRead[]>((resolve) => { resolvePromise = resolve; });
+        vi.mocked(getOperatorsForSquadron).mockReturnValue(promise);
 
         const {unmount} = render(<FinishDayPanel isLoading={false} onExportLog={mockExportLog}/>);
         fireEvent.click(screen.getByRole('button', { name: 'Finish Day' }));
@@ -153,9 +154,9 @@ describe('FinishDayPanel', () => {
     });
 
     it('aborts fetch operators and ignores errors if unmounted before completion', async () => {
-        let rejectPromise!: (reason: unknown) => void;
-        const promise = new Promise((_, reject) => { rejectPromise = reject; });
-        vi.mocked(getOperatorsForSquadron).mockReturnValue(promise as any);
+        let rejectPromise: (reason: unknown) => void = () => {};
+        const promise = new Promise<OperatorRead[]>((_, reject) => { rejectPromise = reject; });
+        vi.mocked(getOperatorsForSquadron).mockReturnValue(promise);
 
         const {unmount} = render(<FinishDayPanel isLoading={false} onExportLog={mockExportLog}/>);
         fireEvent.click(screen.getByRole('button', { name: 'Finish Day' }));

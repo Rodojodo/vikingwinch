@@ -69,13 +69,11 @@ describe('fetchClient', () => {
         });
 
         it('falls back to status when text parsing throws for non-json', async () => {
-            const response = {
-                ok: false,
+            const response = new Response('', {
                 status: 504,
-                headers: new Headers({ 'content-type': 'text/html' }),
-                json: vi.fn(),
-                text: vi.fn().mockRejectedValue(new Error('Read failed')),
-            } as unknown as Response;
+                headers: { 'content-type': 'text/html' },
+            });
+            vi.spyOn(response, 'text').mockRejectedValue(new Error('Read failed'));
 
             await expect(handleApiError(response)).rejects.toThrow('HTTP error: 504');
         });
@@ -93,11 +91,10 @@ describe('fetchClient', () => {
 
             const result = await apiFetch<typeof mockData>('/test-endpoint');
 
-            expect(globalThis.fetch).toHaveBeenCalledWith(`${API_BASE_URL}/test-endpoint`, {
-                headers: {
-                    Accept: 'application/json',
-                },
-            });
+            const [url, init] = vi.mocked(globalThis.fetch).mock.calls[0];
+            expect(url).toBe(`${API_BASE_URL}/test-endpoint`);
+            const headers = new Headers(init?.headers);
+            expect(headers.get('Accept')).toBe('application/json');
             expect(result).toEqual(mockData);
         });
 
@@ -116,14 +113,57 @@ describe('fetchClient', () => {
                 body: JSON.stringify({ name: 'test' }),
             });
 
-            expect(globalThis.fetch).toHaveBeenCalledWith(`${API_BASE_URL}/save`, {
-                method: 'POST',
-                headers: {
-                    Accept: 'application/json',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ name: 'test' }),
+            const [url, init] = vi.mocked(globalThis.fetch).mock.calls[0];
+            expect(url).toBe(`${API_BASE_URL}/save`);
+            expect(init?.method).toBe('POST');
+            expect(init?.body).toBe(JSON.stringify({ name: 'test' }));
+            const headers = new Headers(init?.headers);
+            expect(headers.get('Accept')).toBe('application/json');
+            expect(headers.get('Content-Type')).toBe('application/json');
+            expect(result).toEqual(mockData);
+        });
+
+        it('preserves headers passed as Headers instance or array', async () => {
+            const mockData = { ok: true };
+            globalThis.fetch = vi.fn().mockResolvedValue(
+                new Response(JSON.stringify(mockData), {
+                    status: 200,
+                    headers: { 'content-type': 'application/json' },
+                })
+            );
+
+            const customHeaders = new Headers({ 'X-Custom-Header': 'custom-value' });
+            await apiFetch<typeof mockData>('/headers-instance', {
+                headers: customHeaders,
             });
+
+            const [, init] = vi.mocked(globalThis.fetch).mock.calls[0];
+            const headers = new Headers(init?.headers);
+            expect(headers.get('X-Custom-Header')).toBe('custom-value');
+            expect(headers.get('Accept')).toBe('application/json');
+        });
+
+        it('sets Content-Type to application/json when body is provided without explicit content-type header', async () => {
+            const mockData = { ok: true };
+            globalThis.fetch = vi.fn().mockResolvedValue(
+                new Response(JSON.stringify(mockData), {
+                    status: 200,
+                    headers: { 'content-type': 'application/json' },
+                })
+            );
+
+            const result = await apiFetch<typeof mockData>('/post-auto-header', {
+                method: 'POST',
+                body: JSON.stringify({ key: 'val' }),
+            });
+
+            const [url, init] = vi.mocked(globalThis.fetch).mock.calls[0];
+            expect(url).toBe(`${API_BASE_URL}/post-auto-header`);
+            expect(init?.method).toBe('POST');
+            expect(init?.body).toBe(JSON.stringify({ key: 'val' }));
+            const headers = new Headers(init?.headers);
+            expect(headers.get('Accept')).toBe('application/json');
+            expect(headers.get('Content-Type')).toBe('application/json');
             expect(result).toEqual(mockData);
         });
 

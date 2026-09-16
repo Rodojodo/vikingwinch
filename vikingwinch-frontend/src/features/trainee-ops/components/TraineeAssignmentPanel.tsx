@@ -23,11 +23,18 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({
     const [isExpanded, setIsExpanded] = useState<boolean>(false);
     const [focusedTraineeId, setFocusedTraineeId] = useState<string>('');
     const [operators, setOperators] = useState<OperatorRead[]>([]);
-    const [isFetching, setIsFetching] = useState(false);
+    const [isFetching, setIsFetching] = useState(Boolean(squadron));
+    const [prevSquadron, setPrevSquadron] = useState(squadron);
+
+    if (squadron !== prevSquadron) {
+        setPrevSquadron(squadron);
+        if (squadron) {
+            setIsFetching(true);
+        }
+    }
 
     useEffect(() => {
         if (!squadron) return;
-        setIsFetching(true);
         const controller = new AbortController();
         getOperatorsForSquadron(squadron, controller.signal)
             .then(data => {

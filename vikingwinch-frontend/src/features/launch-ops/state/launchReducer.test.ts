@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {initialLaunchState, type LaunchAction, launchReducer, type LaunchState} from './launchReducer';
+import {initialLaunchState, launchReducer, type LaunchState} from './launchReducer';
 import type {LaunchRecord} from '../types';
 
 describe('launchReducer', () => {
@@ -13,7 +13,7 @@ describe('launchReducer', () => {
     };
 
     it('returns default initial state for unknown action', () => {
-        const unknownAction = {type: 'UNKNOWN'} as unknown as LaunchAction;
+        const unknownAction = {type: 'UNKNOWN'} as never;
         const state = launchReducer(initialLaunchState, unknownAction);
         expect(state).toEqual(initialLaunchState);
     });

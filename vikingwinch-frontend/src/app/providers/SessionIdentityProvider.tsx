@@ -1,30 +1,41 @@
-import React, { createContext, useContext } from 'react';
+import React, { useMemo } from 'react';
+import type { SessionStatus } from '../types/session';
+import { SessionIdentityContext } from '../hooks/useSessionIdentity';
 
-export interface SessionIdentityContextType {
+export interface SessionIdentityProviderProps {
     squadronId: string;
     operatorSn: string;
-    winchId: number | null;
+    status?: SessionStatus;
+    winchId?: number | null;
+    children: React.ReactNode;
 }
 
-const SessionIdentityContext = createContext<SessionIdentityContextType | null>(null);
+export const SessionIdentityProvider: React.FC<SessionIdentityProviderProps> = ({
+    squadronId,
+    operatorSn,
+    status,
+    winchId,
+    children,
+}) => {
+    const sessionStatus: SessionStatus = useMemo(
+        () => status ?? (winchId !== undefined && winchId !== null
+            ? { status: 'open', winchId }
+            : { status: 'unselected' }),
+        [status, winchId]
+    );
 
-export const SessionIdentityProvider: React.FC<{
-    squadronId: string;
-    operatorSn: string;
-    winchId: number | null;
-    children: React.ReactNode;
-}> = ({ squadronId, operatorSn, winchId, children }) => {
+    const derivedWinchId = 'winchId' in sessionStatus ? sessionStatus.winchId : null;
+
+    const value = useMemo(() => ({
+        squadronId,
+        operatorSn,
+        status: sessionStatus,
+        winchId: derivedWinchId,
+    }), [squadronId, operatorSn, sessionStatus, derivedWinchId]);
+
     return (
-        <SessionIdentityContext.Provider value={{ squadronId, operatorSn, winchId }}>
+        <SessionIdentityContext.Provider value={value}>
             {children}
         </SessionIdentityContext.Provider>
     );
-};
-
-export const useSessionIdentity = () => {
-    const context = useContext(SessionIdentityContext);
-    if (!context) {
-        throw new Error('useSessionIdentity must be used within SessionIdentityProvider');
-    }
-    return context;
 };

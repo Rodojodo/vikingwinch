@@ -2,10 +2,10 @@ import {render, screen, waitFor} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {DailyInspectionPanel} from './DailyInspectionPanel.tsx';
-import {useSessionIdentity} from '../../../app/providers/SessionIdentityProvider.tsx';
+import {useSessionIdentity} from '../../../app/hooks/useSessionIdentity.ts';
 import {getBroughtForward, getWinchHours} from '../api/winchClient.ts';
 
-vi.mock('../../../app/providers/SessionIdentityProvider.tsx', () => ({
+vi.mock('../../../app/hooks/useSessionIdentity.ts', () => ({
     useSessionIdentity: vi.fn(() => ({squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1'})),
 }));
 
@@ -34,7 +34,7 @@ describe('DailyInspectionPanel', () => {
 
     it('retrieves data from cloud and updates fields', async () => {
         const user = userEvent.setup();
-        vi.mocked(getBroughtForward).mockResolvedValue({brought_forward: 15} as any);
+        vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8});
         vi.mocked(getWinchHours).mockResolvedValue({hours: 150.5});
 
         render(<DailyInspectionPanel onComplete={mockOnComplete} onSignDI={mockOnSignDI}/>);
@@ -49,8 +49,8 @@ describe('DailyInspectionPanel', () => {
 
     it('handles retrieve data missing fields', async () => {
         const user = userEvent.setup();
-        vi.mocked(getBroughtForward).mockResolvedValue({brought_forward: 0} as any);
-        vi.mocked(getWinchHours).mockResolvedValue({hours: null as any});
+        vi.mocked(getBroughtForward).mockResolvedValue({left: null, right: null});
+        vi.mocked(getWinchHours).mockResolvedValue({hours: null});
 
         render(<DailyInspectionPanel onComplete={mockOnComplete} onSignDI={mockOnSignDI}/>);
 
@@ -136,7 +136,12 @@ describe('DailyInspectionPanel', () => {
     });
 
     it('does not submit if session data is missing', async () => {
-        vi.mocked(useSessionIdentity).mockReturnValue({squadronId: '', winchId: null, operatorSn: ''});
+        vi.mocked(useSessionIdentity).mockReturnValue({
+            squadronId: '',
+            winchId: null,
+            operatorSn: '',
+            status: { status: 'unselected' },
+        });
 
         const user = userEvent.setup();
         render(<DailyInspectionPanel onComplete={mockOnComplete} onSignDI={mockOnSignDI}/>);
@@ -148,7 +153,12 @@ describe('DailyInspectionPanel', () => {
     });
 
     it('does not retrieve data if winchId is missing', async () => {
-        vi.mocked(useSessionIdentity).mockReturnValue({squadronId: 'sqn1', winchId: null, operatorSn: 'OP1'});
+        vi.mocked(useSessionIdentity).mockReturnValue({
+            squadronId: 'sqn1',
+            winchId: null,
+            operatorSn: 'OP1',
+            status: { status: 'unselected' },
+        });
 
         const user = userEvent.setup();
         render(<DailyInspectionPanel onComplete={mockOnComplete} onSignDI={mockOnSignDI}/>);

@@ -4,7 +4,7 @@ import {useEffect, useRef, useState} from 'react';
 
 import {WinchDetailsSticker} from './WinchDetailsSticker.tsx';
 import {useLaunchOps} from '../hooks/useLaunchOps.tsx';
-import {useSessionIdentity} from '../../../app/providers/SessionIdentityProvider.tsx';
+import {useSessionIdentity} from '../../../app/hooks/useSessionIdentity.ts';
 import './LaunchPanel.css';
 import {DrumControl} from "./DrumControl.tsx";
 import {glassPanelSx} from "../../../themes/styles.ts";
@@ -95,8 +95,9 @@ export const LaunchPanel = ({children }: LaunchPanelProps) => {
     }, [leftTotal, rightTotal]);
 
     useEffect(() => {
+        const timers = timersRef.current;
         return () => {
-            timersRef.current.forEach(clearTimeout);
+            timers.forEach(clearTimeout);
         };
     }, []);
 

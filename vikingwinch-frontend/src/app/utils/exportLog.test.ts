@@ -48,7 +48,7 @@ describe('exportLog', () => {
         }
         vi.stubGlobal('fetch', vi.fn());
         vi.mocked(getWinch).mockResolvedValue({id: 1, registration: 'REG123', squadron_id: 'sqn1'});
-        vi.mocked(getBroughtForward).mockResolvedValue({brought_forward: 0, left: 15, right: 25} as any);
+        vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 25});
         vi.mocked(getDayLog).mockResolvedValue([
             {
                 id: 1,
@@ -80,9 +80,7 @@ describe('exportLog', () => {
         ]);
 
         const mockArrayBuffer = new ArrayBuffer(8);
-        vi.mocked(fetch).mockResolvedValue({
-            arrayBuffer: () => Promise.resolve(mockArrayBuffer),
-        } as unknown as Response);
+        vi.mocked(fetch).mockResolvedValue(new Response(mockArrayBuffer));
     });
 
     it('exports log correctly', async () => {
@@ -147,7 +145,16 @@ describe('exportLog', () => {
     });
 
     it('throws error if winchId is null', async () => {
-        const mockState = {winchId: null} as unknown as WinchLogState;
+        const mockState: WinchLogState = {
+            squadron: 'sqn1',
+            winchId: null,
+            operatorSn: 'OP1',
+            traineeSn: null,
+            dayFinished: false,
+            activeLauncherSn: 'OP1',
+            leftHistory: [],
+            rightHistory: [],
+        };
         await expect(exportLog(mockState)).rejects.toThrow('No winch selected');
     });
 

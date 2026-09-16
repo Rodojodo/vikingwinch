@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {Box, Button, TextField, Typography} from '@mui/material';
 import {getBroughtForward, getWinchHours} from '../api/winchClient.ts';
-import {useSessionIdentity} from '../../../app/providers/SessionIdentityProvider.tsx';
+import {useSessionIdentity} from '../../../app/hooks/useSessionIdentity.ts';
 import {darkTextFieldStyles, errorBannerSx, glassPanelSx, glowingPrimaryButtonSx} from '../../../themes/styles.ts';
 import type {SxProps, Theme} from '@mui/material/styles';
 

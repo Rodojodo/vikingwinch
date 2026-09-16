@@ -1,8 +1,9 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import LaunchPanel from './LaunchPanel.tsx';
+import type { DerivedWinchState } from '../types';
 
-let mockDerived: any = {
+let mockDerived: DerivedWinchState = {
     leftTotal: 0,
     rightTotal: 0,
     leftLaunches: 0,
@@ -17,7 +18,7 @@ let mockDerived: any = {
 const mockExecuteLaunch = vi.fn().mockResolvedValue(undefined);
 const mockUndoLaunch = vi.fn().mockResolvedValue(undefined);
 
-vi.mock('../../../app/providers/SessionIdentityProvider.tsx', () => ({
+vi.mock('../../../app/hooks/useSessionIdentity.ts', () => ({
     useSessionIdentity: vi.fn(() => ({ squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1' }))
 }));
 vi.mock('../../trainee-ops/hooks/useTraineeOps.tsx', () => ({
@@ -39,7 +40,7 @@ vi.mock('../../day-ops/hooks/useDayOps.tsx', () => ({
 
 // Mock subcomponents to simplify LaunchPanel testing
 vi.mock('./WinchDetailsSticker.tsx', () => ({
-    WinchDetailsSticker: (props: any) => <div data-testid="winch-sticker" data-recent={props.isRecentLaunch.toString()} />
+    WinchDetailsSticker: (props: { isRecentLaunch: boolean }) => <div data-testid="winch-sticker" data-recent={props.isRecentLaunch.toString()} />
 }));
 
 describe('LaunchPanel', () => {
@@ -80,28 +81,28 @@ describe('LaunchPanel', () => {
     it('handles left launch click', () => {
         render(<LaunchPanel />);
         const launchBtn = screen.getByText('Left Drum').closest('button');
-        fireEvent.click(launchBtn!);
+        if (launchBtn) fireEvent.click(launchBtn);
         expect(mockExecuteLaunch).toHaveBeenCalledWith('left');
     });
 
     it('handles left burn click', () => {
         render(<LaunchPanel />);
         const burnBtn = screen.getByRole('button', { name: /Burn Left/i });
-        fireEvent.click(burnBtn!);
+        fireEvent.click(burnBtn);
         expect(mockExecuteLaunch).toHaveBeenCalledWith('left', true);
     });
 
     it('handles right launch click', () => {
         render(<LaunchPanel />);
         const launchBtn = screen.getByText('Right Drum').closest('button');
-        fireEvent.click(launchBtn!);
+        if (launchBtn) fireEvent.click(launchBtn);
         expect(mockExecuteLaunch).toHaveBeenCalledWith('right');
     });
 
     it('handles right burn click', () => {
         render(<LaunchPanel />);
         const burnBtn = screen.getByRole('button', { name: /Burn Right/i });
-        fireEvent.click(burnBtn!);
+        fireEvent.click(burnBtn);
         expect(mockExecuteLaunch).toHaveBeenCalledWith('right', true);
     });
 
@@ -196,14 +197,16 @@ describe('LaunchPanel', () => {
         render(<LaunchPanel />);
         
         // click left launch
-        fireEvent.click(screen.getByText('Left Drum').closest('button')!);
+        const leftBtn = screen.getByText('Left Drum').closest('button');
+        if (leftBtn) fireEvent.click(leftBtn);
         // click left burn
         fireEvent.click(screen.getByRole('button', { name: /Burn Left/i }));
         // click left undo
         fireEvent.click(screen.getByText('− Undo Left'));
 
         // click right launch
-        fireEvent.click(screen.getByText('Right Drum').closest('button')!);
+        const rightBtn = screen.getByText('Right Drum').closest('button');
+        if (rightBtn) fireEvent.click(rightBtn);
         // click right burn
         fireEvent.click(screen.getByRole('button', { name: /Burn Right/i }));
         // click right undo
