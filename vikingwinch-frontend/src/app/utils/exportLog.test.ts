@@ -48,7 +48,7 @@ describe('exportLog', () => {
         }
         vi.stubGlobal('fetch', vi.fn());
         vi.mocked(getWinch).mockResolvedValue({id: 1, registration: 'REG123', squadron_id: 'sqn1'});
-        vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 25});
+        vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 25, hours: 100});
         vi.mocked(getDayLog).mockResolvedValue([
             {
                 id: 1,

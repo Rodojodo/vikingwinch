@@ -34,7 +34,7 @@ describe('DailyInspectionPanel', () => {
 
     it('retrieves data from cloud and updates fields', async () => {
         const user = userEvent.setup();
-        vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8});
+        vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.5});
         vi.mocked(getWinchHours).mockResolvedValue({hours: 150.5});
 
         render(<DailyInspectionPanel onComplete={mockOnComplete} onSignDI={mockOnSignDI}/>);
@@ -49,7 +49,7 @@ describe('DailyInspectionPanel', () => {
 
     it('handles retrieve data missing fields', async () => {
         const user = userEvent.setup();
-        vi.mocked(getBroughtForward).mockResolvedValue({left: null, right: null});
+        vi.mocked(getBroughtForward).mockResolvedValue({left: null, right: null, hours: null});
         vi.mocked(getWinchHours).mockResolvedValue({hours: null});
 
         render(<DailyInspectionPanel onComplete={mockOnComplete} onSignDI={mockOnSignDI}/>);

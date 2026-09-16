@@ -52,7 +52,6 @@ async def test_create_launch_success(db_session):
 
 @pytest.mark.asyncio
 async def test_delete_launch_success(db_session):
-    from datetime import datetime
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn5')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (890, 'Winch 890', 'sqn5')"))
     await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op3', 'oid3', 'Op3', 'sqn5', 'operator')"))
