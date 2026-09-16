@@ -88,14 +88,32 @@ async def test_create_day_log_rollback(db_session):
 
     # Patch the repository to raise an exception halfway
     with patch('domain.day_log.repository.add_day_log', side_effect=Exception("DB Error mid-flush")):
-        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
-            try:
-                response = await ac.post("/winch/999/day_log", json=payload)
-                assert response.status_code == 500
-            except Exception:
-                pass
+        async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as ac:
+            response = await ac.post("/winch/999/day_log", json=payload)
+            assert response.status_code == 500
     
     # Assert partial failure rolls back
     result = await db_session.execute(text("SELECT COUNT(*) FROM day_log WHERE winch_id = 999"))
     assert result.scalar() == 0
 
+
+@pytest.mark.asyncio
+async def test_create_day_log_success(db_session):
+    await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn10')"))
+    await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (1001, 'Winch 1001', 'sqn10')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op10', 'oid10', 'Op10', 'sqn10', 'operator')"))
+    await db_session.commit()
+    
+    payload = {
+        "squadron_id": "sqn10",
+        "type": "di",
+        "operator_sn": "op10",
+        "hours": 200.5
+    }
+
+    async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as ac:
+        response = await ac.post("/winch/1001/day_log", json=payload)
+        assert response.status_code == 201
+    
+    result = await db_session.execute(text("SELECT COUNT(*) FROM day_log WHERE winch_id = 1001"))
+    assert result.scalar() == 1

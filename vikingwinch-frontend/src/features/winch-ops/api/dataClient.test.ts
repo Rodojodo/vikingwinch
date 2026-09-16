@@ -419,3 +419,45 @@ describe('getWinchesForSquadron', () => {
     expect(result).toStrictEqual([]);
   });
 });
+
+import { getBroughtForward } from './dataClient.ts';
+
+describe('getBroughtForward', () => {
+  beforeEach(() => { vi.stubGlobal('fetch', vi.fn()); });
+  afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+
+  it('fetches brought-forward info from bf_info endpoint and maps correctly', async () => {
+    const targetWinchId = 1;
+    const targetDay = '2026-09-01';
+    const backendResponse = { left: 5, right: 3, hours: 25.5 };
+    
+    vi.mocked(fetch).mockResolvedValue({
+      ok: true,
+      json: async () => backendResponse,
+    } as Response);
+
+    const result = await getBroughtForward(targetWinchId, targetDay);
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledWith(`${API_BASE_URL}/winch/${targetWinchId}/bf_info?day=${targetDay}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+      },
+    });
+    
+    // Ensure the structure maps properly including the hours property we restored
+    expect(result).toStrictEqual({ left: 5, right: 3, hours: 25.5 });
+  });
+
+  it('throws error if the response is not ok', async () => {
+    vi.mocked(fetch).mockResolvedValue({
+      ok: false,
+      status: 404,
+      headers: createMockHeaders(),
+      json: async () => ({ detail: 'Not found' }),
+    } as unknown as Response);
+
+    await expect(getBroughtForward(1, '2026-09-01')).rejects.toThrow('Not found');
+  });
+});

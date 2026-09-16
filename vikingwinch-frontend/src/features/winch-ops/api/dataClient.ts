@@ -159,7 +159,7 @@ export const getWinchHours = async (winchId: number): Promise<{hours: number | n
     return response.json();
 }
 
-export const getBroughtForward = async (winchId: number, day: string): Promise<{left: number | null, right: number | null}> => {
+export const getBroughtForward = async (winchId: number, day: string): Promise<{left: number | null, right: number | null, hours: number | null}> => {
     const response = await fetch(`${API_BASE_URL}/winch/${winchId}/bf_info?day=${day}`, {
         method: 'GET',
         headers: {
@@ -168,5 +168,5 @@ export const getBroughtForward = async (winchId: number, day: string): Promise<{
     });
     await handleApiError(response);
     const data = await response.json();
-    return { left: data.left, right: data.right };
+    return { left: data.left, right: data.right, hours: data.hours };
 }
