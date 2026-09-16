@@ -46,14 +46,13 @@ sequenceDiagram
         alt UNIQUE constraint violated (concurrent insert)
             DB -->> Session: IntegrityError
             Session -->> Repo: rollback to SAVEPOINT
-            deactivate Session
             Repo ->> Repo: expunge(new_launch), sleep(0.1), retry
         else insert succeeds
             DB -->> Session: OK
             Session -->> Repo: release SAVEPOINT
-            deactivate Session
-            Repo ->> Repo: break loop
+          Repo ->> Repo: break loop
         end
+      deactivate Session
     end
 
     Repo -->> Router: new_launch
