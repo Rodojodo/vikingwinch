@@ -15,15 +15,15 @@ async def create_launch(
     payload: LaunchCreate,
     db: AsyncSession = Depends(get_db),
 ):
-    launch = await launch_repo.add_launch(
-        db,
-        squadron_id=payload.squadron_id,
-        winch_id=payload.winch_id,
-        operator_sn=payload.operator_sn,
-        drum=payload.drum,
-        is_burn=payload.is_burn,
-    )
-    await db.commit()
+    async with db.begin():
+        launch = await launch_repo.add_launch(
+            db,
+            squadron_id=payload.squadron_id,
+            winch_id=payload.winch_id,
+            operator_sn=payload.operator_sn,
+            drum=payload.drum,
+            is_burn=payload.is_burn,
+        )
     return launch
 
 
@@ -32,10 +32,10 @@ async def delete_launch(
     launch_id: int,
     db: AsyncSession = Depends(get_db),
 ):
-    launch = await launch_repo.delete_launch(db, launch_id)
-    if not launch:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Launch not found")
-    await db.commit()
+    async with db.begin():
+        launch = await launch_repo.delete_launch(db, launch_id)
+        if not launch:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Launch not found")
     return None
 
 
@@ -45,10 +45,10 @@ async def add_remark(
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        launch = await launch_repo.add_remark_to_launch(
-            db, payload.launch_id, payload.remark
-        )
-        await db.commit()
+        async with db.begin():
+            launch = await launch_repo.add_remark_to_launch(
+                db, payload.launch_id, payload.remark
+            )
         return launch
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
@@ -60,10 +60,10 @@ async def add_repair(
     db: AsyncSession = Depends(get_db),
 ):
     try:
-        launch = await launch_repo.add_repair_to_launch(
-            db, payload.launch_id, payload.repair, payload.supervisor_id
-        )
-        await db.commit()
+        async with db.begin():
+            launch = await launch_repo.add_repair_to_launch(
+                db, payload.launch_id, payload.repair, payload.supervisor_id
+            )
         return launch
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))

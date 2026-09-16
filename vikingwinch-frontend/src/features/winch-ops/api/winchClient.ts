@@ -15,6 +15,6 @@ export const getWinchHours = async (winchId: number): Promise<{hours: number | n
     return apiFetch<{hours: number | null}>(`/winch/${winchId}/hours`);
 };
 
-export const getBroughtForward = async (winchId: number, day: string): Promise<{left: number | null, right: number | null}> => {
-    return apiFetch<{left: number | null, right: number | null}>(`/launches/brought_forward?winch_id=${winchId}&day=${day}`);
+export const getBroughtForward = async (winchId: number, day: string): Promise<{left: number | null, right: number | null, hours: number | null}> => {
+    return apiFetch<{left: number | null, right: number | null, hours: number | null}>(`/winch/${winchId}/bf_info?day=${day}`);
 };

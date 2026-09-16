@@ -46,12 +46,12 @@ describe('winchClient', () => {
         expect(result).toEqual({ hours: 145.2 });
     });
 
-    it('getBroughtForward calls /launches/brought_forward?winch_id=:id&day=:day', async () => {
-        vi.mocked(apiFetch).mockResolvedValue({ left: 12, right: 14 });
+    it('getBroughtForward calls /winch/:id/bf_info?day=:day', async () => {
+        vi.mocked(apiFetch).mockResolvedValue({ left: 12, right: 14, hours: 145.2 });
 
         const result = await getBroughtForward(1, '2026-09-16');
 
-        expect(apiFetch).toHaveBeenCalledWith('/launches/brought_forward?winch_id=1&day=2026-09-16');
-        expect(result).toEqual({ left: 12, right: 14 });
+        expect(apiFetch).toHaveBeenCalledWith('/winch/1/bf_info?day=2026-09-16');
+        expect(result).toEqual({ left: 12, right: 14, hours: 145.2 });
     });
 });
