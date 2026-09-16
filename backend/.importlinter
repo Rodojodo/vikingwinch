@@ -27,5 +27,14 @@ ignore_imports =
     domain.operator.test_repository -> domain.squadron.model
     domain.winch.test_repository -> domain.squadron.model
     domain.launch.test_repository -> domain.squadron.model
-    domain.launch.test_repository -> domain.operator.model
     domain.launch.test_repository -> domain.winch.model
+    domain.winch.router -> domain.day_log.repository
+    domain.winch.router -> domain.launch.repository
+    domain.winch.router -> domain.operator.repository
+    domain.winch.schema -> domain.day_log.schema
+    domain.winch.schema -> domain.launch.schema
+    domain.winch.schema -> domain.operator.schema
+    domain.winch.test_router -> domain.operator.model
+    domain.winch.test_router -> domain.launch.model
+    domain.winch.test_router -> domain.squadron.model
+    domain.winch.test_router -> domain.day_log.model

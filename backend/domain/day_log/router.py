@@ -16,8 +16,8 @@ async def create_day_log(
     payload: DayLogCreate,
     db: AsyncSession = Depends(get_db),
 ):
-    log = await day_log_repo.add_day_log(db, winch_id, payload)
-    await db.commit()
+    async with db.begin():
+        log = await day_log_repo.add_day_log(db, winch_id, payload)
     return log
 
 

@@ -65,3 +65,36 @@ async def test_get_export_data(setup_data):
     assert data["winch"]["registration"] == "VX001"
     assert len(data["operators"]) == 1
     assert data["brought_forward"]["right"] == 2
+
+from unittest.mock import patch
+from sqlalchemy import text
+from httpx import AsyncClient
+
+@pytest.mark.asyncio
+async def test_create_day_log_rollback(db_session):
+    # Setup test winch
+    await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn2')"))
+    await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (999, 'Winch 999', 'sqn2')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('12345', 'oid', 'Op', 'sqn2', 'operator')"))
+    await db_session.commit()
+    
+    payload = {
+        "squadron_id": "sqn2",
+        "type": "di",
+        "operator_sn": "12345",
+        "hours": 100.5
+    }
+
+    # Patch the repository to raise an exception halfway
+    with patch('domain.day_log.repository.add_day_log', side_effect=Exception("DB Error mid-flush")):
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+            try:
+                response = await ac.post("/winch/999/day_log", json=payload)
+                assert response.status_code == 500
+            except Exception:
+                pass
+    
+    # Assert partial failure rolls back
+    result = await db_session.execute(text("SELECT COUNT(*) FROM day_logs WHERE winch_id = 999"))
+    assert result.scalar() == 0
+

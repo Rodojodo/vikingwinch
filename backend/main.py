@@ -11,7 +11,6 @@ from domain.launch.router import router as launch_router
 from domain.operator.router import router as operator_router
 from domain.squadron.router import router as squadron_router
 from domain.winch.router import router as winch_router
-from domain.root.router import router as root_router
 
 
 async def db_unavailable_handler(request: Request, exc: Exception):
@@ -50,4 +49,3 @@ app.include_router(launch_router)
 app.include_router(operator_router)
 app.include_router(squadron_router)
 app.include_router(winch_router)
-app.include_router(root_router)
