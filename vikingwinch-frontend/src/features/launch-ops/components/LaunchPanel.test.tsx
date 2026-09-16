@@ -21,10 +21,7 @@ const mockUndoLaunch = vi.fn().mockResolvedValue(undefined);
 vi.mock('../../../app/hooks/useSessionIdentity.ts', () => ({
     useSessionIdentity: vi.fn(() => ({ squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1' }))
 }));
-vi.mock('../../trainee-ops/hooks/useTraineeOps.tsx', () => ({
-    useTraineeOps: vi.fn(() => ({ traineeSn: null, setTrainee: vi.fn(), changeTrainee: vi.fn() }))
-}));
-vi.mock('../hooks/useLaunchOps.tsx', () => ({
+vi.mock('../hooks/useLaunchOps.ts', () => ({
     useLaunchOps: () => ({
         derived: mockDerived,
         leftHistory: [],
@@ -33,9 +30,6 @@ vi.mock('../hooks/useLaunchOps.tsx', () => ({
         undoLaunch: mockUndoLaunch,
         addRemarkToState: vi.fn(),
     })
-}));
-vi.mock('../../day-ops/hooks/useDayOps.tsx', () => ({
-    useDayOps: vi.fn(() => ({ dayFinished: false, finishDay: vi.fn() }))
 }));
 
 // Mock subcomponents to simplify LaunchPanel testing

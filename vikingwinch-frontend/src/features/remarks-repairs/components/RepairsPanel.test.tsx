@@ -6,34 +6,7 @@ import type {DrumLaunchStatus} from '../types';
 import { getOperatorsForSquadron } from "../../../core/http/operatorsClient.ts";
 
 
-vi.mock('../../../app/hooks/useSessionIdentity.ts', () => ({
-    useSessionIdentity: vi.fn(() => ({ squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1' }))
-}));
-vi.mock('../..//trainee-ops/hooks/useTraineeOps.tsx', () => ({
-    useTraineeOps: vi.fn(() => ({ traineeSn: null, setTrainee: vi.fn(), changeTrainee: vi.fn() }))
-}));
-vi.mock('../..//launch-ops/hooks/useLaunchOps.tsx', () => ({
-    useLaunchOps: vi.fn(() => ({ 
-        derived: { leftLastRecord: { id: 1 }, rightLastRecord: { id: 2 } }, 
-        leftHistory: [], 
-        rightHistory: [], 
-        executeLaunch: vi.fn().mockResolvedValue(undefined), 
-        undoLaunch: vi.fn().mockResolvedValue(undefined), 
-        addRemarkToState: vi.fn() 
-    }))
-}));
-vi.mock('../..//day-ops/hooks/useDayOps.tsx', () => ({
-    useDayOps: vi.fn(() => ({ dayFinished: false, finishDay: vi.fn() }))
-}));
-
-
 vi.mock("../../../core/http/operatorsClient.ts", () => ({ getOperatorsForSquadron: vi.fn() }));
-
-
-
-vi.mock('../../winch-ops/api/dataClient.ts', () => ({
-    getOperatorsForSquadron: vi.fn(),
-}));
 
 describe('RepairsPanel', () => {
     const mockAddRemark = vi.fn();

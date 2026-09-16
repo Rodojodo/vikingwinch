@@ -9,15 +9,17 @@ import { LaunchOpsContext } from '../hooks/useLaunchOps';
 
 export interface LaunchOpsProviderProps {
     children: React.ReactNode;
+    activeLauncherSn?: string | null;
     traineeSn?: string | null;
 }
 
 export const LaunchOpsProvider: React.FC<LaunchOpsProviderProps> = ({
     children,
-    traineeSn = null,
+    activeLauncherSn = null,
+    traineeSn: _traineeSn = null,
 }) => {
     const [state, dispatch] = useReducer(launchReducer, initialLaunchState);
-    const { winchId, operatorSn } = useSessionIdentity();
+    const { winchId, operatorSn, squadronId } = useSessionIdentity();
 
     const derived = useMemo<DerivedWinchState>(() => {
         const leftTotal = state.leftHistory.length;
@@ -55,17 +57,19 @@ export const LaunchOpsProvider: React.FC<LaunchOpsProviderProps> = ({
 
     const executeLaunch = useCallback(async (drum: DrumPosition, burn: boolean = false, traineeSnOverride?: string | null) => {
         if (!winchId) throw new Error('Winch not selected');
+        if (!squadronId) throw new Error('Squadron not selected');
+        const effectiveOperator = traineeSnOverride ?? activeLauncherSn ?? operatorSn;
         const payload: LaunchPayload = {
+            squadron_id: squadronId,
             winch_id: winchId,
-            operator_sn: operatorSn,
+            operator_sn: effectiveOperator,
             drum,
-            burn,
-            trainee: traineeSnOverride !== undefined ? traineeSnOverride : traineeSn,
+            is_burn: burn,
         };
         const response = await postLaunchToDb(payload);
         const record = toLaunchRecord(response);
         dispatch({ type: 'RECORD_LAUNCH', payload: { drum, record } });
-    }, [winchId, operatorSn, traineeSn]);
+    }, [winchId, operatorSn, squadronId, activeLauncherSn]);
 
     const undoLaunch = useCallback(async (drum: DrumPosition) => {
         const record = drum === 'left' ? derived.leftLastRecord : derived.rightLastRecord;

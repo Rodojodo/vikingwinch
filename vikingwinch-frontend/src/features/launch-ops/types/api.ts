@@ -1,21 +1,20 @@
 import type {DrumPosition} from '../../../core/types';
 
 export interface LaunchPayload {
+    squadron_id: string;
     winch_id: number;
-    drum: DrumPosition;
-    burn: boolean;
     operator_sn: string;
-    trainee: string | null;
+    drum: DrumPosition;
+    is_burn: boolean;
 }
 
 export interface LaunchResponse {
-    id: number;
+    launch_id: number;
+    launch_number: number | null;
+    squadron_id: string;
     winch_id: number;
     drum: DrumPosition;
-    burn: boolean;
+    timestamp: string | null;
     operator_sn: string;
-    trainee: string | null;
-    launch_number: number | null;
-    timestamp: string;
-    remark: string | null;
+    remarks: string | null;
 }

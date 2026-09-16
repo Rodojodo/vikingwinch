@@ -1,8 +1,8 @@
-import React, {useEffect} from 'react';
-import {act, render, screen} from '@testing-library/react';
+import {useEffect} from 'react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {useLaunchOps} from './useLaunchOps';
+import {act, render, screen} from '@testing-library/react';
 import {LaunchOpsProvider} from '../providers/LaunchOpsProvider';
+import {useLaunchOps} from './useLaunchOps';
 import {SessionIdentityProvider} from '../../../app/providers/SessionIdentityProvider';
 import {postLaunchToDb, removeLaunchFromDb} from '../api/launchClient';
 import type {LaunchResponse} from '../types';
@@ -10,11 +10,12 @@ import type {LaunchResponse} from '../types';
 vi.mock('../api/launchClient', () => ({
     postLaunchToDb: vi.fn(),
     removeLaunchFromDb: vi.fn(),
+    getLaunches: vi.fn(),
 }));
 
 let opsContext: ReturnType<typeof useLaunchOps> | null = null;
 
-const ConsumerComponent: React.FC = () => {
+const ConsumerComponent = () => {
     const context = useLaunchOps();
     useEffect(() => {
         opsContext = context;
@@ -84,15 +85,14 @@ describe('useLaunchOps', () => {
 
     it('successfully executes a launch and updates history & derived values', async () => {
         const mockResponse: LaunchResponse = {
-            id: 10,
+            launch_id: 10,
             launch_number: 1,
             timestamp: '2026-09-16T10:00:00Z',
             drum: 'left',
             operator_sn: 'OP-1234',
+            squadron_id: '621 VGS',
             winch_id: 1,
-            burn: false,
-            trainee: null,
-            remark: null,
+            remarks: null,
         };
         vi.mocked(postLaunchToDb).mockResolvedValue(mockResponse);
 
@@ -103,11 +103,11 @@ describe('useLaunchOps', () => {
         });
 
         expect(postLaunchToDb).toHaveBeenCalledWith({
+            squadron_id: '621 VGS',
             winch_id: 1,
             operator_sn: 'OP-1234',
             drum: 'left',
-            burn: false,
-            trainee: null,
+            is_burn: false,
         });
 
         expect(screen.getByTestId('left-total')).toHaveTextContent('1');
@@ -117,15 +117,14 @@ describe('useLaunchOps', () => {
 
     it('handles burn launches correctly by excluding from launches count', async () => {
         const mockResponse: LaunchResponse = {
-            id: 11,
+            launch_id: 11,
             launch_number: null,
             timestamp: '2026-09-16T10:05:00Z',
             drum: 'right',
             operator_sn: 'OP-1234',
+            squadron_id: '621 VGS',
             winch_id: 1,
-            burn: true,
-            trainee: null,
-            remark: null,
+            remarks: null,
         };
         vi.mocked(postLaunchToDb).mockResolvedValue(mockResponse);
 
@@ -149,26 +148,24 @@ describe('useLaunchOps', () => {
 
     it('successfully undos a launch on left drum and right drum', async () => {
         const leftResponse: LaunchResponse = {
-            id: 50,
+            launch_id: 50,
             launch_number: 1,
             timestamp: '2026-09-16T10:00:00Z',
             drum: 'left',
             operator_sn: 'OP-1234',
+            squadron_id: '621 VGS',
             winch_id: 1,
-            burn: false,
-            trainee: null,
-            remark: null,
+            remarks: null,
         };
         const rightResponse: LaunchResponse = {
-            id: 51,
+            launch_id: 51,
             launch_number: 2,
             timestamp: '2026-09-16T10:10:00Z',
             drum: 'right',
             operator_sn: 'OP-1234',
+            squadron_id: '621 VGS',
             winch_id: 1,
-            burn: false,
-            trainee: null,
-            remark: null,
+            remarks: null,
         };
         vi.mocked(postLaunchToDb).mockResolvedValueOnce(leftResponse).mockResolvedValueOnce(rightResponse);
         vi.mocked(removeLaunchFromDb).mockResolvedValue(undefined);
@@ -200,26 +197,24 @@ describe('useLaunchOps', () => {
 
         const pastLaunches: LaunchResponse[] = [
             {
-                id: 1,
+                launch_id: 1,
                 launch_number: 1,
                 timestamp: '2026-09-16T09:00:00Z',
                 drum: 'left',
                 operator_sn: 'OP1',
+                squadron_id: '621 VGS',
                 winch_id: 1,
-                burn: false,
-                trainee: null,
-                remark: null,
+                remarks: null,
             },
             {
-                id: 2,
+                launch_id: 2,
                 launch_number: 2,
                 timestamp: '2026-09-16T09:10:00Z',
                 drum: 'right',
                 operator_sn: 'OP1',
+                squadron_id: '621 VGS',
                 winch_id: 1,
-                burn: false,
-                trainee: null,
-                remark: null,
+                remarks: null,
             },
         ];
 
@@ -237,15 +232,14 @@ describe('useLaunchOps', () => {
 
         const leftOnly: LaunchResponse[] = [
             {
-                id: 1,
+                launch_id: 1,
                 launch_number: 1,
                 timestamp: '2026-09-16T09:00:00Z',
                 drum: 'left',
                 operator_sn: 'OP1',
+                squadron_id: '621 VGS',
                 winch_id: 1,
-                burn: false,
-                trainee: null,
-                remark: null,
+                remarks: null,
             },
         ];
 
@@ -256,15 +250,14 @@ describe('useLaunchOps', () => {
 
         const rightOnly: LaunchResponse[] = [
             {
-                id: 2,
+                launch_id: 2,
                 launch_number: 1,
                 timestamp: '2026-09-16T09:00:00Z',
                 drum: 'right',
                 operator_sn: 'OP1',
+                squadron_id: '621 VGS',
                 winch_id: 1,
-                burn: false,
-                trainee: null,
-                remark: null,
+                remarks: null,
             },
         ];
 
@@ -279,26 +272,24 @@ describe('useLaunchOps', () => {
 
         const pastLaunches: LaunchResponse[] = [
             {
-                id: 1,
+                launch_id: 1,
                 launch_number: 1,
                 timestamp: '2026-09-16T09:30:00Z',
                 drum: 'left',
                 operator_sn: 'OP1',
+                squadron_id: '621 VGS',
                 winch_id: 1,
-                burn: false,
-                trainee: null,
-                remark: null,
+                remarks: null,
             },
             {
-                id: 2,
+                launch_id: 2,
                 launch_number: 2,
                 timestamp: '2026-09-16T09:10:00Z',
                 drum: 'right',
                 operator_sn: 'OP1',
+                squadron_id: '621 VGS',
                 winch_id: 1,
-                burn: false,
-                trainee: null,
-                remark: null,
+                remarks: null,
             },
         ];
 
@@ -314,15 +305,14 @@ describe('useLaunchOps', () => {
 
         const pastLaunches: LaunchResponse[] = [
             {
-                id: 99,
+                launch_id: 99,
                 launch_number: 1,
                 timestamp: '2026-09-16T09:00:00Z',
                 drum: 'left',
                 operator_sn: 'OP1',
+                squadron_id: '621 VGS',
                 winch_id: 1,
-                burn: false,
-                trainee: null,
-                remark: null,
+                remarks: null,
             },
         ];
 

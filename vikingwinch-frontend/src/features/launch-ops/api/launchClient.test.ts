@@ -14,19 +14,22 @@ describe('launchClient', () => {
 
     it('postLaunchToDb sends POST request to /launches with payload', async () => {
         const payload: LaunchPayload = {
+            squadron_id: '621 VGS',
             winch_id: 1,
             drum: 'left',
             operator_sn: 'OP-1234',
-            burn: false,
-            trainee: null,
+            is_burn: false,
         };
 
         const mockResponse: LaunchResponse = {
-            ...payload,
-            id: 101,
+            launch_id: 101,
             launch_number: 1,
+            squadron_id: '621 VGS',
+            winch_id: 1,
+            drum: 'left',
             timestamp: '2026-09-16T10:00:00Z',
-            remark: null,
+            operator_sn: 'OP-1234',
+            remarks: null,
         };
 
         vi.mocked(apiFetch).mockResolvedValue(mockResponse);

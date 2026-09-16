@@ -2,37 +2,11 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RemarksPanel } from './RemarksPanel.tsx';
 
-
-
-vi.mock('../../../app/providers/SessionIdentityProvider.tsx', () => ({
-    useSessionIdentity: vi.fn(() => ({ squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1' }))
-}));
-vi.mock('../..//trainee-ops/hooks/useTraineeOps.tsx', () => ({
-    useTraineeOps: vi.fn(() => ({ traineeSn: null, setTrainee: vi.fn(), changeTrainee: vi.fn() }))
-}));
-vi.mock('../..//launch-ops/hooks/useLaunchOps.tsx', () => ({
-    useLaunchOps: vi.fn(() => ({ 
-        derived: { leftLastRecord: {}, rightLastRecord: {} }, 
-        leftHistory: [], 
-        rightHistory: [], 
-        executeLaunch: vi.fn().mockResolvedValue(undefined), 
-        undoLaunch: vi.fn().mockResolvedValue(undefined), 
-        addRemarkToState: vi.fn() 
-    }))
-}));
-vi.mock('../..//day-ops/hooks/useDayOps.tsx', () => ({
-    useDayOps: vi.fn(() => ({ dayFinished: false, finishDay: vi.fn() }))
-}));
-
-
-
-
 describe('RemarksPanel', () => {
     const mockAddRemark = vi.fn();
 
     beforeEach(() => {
         vi.clearAllMocks();
-        
     });
 
     it('renders RemarksPanel correctly', () => {
@@ -75,8 +49,6 @@ describe('RemarksPanel', () => {
     });
 
     it('disables submit button and shows text when no launches', () => {
-        
-
         render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: null, rightLastRecord: null } as any} />);
         expect(screen.getByText('No launches yet')).toBeInTheDocument();
         const submitButton = screen.getByRole('button', { name: /Submit Remark/i });
@@ -124,6 +96,7 @@ describe('RemarksPanel', () => {
         expect(mockAddRemark).not.toHaveBeenCalled();
         expect(screen.getByText('Repairs should be logged in the Repairs tab')).toBeInTheDocument();
     });
+
     it('submits remark for right drum', async () => {
         render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} />);
         

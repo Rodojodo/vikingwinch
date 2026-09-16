@@ -4,7 +4,7 @@ import {darkMenuStyles, darkSelectStyles, darkTextFieldStyles, getTabButtonStyle
 import {getOperatorsForSquadron} from '../../../core/http/operatorsClient.ts';
 import type {OperatorRead} from '../../../core/types';
 import {useSessionIdentity} from '../../../app/hooks/useSessionIdentity.ts';
-import {useDayOps} from '../hooks/useDayOps.tsx';
+import {useDayOps} from '../hooks/useDayOps.ts';
 
 type FinishDayPanelProps = {
     isLoading: boolean;

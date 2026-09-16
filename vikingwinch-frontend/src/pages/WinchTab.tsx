@@ -9,9 +9,10 @@ import {useDayOps} from '../features/day-ops/hooks/useDayOps.ts';
 import {RemarksRepairsPanel} from '../features/remarks-repairs/components/RemarksRepairsPanel.tsx';
 import {FinishDayPanel} from '../features/day-ops/components/FinishDayPanel.tsx';
 import {useCallback, useEffect, useState} from 'react';
-import {Box} from '@mui/material';
+import {Box, ButtonBase} from '@mui/material';
 import {LaunchPanel} from '../features/launch-ops/components/LaunchPanel';
 import {TraineeWing} from '../features/trainee-ops/components/TraineeWing.tsx';
+import {TraineeAssignmentPanel} from '../features/trainee-ops/components/TraineeAssignmentPanel.tsx';
 import {SkylogValues} from '../features/day-ops/components/SkylogValues';
 
 import {WinchSelectPanel} from '../features/winch-ops/components/WinchSelectPanel';
@@ -26,7 +27,7 @@ import {exportLog} from '../app/utils/exportLog.ts';
 import type {SessionStatus} from '../app/types/session.ts';
 import type {TabView} from '../features/winch-ops/types';
 import type {OperatorRead} from '../core/types';
-import {appBackgroundSx} from '../themes/styles.ts';
+import {appBackgroundSx, getTabButtonStyles} from '../themes/styles.ts';
 
 interface WinchTabProps {
     tabId: string;
@@ -53,7 +54,7 @@ const WinchTabContent = ({
     const {squadronId, winchId, operatorSn, status} = useSessionIdentity();
     const {hydrateHistory, derived, addRemarkToState, leftHistory, rightHistory} = useLaunchOps();
     const {traineeSn, activeLauncherSn, setActiveLauncher, setTrainee} = useTraineeOps();
-    const {recordDI} = useDayOps();
+    const {recordDI, recordSignOn} = useDayOps();
     const [view, setView] = useState<TabView>(() => (winchId ? 'loading' : 'select_winch'));
     const [prevWinchId, setPrevWinchId] = useState(winchId);
     if (winchId !== prevWinchId) {
@@ -216,6 +217,12 @@ const WinchTabContent = ({
                     <Box sx={{position: 'relative', width: '100%', maxWidth: 540}}>
                         <LaunchPanel>
                             <RemarksRepairsPanel addRemark={addRemark} squadronId={squadronId} isLoading={false} derived={derived} />
+                            <ButtonBase
+                                onClick={() => setView('skylog')}
+                                sx={getTabButtonStyles(false)}
+                            >
+                                Show skylog values
+                            </ButtonBase>
                             <FinishDayPanel isLoading={false} onExportLog={handleExportLog}/>
                         </LaunchPanel>
                         <TraineeWing
@@ -231,7 +238,20 @@ const WinchTabContent = ({
                             operators={operators}
                             isFetchingOperators={isFetchingOperators}
                             setActiveDriver={setActiveLauncher}
-                        />
+                        >
+                            <TraineeAssignmentPanel
+                                isLoading={false}
+                                recordSignOn={async (newTraineeSn) => {
+                                    if (operatorSn) {
+                                        await recordSignOn(newTraineeSn);
+                                        setTrainee(newTraineeSn);
+                                    }
+                                }}
+                                squadron={squadronId}
+                                operatorSn={operatorSn}
+                                traineeSn={traineeSn}
+                            />
+                        </TraineeWing>
                     </Box>
                 );
             case 'skylog':
@@ -262,9 +282,9 @@ const WinchTabInner = ({
     onWinchSelect,
     onSessionStatusResolved,
 }: WinchTabContentProps) => {
-    const { traineeSn } = useTraineeOps();
+    const { traineeSn, activeLauncherSn } = useTraineeOps();
     return (
-        <LaunchOpsProvider traineeSn={traineeSn}>
+        <LaunchOpsProvider traineeSn={traineeSn} activeLauncherSn={activeLauncherSn}>
             <WinchTabContent
                 tabId={tabId}
                 openWinchIds={openWinchIds}

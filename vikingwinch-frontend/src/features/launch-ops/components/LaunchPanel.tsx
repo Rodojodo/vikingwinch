@@ -3,7 +3,7 @@ import {useEffect, useRef, useState} from 'react';
 
 
 import {WinchDetailsSticker} from './WinchDetailsSticker.tsx';
-import {useLaunchOps} from '../hooks/useLaunchOps.tsx';
+import {useLaunchOps} from '../hooks/useLaunchOps.ts';
 import {useSessionIdentity} from '../../../app/hooks/useSessionIdentity.ts';
 import './LaunchPanel.css';
 import {DrumControl} from "./DrumControl.tsx";

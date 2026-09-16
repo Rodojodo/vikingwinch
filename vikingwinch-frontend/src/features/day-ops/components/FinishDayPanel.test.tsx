@@ -11,7 +11,7 @@ vi.mock('../../../app/hooks/useSessionIdentity.ts', () => ({
     useSessionIdentity: vi.fn(() => ({squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1'})),
 }));
 
-vi.mock('../hooks/useDayOps.tsx', () => ({
+vi.mock('../hooks/useDayOps', () => ({
     useDayOps: vi.fn(() => ({
         dayFinished: false,
         finishDay: mockFinishDay,
