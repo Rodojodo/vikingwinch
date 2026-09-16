@@ -1,22 +1,31 @@
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RemarksPanel } from './RemarksPanel.tsx';
+import type { DrumLaunchStatus } from '../types';
 
 describe('RemarksPanel', () => {
     const mockAddRemark = vi.fn();
+    const mockDerived: DrumLaunchStatus = {
+        leftLastRecord: { id: 1 },
+        rightLastRecord: { id: 2 },
+    };
+    const mockDerivedEmpty: DrumLaunchStatus = {
+        leftLastRecord: null,
+        rightLastRecord: null,
+    };
 
     beforeEach(() => {
         vi.clearAllMocks();
     });
 
     it('renders RemarksPanel correctly', () => {
-        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} />);
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={mockDerived} />);
         expect(screen.getByText('Launch remarks')).toBeInTheDocument();
         expect(screen.getByPlaceholderText('Enter launch remarks...')).toBeInTheDocument();
     });
 
     it('submits remark when button is clicked', async () => {
-        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} />);
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={mockDerived} />);
         
         fireEvent.change(screen.getByPlaceholderText('Enter launch remarks...'), {
             target: { value: 'Test remark' },
@@ -32,7 +41,7 @@ describe('RemarksPanel', () => {
 
     it('shows error alert when submission fails', async () => {
         mockAddRemark.mockRejectedValue(new Error('Test local Error'));
-        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} />);
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={mockDerived} />);
         
         fireEvent.change(screen.getByPlaceholderText('Enter launch remarks...'), {
             target: { value: 'Test remark' },
@@ -49,7 +58,7 @@ describe('RemarksPanel', () => {
     });
 
     it('disables submit button and shows text when no launches', () => {
-        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: null, rightLastRecord: null } as any} />);
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={mockDerivedEmpty} />);
         expect(screen.getByText('No launches yet')).toBeInTheDocument();
         const submitButton = screen.getByRole('button', { name: /Submit Remark/i });
         expect(submitButton).toBeDisabled();
@@ -57,7 +66,7 @@ describe('RemarksPanel', () => {
     
     it('catches and swallows error thrown by addRemark', async () => {
         mockAddRemark.mockRejectedValue(new Error('Add remark failed'));
-        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} />);
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={mockDerived} />);
         
         fireEvent.change(screen.getByPlaceholderText('Enter launch remarks...'), {
             target: { value: 'Test remark' },
@@ -76,13 +85,13 @@ describe('RemarksPanel', () => {
     });
 
     it('does not submit if remark is empty', () => {
-        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} />);
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={mockDerived} />);
         const submitButton = screen.getByRole('button', { name: /Submit Remark/i });
         expect(submitButton).toBeDisabled();
     });
 
     it('blocks remarks starting with Repair', async () => {
-        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} />);
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={mockDerived} />);
         
         fireEvent.change(screen.getByPlaceholderText('Enter launch remarks...'), {
             target: { value: 'Repair: broken cable' },
@@ -98,7 +107,7 @@ describe('RemarksPanel', () => {
     });
 
     it('submits remark for right drum', async () => {
-        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} />);
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={mockDerived} />);
         
         fireEvent.change(screen.getByPlaceholderText('Enter launch remarks...'), {
             target: { value: 'Right remark' },
@@ -118,7 +127,7 @@ describe('RemarksPanel', () => {
 
     it('handles non-Error exception during submit', async () => {
         mockAddRemark.mockRejectedValue('String Error');
-        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: {}, rightLastRecord: {} } as any} />);
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={mockDerived} />);
         
         fireEvent.change(screen.getByPlaceholderText('Enter launch remarks...'), {
             target: { value: 'Test remark' },
@@ -136,7 +145,7 @@ describe('RemarksPanel', () => {
     });
 
     it('returns early in handleSubmit if hasLaunches is false', async () => {
-        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={{ leftLastRecord: null, rightLastRecord: null } as any} />);
+        render(<RemarksPanel addRemark={mockAddRemark} isLoading={false} derived={mockDerivedEmpty} />);
         
         fireEvent.change(screen.getByPlaceholderText('Enter launch remarks...'), {
             target: { value: 'Test remark' },
