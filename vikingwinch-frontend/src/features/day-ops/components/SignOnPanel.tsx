@@ -5,7 +5,7 @@ import type {OperatorRead} from '../../../core/types';
 import {useSessionIdentity} from '../../../app/providers/SessionIdentityProvider.tsx';
 import {postDayLogToDb} from '../api/dayOpsClient.ts';
 import {useTraineeOps} from '../../trainee-ops/hooks/useTraineeOps.tsx';
-import {TraineeSelect} from './TraineeSelect.tsx';
+import {TraineeSelect} from '../../trainee-ops/components/TraineeSelect.tsx';
 import {elevatedPanel, errorBannerSx, glassPanelSx, glowingPrimaryButtonSx} from "../../../themes/styles.ts";
 import type {SxProps, Theme} from "@mui/material/styles";
 

@@ -7,10 +7,10 @@ import LaunchPanel from './LaunchPanel.tsx';
 vi.mock('../../../app/providers/SessionIdentityProvider.tsx', () => ({
     useSessionIdentity: vi.fn(() => ({ squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1' }))
 }));
-vi.mock('../..//trainee-ops/hooks/useTraineeOps.tsx', () => ({
+vi.mock('../../trainee-ops/hooks/useTraineeOps.tsx', () => ({
     useTraineeOps: vi.fn(() => ({ traineeSn: null, setTrainee: vi.fn(), changeTrainee: vi.fn() }))
 }));
-vi.mock('../..//launch-ops/hooks/useLaunchOps.tsx', () => ({
+vi.mock('../hooks/useLaunchOps.tsx', () => ({
     useLaunchOps: vi.fn(() => ({ 
         derived: { leftLastRecord: {}, rightLastRecord: {} }, 
         leftHistory: [], 
@@ -20,7 +20,7 @@ vi.mock('../..//launch-ops/hooks/useLaunchOps.tsx', () => ({
         addRemarkToState: vi.fn() 
     }))
 }));
-vi.mock('../..//day-ops/hooks/useDayOps.tsx', () => ({
+vi.mock('../../day-ops/hooks/useDayOps.tsx', () => ({
     useDayOps: vi.fn(() => ({ dayFinished: false, finishDay: vi.fn() }))
 }));
 
@@ -28,7 +28,7 @@ vi.mock('../..//day-ops/hooks/useDayOps.tsx', () => ({
 
 
 // Mock subcomponents to simplify LaunchPanel testing
-vi.mock('../../day-ops/components/TraineeAssignmentPanel.tsx', () => ({
+vi.mock('../../trainee-ops/components/TraineeAssignmentPanel.tsx', () => ({
     TraineeAssignmentPanel: () => <div data-testid="trainee-panel" />
 }));
 vi.mock('../../remarks-repairs/components/RemarksRepairsPanel.tsx', () => ({
