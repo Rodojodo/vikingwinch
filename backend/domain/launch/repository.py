@@ -81,6 +81,7 @@ async def add_remark_to_launch(db_session: AsyncSession, launch_id: int, remark:
         launch.remarks = launch.remarks + ", " + remark
 
     
+    await db_session.flush()
     return launch
 
 
@@ -98,6 +99,7 @@ async def add_repair_to_launch(db_session: AsyncSession, launch_id: int, repair:
         launch.remarks = launch.remarks + ", " + "Repair: " + repair + " S_id: " + supervisor_id
 
     
+    await db_session.flush()
     return launch
 
 

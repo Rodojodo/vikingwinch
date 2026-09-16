@@ -1,6 +1,8 @@
 import pytest_asyncio
 import pytest
+from unittest.mock import patch
 from httpx import AsyncClient, ASGITransport
+from sqlalchemy import text
 from datetime import date, datetime, timezone, timedelta
 from domain.squadron.model import Squadron
 from domain.winch.model import Winch
@@ -66,9 +68,8 @@ async def test_get_export_data(setup_data):
     assert len(data["operators"]) == 1
     assert data["brought_forward"]["right"] == 2
 
-from unittest.mock import patch
-from sqlalchemy import text
-from httpx import AsyncClient
+
+
 
 @pytest.mark.asyncio
 async def test_create_day_log_rollback(db_session):
@@ -95,6 +96,6 @@ async def test_create_day_log_rollback(db_session):
                 pass
     
     # Assert partial failure rolls back
-    result = await db_session.execute(text("SELECT COUNT(*) FROM day_logs WHERE winch_id = 999"))
+    result = await db_session.execute(text("SELECT COUNT(*) FROM day_log WHERE winch_id = 999"))
     assert result.scalar() == 0
 
