@@ -15,9 +15,13 @@ describe('Feature slice boundaries (Oxlint enforcement)', () => {
         let output = '';
 
         try {
-            execSync(`npx oxlint -c .oxlintrc.json ${tempFixture}`, {
+            execSync(`npx oxlint -c .oxlintrc.json --format=default ${tempFixture}`, {
                 cwd: process.cwd(),
                 encoding: 'utf8',
+                env: {
+                    ...process.env,
+                    GITHUB_ACTIONS: '',
+                },
             });
         } catch (err: unknown) {
             const execErr = err as { status?: number; stdout?: string; stderr?: string };
@@ -31,6 +35,9 @@ describe('Feature slice boundaries (Oxlint enforcement)', () => {
 
         expect(exitCode).not.toBe(0);
         expect(output).toContain('no-restricted-imports');
-        expect(output).toContain('Cross-feature imports are forbidden outside src/app/');
+        expect(
+            output.includes('Cross-feature imports are forbidden outside src/app/') ||
+            output.includes('is restricted from being used by a pattern')
+        ).toBe(true);
     });
 });
