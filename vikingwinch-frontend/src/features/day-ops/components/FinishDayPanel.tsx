@@ -4,21 +4,16 @@ import {darkMenuStyles, darkSelectStyles, darkTextFieldStyles, getTabButtonStyle
 import {getOperatorsForSquadron} from '../../../core/http/operatorsClient.ts';
 import type {OperatorRead} from '../../../core/types';
 import {useSessionIdentity} from '../../../app/providers/SessionIdentityProvider.tsx';
-import {useLaunchOps} from '../../launch-ops/hooks/useLaunchOps.tsx';
-import {useTraineeOps} from '../../trainee-ops/hooks/useTraineeOps.tsx';
-import {postDayLogToDb} from '../api/dayOpsClient.ts';
-import {exportLog} from '../../winch-ops/utils/exportLog.ts';
+import {useDayOps} from '../hooks/useDayOps.tsx';
 
 type FinishDayPanelProps = {
-    
     isLoading: boolean;
-    
+    onExportLog?: () => Promise<void>;
 };
 
-export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ isLoading }) => {
-    const {squadronId, winchId, operatorSn} = useSessionIdentity();
-    const {traineeSn, activeLauncherSn} = useTraineeOps();
-    const {leftHistory, rightHistory} = useLaunchOps();
+export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({isLoading, onExportLog}) => {
+    const {squadronId, winchId} = useSessionIdentity();
+    const {finishDay} = useDayOps();
     const [isOpen, setIsOpen] = useState(false);
     const [hoursStop, setHoursStop] = useState<string>('');
     const [cableCheckBy, setCableCheckBy] = useState<string>('');
@@ -62,37 +57,21 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({ isLoading }) => 
         setLocalError(null);
         const hours = hoursStop ? parseFloat(hoursStop) : null;
         try {
-            await postDayLogToDb({
-                squadron_id: squadronId,
-                winch_id: winchId,
-                operator_sn: operatorSn,
-                trainee: traineeSn,
-                type: "finish_day",
-                cable_check: cableCheckBy || null,
-                hours
-            }, winchId);
-            setHoursStop("");
-            setCableCheckBy("");
+            await finishDay(cableCheckBy || null, hours);
+            setHoursStop('');
+            setCableCheckBy('');
             setIsOpen(false);
         } catch (err) {
-            setLocalError(err instanceof Error ? err.message : "Failed to submit finish day");
+            setLocalError(err instanceof Error ? err.message : 'Failed to submit finish day');
         }
     };
 
     const handleDownloadLog = async () => {
+        if (!onExportLog) return;
         try {
-            await exportLog({
-                squadron: squadronId,
-                winchId,
-                operatorSn,
-                traineeSn,
-                leftHistory,
-                rightHistory,
-                dayFinished: false,
-                activeLauncherSn: activeLauncherSn || operatorSn
-            });
+            await onExportLog();
         } catch (err) {
-            setLocalError(err instanceof Error ? err.message : "Failed to download log");
+            setLocalError(err instanceof Error ? err.message : 'Failed to download log');
         }
     };
 

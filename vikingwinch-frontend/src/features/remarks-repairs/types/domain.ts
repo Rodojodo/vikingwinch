@@ -1,1 +1,6 @@
-export type PanelType = 'remarks' | 'repairs' | null;
+export interface RemarkEntry {
+    id: number;
+    launchId: number;
+    winchId: number;
+    remark: string | null;
+}

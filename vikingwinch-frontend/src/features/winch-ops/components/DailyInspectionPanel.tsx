@@ -2,16 +2,15 @@ import React, {useState} from 'react';
 import {Box, Button, TextField, Typography} from '@mui/material';
 import {getBroughtForward, getWinchHours} from '../api/winchClient.ts';
 import {useSessionIdentity} from '../../../app/providers/SessionIdentityProvider.tsx';
-import {postDayLogToDb} from '../../day-ops/api/dayOpsClient.ts';
 import {darkTextFieldStyles, errorBannerSx, glassPanelSx, glowingPrimaryButtonSx} from '../../../themes/styles.ts';
-import type {SxProps, Theme} from "@mui/material/styles";
+import type {SxProps, Theme} from '@mui/material/styles';
 
 interface DailyInspectionPanelProps {
-    
     onComplete: () => void;
+    onSignDI?: (hours: number | null) => Promise<void>;
 }
 
-export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ onComplete }) => {
+export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({onComplete, onSignDI}) => {
     const {squadronId, operatorSn, winchId} = useSessionIdentity();
     const [leftDrum, setLeftDrum] = useState<string>('');
     const [rightDrum, setRightDrum] = useState<string>('');
@@ -30,16 +29,16 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ onCo
             if (bf.left !== null && bf.left !== undefined) setLeftDrum(bf.left.toString());
             if (bf.right !== null && bf.right !== undefined) setRightDrum(bf.right.toString());
         } catch (e) {
-            console.error("Failed to fetch drums", e);
-            setError("Failed to retrieve drum totals.");
+            console.error('Failed to fetch drums', e);
+            setError('Failed to retrieve drum totals.');
         }
 
         try {
             const h = await getWinchHours(winchId);
             if (h.hours !== null && h.hours !== undefined) setHours(h.hours.toString());
         } catch (e) {
-            console.error("Failed to fetch hours", e);
-            setError("Failed to retrieve winch hours.");
+            console.error('Failed to fetch hours', e);
+            setError('Failed to retrieve winch hours.');
         }
         setIsFetching(false);
     };
@@ -49,19 +48,14 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ onCo
         setIsSubmitting(true);
         try {
             const parsedHours = hours ? parseFloat(hours) : null;
-            await postDayLogToDb({
-                squadron_id: squadronId,
-                winch_id: winchId,
-                operator_sn: operatorSn,
-                trainee: null,
-                type: 'di',
-                cable_check: null,
-                hours: (parsedHours !== null && !isNaN(parsedHours)) ? parsedHours : null,
-            }, winchId);
+            const validHours = parsedHours !== null && !isNaN(parsedHours) ? parsedHours : null;
+            if (onSignDI) {
+                await onSignDI(validHours);
+            }
             onComplete();
         } catch (e) {
-            console.error("Failed to sign DI", e);
-            setError("Failed to submit Daily Inspection.");
+            console.error('Failed to sign DI', e);
+            setError('Failed to submit Daily Inspection.');
         } finally {
             setIsSubmitting(false);
         }
@@ -155,7 +149,7 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({ onCo
                 onClick={handleSignDI}
                 sx={[
                     glowingPrimaryButtonSx,
-                    {py: 2, px: 5}
+                    {py: 2, px: 5},
                 ] as SxProps<Theme>}
             >
                 Sign DI

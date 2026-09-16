@@ -1,7 +1,7 @@
-import type { DayLogPayload, DayLogResponse } from '../types/index.ts';
-import { apiFetch } from '../../../core/http/fetchClient';
+import type {DayLogPayload, DayLogResponse} from '../types/index.ts';
+import {apiFetch} from '../../../core/http/fetchClient';
 
-export const postDayLogToDb = async (payload: DayLogPayload, winchId: number): Promise<DayLogResponse> => {
+export const postDayLogToDb = async (payload: DayLogPayload, winchId: number = payload.winch_id): Promise<DayLogResponse> => {
     return apiFetch<DayLogResponse>(`/winch/${winchId}/day_log`, {
         method: 'POST',
         body: JSON.stringify(payload),

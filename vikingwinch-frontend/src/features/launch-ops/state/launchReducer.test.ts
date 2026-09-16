@@ -1,24 +1,20 @@
-import { describe, it, expect } from 'vitest';
-import { launchReducer, initialLaunchState, type LaunchState, type LaunchAction } from './launchReducer';
-import type { LaunchResponse } from '../types';
+import {describe, expect, it} from 'vitest';
+import {initialLaunchState, type LaunchAction, launchReducer, type LaunchState} from './launchReducer';
+import type {LaunchRecord} from '../types';
 
 describe('launchReducer', () => {
-    const baseResponse: LaunchResponse = {
+    const baseRecord: LaunchRecord = {
         id: 1,
         launch_number: 10,
         timestamp: '2026-09-16T09:00:00Z',
-        drum: 'left',
-        operator_sn: 'OP-123',
-        squadron_id: '621 VGS',
-        winch_id: 1,
-        cable_id: null,
-        created_at: '2026-09-16T09:00:00Z',
-        day: '2026-09-16',
         remark: null,
+        burn: false,
+        operator_sn: 'OP-123',
     };
 
     it('returns default initial state for unknown action', () => {
-        const state = launchReducer(initialLaunchState, { type: 'UNKNOWN' as any } as LaunchAction);
+        const unknownAction = {type: 'UNKNOWN'} as unknown as LaunchAction;
+        const state = launchReducer(initialLaunchState, unknownAction);
         expect(state).toEqual(initialLaunchState);
     });
 
@@ -26,7 +22,7 @@ describe('launchReducer', () => {
         it('appends normal launch to leftHistory with burn false', () => {
             const state = launchReducer(initialLaunchState, {
                 type: 'RECORD_LAUNCH',
-                payload: { ...baseResponse, drum: 'left', launch_number: 1 },
+                payload: {drum: 'left', record: {...baseRecord, launch_number: 1}},
             });
 
             expect(state.leftHistory).toHaveLength(1);
@@ -41,10 +37,10 @@ describe('launchReducer', () => {
             expect(state.rightHistory).toHaveLength(0);
         });
 
-        it('appends burn launch (null launch_number) to rightHistory with burn true', () => {
+        it('appends burn launch to rightHistory with burn true', () => {
             const state = launchReducer(initialLaunchState, {
                 type: 'RECORD_LAUNCH',
-                payload: { ...baseResponse, id: 2, drum: 'right', launch_number: null },
+                payload: {drum: 'right', record: {...baseRecord, id: 2, launch_number: null, burn: true}},
             });
 
             expect(state.rightHistory).toHaveLength(1);
@@ -103,16 +99,18 @@ describe('launchReducer', () => {
     });
 
     describe('HYDRATE_HISTORY', () => {
-        it('hydrates left and right histories separating drums and marking burns', () => {
-            const items: LaunchResponse[] = [
-                { ...baseResponse, id: 1, drum: 'left', launch_number: 1 },
-                { ...baseResponse, id: 2, drum: 'right', launch_number: null },
-                { ...baseResponse, id: 3, drum: 'left', launch_number: 2, remark: 'Cable knot' },
+        it('hydrates left and right histories', () => {
+            const leftRecords: LaunchRecord[] = [
+                {...baseRecord, id: 1, launch_number: 1},
+                {...baseRecord, id: 3, launch_number: 2, remark: 'Cable knot'},
+            ];
+            const rightRecords: LaunchRecord[] = [
+                {...baseRecord, id: 2, launch_number: null, burn: true},
             ];
 
             const state = launchReducer(initialLaunchState, {
                 type: 'HYDRATE_HISTORY',
-                payload: { sorted: items },
+                payload: {left: leftRecords, right: rightRecords},
             });
 
             expect(state.leftHistory).toHaveLength(2);

@@ -2,15 +2,14 @@ import React, {useEffect, useState} from 'react';
 import {Alert, Box, Button, FormControl, Grid, MenuItem, Select, TextField, Typography} from '@mui/material';
 import {DrumToggleGroup} from './DrumToggleGroup';
 import {darkMenuStyles, darkSelectStyles, darkTextFieldStyles} from '../../../themes/styles.ts';
-// eslint-disable-next-line no-restricted-imports
-import type {DerivedWinchState} from '../../launch-ops/types';
 import type {DrumPosition, OperatorRead} from '../../../core/types';
+import type {DrumLaunchStatus} from '../types';
 import {getOperatorsForSquadron} from '../../../core/http/operatorsClient.ts';
 
 type RepairsPanelProps = {
     addRemark: (remark: string | null, drum: DrumPosition) => Promise<void>;
     isLoading: boolean;
-    derived: DerivedWinchState;
+    derived: DrumLaunchStatus;
     squadronId: string;
 };
 

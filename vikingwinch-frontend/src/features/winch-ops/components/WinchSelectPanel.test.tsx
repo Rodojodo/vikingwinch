@@ -1,33 +1,9 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { WinchSelectPanel } from './WinchSelectPanel';
-import { getWinchesForSquadron } from "../..//winch-ops/api/winchClient.ts";
+import {fireEvent, render, screen} from '@testing-library/react';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {WinchSelectPanel} from './WinchSelectPanel';
+import {getWinchesForSquadron} from '../api/winchClient.ts';
 
-
-vi.mock('../../../app/providers/SessionIdentityProvider.tsx', () => ({
-    useSessionIdentity: vi.fn(() => ({ squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1' }))
-}));
-vi.mock('../..//trainee-ops/hooks/useTraineeOps.tsx', () => ({
-    useTraineeOps: vi.fn(() => ({ traineeSn: null, setTrainee: vi.fn(), changeTrainee: vi.fn() }))
-}));
-vi.mock('../..//launch-ops/hooks/useLaunchOps.tsx', () => ({
-    useLaunchOps: vi.fn(() => ({ 
-        derived: { leftLastRecord: {}, rightLastRecord: {} }, 
-        leftHistory: [], 
-        rightHistory: [], 
-        executeLaunch: vi.fn().mockResolvedValue(undefined), 
-        undoLaunch: vi.fn().mockResolvedValue(undefined), 
-        addRemarkToState: vi.fn() 
-    }))
-}));
-vi.mock('../..//day-ops/hooks/useDayOps.tsx', () => ({
-    useDayOps: vi.fn(() => ({ dayFinished: false, finishDay: vi.fn() }))
-}));
-
-
-vi.mock("../..//winch-ops/api/winchClient.ts", () => ({ getWinchesForSquadron: vi.fn() }));
-
-vi.mock('../api/dataClient', () => ({
+vi.mock('../api/winchClient.ts', () => ({
     getWinchesForSquadron: vi.fn(),
 }));
 
@@ -40,11 +16,10 @@ describe('WinchSelectPanel', () => {
     });
 
     it('displays a loading spinner initially', () => {
-        // Return a promise that doesn't resolve immediately to check the loading state
         vi.mocked(getWinchesForSquadron).mockReturnValue(new Promise(() => {}));
-        
+
         render(<WinchSelectPanel squadronId={squadronId} openWinchIds={[]} onSelectWinch={mockOnSelectWinch} />);
-        
+
         expect(screen.getByRole('progressbar')).toBeInTheDocument();
     });
 
@@ -57,7 +32,6 @@ describe('WinchSelectPanel', () => {
 
         render(<WinchSelectPanel squadronId={squadronId} openWinchIds={[]} onSelectWinch={mockOnSelectWinch} />);
 
-        // Wait for loading to finish and buttons to appear
         const btn1 = await screen.findByRole('button', { name: 'Winch 1' });
         const btn2 = screen.getByRole('button', { name: 'Winch 2' });
 
@@ -89,7 +63,7 @@ describe('WinchSelectPanel', () => {
     it('filters out winches that are already open', async () => {
         const mockWinches = [
             { id: 1, squadron_id: squadronId, registration: 'W1', name: 'Winch 1' },
-            { id: 2, squadron_id: squadronId, registration: 'W1', name: 'Winch 1' }
+            {id: 2, squadron_id: squadronId, registration: 'W2', name: 'Winch 2'},
         ];
         vi.mocked(getWinchesForSquadron).mockResolvedValue(mockWinches);
 

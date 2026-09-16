@@ -1,18 +1,16 @@
 import React, {useState} from 'react';
 import {Box, Button, Stack} from '@mui/material';
-// eslint-disable-next-line no-restricted-imports
-import type {DerivedWinchState} from '../../launch-ops/types';
 import type {DrumPosition} from '../../../core/types';
-import type {PanelType} from '../types';
+import type {DrumLaunchStatus, PanelType} from '../types';
 import {RemarksPanel} from './RemarksPanel.tsx';
 import {RepairsPanel} from './RepairsPanel.tsx';
 import {elevatedPanel, getTabButtonStyles} from '../../../themes/styles.ts';
-import type {SxProps, Theme} from "@mui/material/styles";
+import type {SxProps, Theme} from '@mui/material/styles';
 
 type RemarksRepairsPanelProps = {
     addRemark: (remark: string | null, drum: DrumPosition) => Promise<void>;
     isLoading: boolean;
-    derived: DerivedWinchState;
+    derived: DrumLaunchStatus;
     squadronId: string;
 };
 
@@ -25,7 +23,6 @@ export const RemarksRepairsPanel: React.FC<RemarksRepairsPanelProps> = ({ addRem
 
     return (
         <Box sx={{width: '100%', p: 0}}>
-
             <Stack direction="row" spacing={1}>
                 <Button
                     fullWidth
@@ -48,18 +45,19 @@ export const RemarksRepairsPanel: React.FC<RemarksRepairsPanelProps> = ({ addRem
                     elevatedPanel,
                     {
                         display: activePanel ? 'block' : 'none',
-                    }
+                    },
                 ] as SxProps<Theme>}
             >
                 <Box sx={{display: activePanel === 'remarks' ? 'block' : 'none'}}>
                     <RemarksPanel addRemark={addRemark} isLoading={isLoading} derived={derived}/>
                 </Box>
                 <Box sx={{display: activePanel === 'repairs' ? 'block' : 'none'}}>
-                    <RepairsPanel addRemark={addRemark} isLoading={isLoading} derived={derived} squadronId={squadronId}/>
+                    <RepairsPanel addRemark={addRemark} isLoading={isLoading} derived={derived}
+                                  squadronId={squadronId}/>
                 </Box>
             </Box>
         </Box>
     );
 };
 
-export default RemarksRepairsPanel
+export default RemarksRepairsPanel;

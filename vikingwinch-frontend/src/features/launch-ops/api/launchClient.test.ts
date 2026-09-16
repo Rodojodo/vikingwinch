@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { postLaunchToDb, removeLaunchFromDb, getLaunches } from './launchClient';
-import { apiFetch } from '../../../core/http/fetchClient';
-import type { LaunchPayload, LaunchResponse } from '../types';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {getLaunches, postLaunchToDb, removeLaunchFromDb} from './launchClient';
+import {apiFetch} from '../../../core/http/fetchClient';
+import type {LaunchPayload, LaunchResponse} from '../types';
 
 vi.mock('../../../core/http/fetchClient', () => ({
     apiFetch: vi.fn(),
@@ -14,12 +14,11 @@ describe('launchClient', () => {
 
     it('postLaunchToDb sends POST request to /launches with payload', async () => {
         const payload: LaunchPayload = {
-            squadron_id: '621 VGS',
             winch_id: 1,
             drum: 'left',
             operator_sn: 'OP-1234',
-            cable_id: null,
             burn: false,
+            trainee: null,
         };
 
         const mockResponse: LaunchResponse = {
@@ -27,8 +26,6 @@ describe('launchClient', () => {
             id: 101,
             launch_number: 1,
             timestamp: '2026-09-16T10:00:00Z',
-            day: '2026-09-16',
-            created_at: '2026-09-16T10:00:00Z',
             remark: null,
         };
 

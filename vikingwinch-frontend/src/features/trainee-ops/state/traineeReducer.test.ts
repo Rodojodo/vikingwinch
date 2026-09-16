@@ -1,9 +1,10 @@
-import { describe, it, expect } from 'vitest';
-import { traineeReducer, initialTraineeState, type TraineeAction } from './traineeReducer';
+import {describe, expect, it} from 'vitest';
+import {initialTraineeState, type TraineeAction, traineeReducer} from './traineeReducer';
 
 describe('traineeReducer', () => {
     it('returns default initial state for unknown action', () => {
-        const state = traineeReducer(initialTraineeState, { type: 'UNKNOWN' as any } as TraineeAction);
+        const unknownAction = {type: 'UNKNOWN'} as unknown as TraineeAction;
+        const state = traineeReducer(initialTraineeState, unknownAction);
         expect(state).toEqual(initialTraineeState);
     });
 

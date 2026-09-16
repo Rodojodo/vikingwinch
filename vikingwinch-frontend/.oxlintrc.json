@@ -1,15 +1,71 @@
 {
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": [
+    "react",
+    "typescript",
+    "oxc"
+  ],
   "rules": {
-    "no-restricted-imports": [
-      "error",
+    "react/rules-of-hooks": "error",
+    "react/only-export-components": [
+      "warn",
       {
-        "patterns": [
-          "../../launch-ops/*",
-          "../../day-ops/*",
-          "../../remarks-repairs/*",
-          "../../trainee-ops/*"
-        ]
+        "allowConstantExport": true
       }
     ]
-  }
+  },
+  "overrides": [
+    {
+      "files": [
+        "src/features/**"
+      ],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "**/features/auth/**",
+                  "**/features/auth",
+                  "**/features/day-ops/**",
+                  "**/features/day-ops",
+                  "**/features/launch-ops/**",
+                  "**/features/launch-ops",
+                  "**/features/remarks-repairs/**",
+                  "**/features/remarks-repairs",
+                  "**/features/trainee-ops/**",
+                  "**/features/trainee-ops",
+                  "**/features/winch-ops/**",
+                  "**/features/winch-ops",
+                  "../*-ops/**",
+                  "../*-ops",
+                  "../../*-ops/**",
+                  "../../*-ops",
+                  "../../../*-ops/**",
+                  "../../../*-ops",
+                  "../remarks-repairs/**",
+                  "../remarks-repairs",
+                  "../../remarks-repairs/**",
+                  "../../remarks-repairs",
+                  "../../../remarks-repairs/**",
+                  "../../../remarks-repairs",
+                  "../auth/**",
+                  "../auth",
+                  "../../auth/**",
+                  "../../auth",
+                  "../../../auth/**",
+                  "../../../auth"
+                ],
+                "message": "Cross-feature imports are forbidden outside src/app/."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "ignorePatterns": [
+    "**/__boundary_fixture__/**"
+  ]
 }

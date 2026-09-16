@@ -2,19 +2,24 @@ import React, {useEffect, useState} from 'react';
 import {Box, Button, ButtonBase, Paper, Stack, Typography} from '@mui/material';
 import {getOperatorsForSquadron} from '../../../core/http/operatorsClient.ts';
 import type {OperatorRead} from '../../../core/types';
-import type {DayLogResponse} from '../../day-ops/types/index.ts';
 import {TraineeSelect} from './TraineeSelect.tsx';
-import {elevatedPanel, getTabButtonStyles, glowingPrimaryButtonSx} from "../../../themes/styles.ts";
+import {elevatedPanel, getTabButtonStyles, glowingPrimaryButtonSx} from '../../../themes/styles.ts';
 
 type TraineeAssignmentPanelProps = {
     isLoading: boolean;
-    recordSignOn: (traineeSn: string | null) => Promise<DayLogResponse>;
+    recordSignOn: (traineeSn: string | null) => Promise<unknown>;
     squadron?: string;
     operatorSn?: string | null;
     traineeSn?: string | null;
 };
 
-export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({isLoading, recordSignOn, squadron, operatorSn, traineeSn}) => {
+export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({
+                                                                                  isLoading,
+                                                                                  recordSignOn,
+                                                                                  squadron,
+                                                                                  operatorSn,
+                                                                                  traineeSn,
+                                                                              }) => {
     const [isExpanded, setIsExpanded] = useState<boolean>(false);
     const [focusedTraineeId, setFocusedTraineeId] = useState<string>('');
     const [operators, setOperators] = useState<OperatorRead[]>([]);
@@ -63,7 +68,7 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({i
                 onClick={() => setIsExpanded(true)}
                 sx={getTabButtonStyles(false)}
             >
-                    {labelText}
+                {labelText}
             </ButtonBase>
         );
     }

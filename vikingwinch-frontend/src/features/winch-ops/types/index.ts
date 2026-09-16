@@ -1,2 +1,3 @@
-export * from './domain.ts';
-export * from './api.ts';
+export * from './api';
+export * from './domain';
+export * from './state';

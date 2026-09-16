@@ -1,21 +1,21 @@
 import ExcelJS from 'exceljs';
-import { saveAs } from 'file-saver';
-import winchLogTemplateUrl from '../../../assets/winch_log.xltx?url';
-// eslint-disable-next-line no-restricted-imports
-import type { LaunchRecord } from '../../launch-ops/types';
+import {saveAs} from 'file-saver';
+import winchLogTemplateUrl from '../../assets/winch_log.xltx?url';
+import type {LaunchRecord} from '../../features/launch-ops/types';
+import {getBroughtForward, getWinch} from '../../features/winch-ops/api/winchClient.ts';
+import {getDayLog} from '../../features/day-ops/api/dayOpsClient.ts';
+import {getOperatorsForSquadron} from '../../core/http/operatorsClient.ts';
+
 export interface WinchLogState {
-  squadron: string;
-  winchId: number | null;
-  operatorSn: string;
-  traineeSn: string | null;
-  leftHistory: LaunchRecord[];
-  rightHistory: LaunchRecord[];
-  dayFinished: boolean;
-  activeLauncherSn: string;
+    squadron: string;
+    winchId: number | null;
+    operatorSn: string;
+    traineeSn: string | null;
+    leftHistory: LaunchRecord[];
+    rightHistory: LaunchRecord[];
+    dayFinished: boolean;
+    activeLauncherSn: string;
 }
-import { getWinch, getBroughtForward } from '../api/winchClient.ts';
-import { getDayLog } from '../../day-ops/api/dayOpsClient.ts';
-import { getOperatorsForSquadron } from '../../../core/http/operatorsClient.ts';
 
 const CELLS = {
     UNIT: 'F2',
@@ -30,21 +30,19 @@ const CELLS = {
     OPERATOR_START_ROW: 31,
 };
 
-
 const formatUKTime = (timestampStr: string): string => {
-    // Append Z to parse the naive database timestamp as UTC
     const d = new Date(timestampStr.endsWith('Z') ? timestampStr : timestampStr + 'Z');
     if (isNaN(d.getTime())) return '';
     return new Intl.DateTimeFormat('en-GB', {
         timeZone: 'Europe/London',
         hour: '2-digit',
         minute: '2-digit',
-        hour12: false
+        hour12: false,
     }).format(d);
 };
 
 export const exportLog = async (state: WinchLogState): Promise<void> => {
-    if (!state.winchId) throw new Error("No winch selected");
+    if (!state.winchId) throw new Error('No winch selected');
     try {
         const today = new Date();
         const year = today.getFullYear();
@@ -56,7 +54,7 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
             getWinch(state.winchId),
             getDayLog(state.winchId, todayStr),
             getOperatorsForSquadron(state.squadron),
-            getBroughtForward(state.winchId, todayStr)
+            getBroughtForward(state.winchId, todayStr),
         ]);
 
         const opMap = new Map(operators.map(op => [op.service_no, op.name]));
@@ -83,12 +81,12 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
 
         if (diLog) {
             sheet.getCell('D12').value = getName(diLog.operator_sn);
-            sheet.getCell('F12').value = getName(diLog.operator_sn); // Signature is just the name for now
+            sheet.getCell('F12').value = getName(diLog.operator_sn);
         }
 
         if (finishLog) {
             sheet.getCell('H12').value = getName(finishLog.cable_check);
-            sheet.getCell('J12').value = getName(finishLog.operator_sn); // Signature is just the name for now
+            sheet.getCell('J12').value = getName(finishLog.operator_sn);
         }
 
         const leftHistory = state.leftHistory;
@@ -101,13 +99,13 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
 
         let lastLeftNumber: number | string = bf.left ?? 0;
         let lastRightNumber: number | string = bf.right ?? 0;
-        let seenOperators = new Set<string>();
+        const seenOperators = new Set<string>();
 
         const maxLaunches = Math.max(15, leftHistory.length, rightHistory.length);
         const totalSheetsNeeded = maxLaunches <= 15 ? 1 : 1 + Math.ceil((maxLaunches - 15) / 20);
         const totalSheetsAvailable = workbook.worksheets.length;
         const totalSheets = Math.min(totalSheetsNeeded, totalSheetsAvailable);
-        
+
         for (let s = 0; s < totalSheets; s++) {
             workbook.worksheets[s].getCell('K2').value = totalSheets;
         }
@@ -118,9 +116,9 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
             const leftLaunch = leftHistory[i];
             const rightLaunch = rightHistory[i];
 
-            let sheetIndex = i < 15 ? 0 : 1 + Math.floor((i - 15) / 20);
-            let currentSheet = workbook.worksheets[sheetIndex];
-            
+            const sheetIndex = i < 15 ? 0 : 1 + Math.floor((i - 15) / 20);
+            const currentSheet = workbook.worksheets[sheetIndex];
+
             if (!currentSheet) break;
 
             let currentRow;
@@ -128,7 +126,7 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
                 currentRow = 14 + i;
             } else {
                 currentRow = 8 + ((i - 15) % 20);
-                
+
                 if (currentRow === 8) {
                     currentSheet.getCell('D3').value = lastLeftNumber;
                     currentSheet.getCell('E3').value = lastRightNumber;
@@ -145,11 +143,11 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
 
             let leftOp = null;
             let rightOp = null;
-            
-            let toolCheckInitials = new Set<string>();
-            let remarksCombined: string[] = [];
-            let repairsCombined: string[] = [];
-            let supervisorsCombined: string[] = [];
+
+            const toolCheckInitials = new Set<string>();
+            const remarksCombined: string[] = [];
+            const repairsCombined: string[] = [];
+            const supervisorsCombined: string[] = [];
 
             const processRemark = (drumStr: string, remarkStr: string | null) => {
                 if (!remarkStr) return;
@@ -160,7 +158,7 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
                     const repairDetail = match[1].trim();
                     const workerName = getName(match[2].trim()) || match[2].trim();
                     const supervisorName = getName(match[3].trim()) || match[3].trim();
-                    
+
                     remarksCombined.push(`${drumStr}: Repair: ${repairDetail}`);
                     repairsCombined.push(workerName);
                     supervisorsCombined.push(supervisorName);
@@ -247,7 +245,7 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
         const buffer = await workbook.xlsx.writeBuffer();
         saveAs(new Blob([buffer]), `winch_log_${todayStr}.xlsx`);
     } catch (error) {
-        console.error("Failed to generate winch log spreadsheet:", error);
-        throw new Error("Log export failed. Please check your connection and try again.");
+        console.error('Failed to generate winch log spreadsheet:', error);
+        throw new Error('Log export failed. Please check your connection and try again.');
     }
 };

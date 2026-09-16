@@ -33,8 +33,14 @@ jobs:
         if: steps.filter.outputs.frontend == 'true'
         run: npm ci
 
-      - name: Run Vitest
+      - name: Run typecheck
         if: steps.filter.outputs.frontend == 'true'
-        run: npx vitest run --coverage      - name: Run oxlint
+        run: npx tsc -b
+
+      - name: Run oxlint
         if: steps.filter.outputs.frontend == 'true'
         run: npx oxlint -c .oxlintrc.json
+
+      - name: Run Vitest
+        if: steps.filter.outputs.frontend == 'true'
+        run: npx vitest run --coverage

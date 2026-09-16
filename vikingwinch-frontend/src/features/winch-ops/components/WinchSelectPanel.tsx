@@ -1,8 +1,8 @@
-import {Box, Button, CircularProgress, Typography} from "@mui/material";
-import {useEffect, useState} from "react";
-import {getWinchesForSquadron} from "../api/winchClient";
-import type {WinchRead} from "../types";
-import {darkBlueButton, glassPanelSx} from "../../../themes/styles.ts";
+import {Box, Button, CircularProgress, Typography} from '@mui/material';
+import {useEffect, useState} from 'react';
+import {getWinchesForSquadron} from '../api/winchClient.ts';
+import type {WinchRead} from '../types/api.ts';
+import {darkBlueButton, glassPanelSx} from '../../../themes/styles.ts';
 import type {SxProps, Theme} from '@mui/material/styles';
 
 interface WinchSelectPanelProps {
@@ -22,13 +22,13 @@ export const WinchSelectPanel = ({ squadronId, openWinchIds, onSelectWinch }: Wi
                 setLoading(true);
                 const data = await getWinchesForSquadron(squadronId);
                 setWinches(data);
-            } catch (err) {
-                setError("Failed to load winches");
+            } catch {
+                setError('Failed to load winches');
             } finally {
                 setLoading(false);
             }
         };
-        
+
         fetchWinches();
     }, [squadronId]);
 
@@ -59,7 +59,7 @@ export const WinchSelectPanel = ({ squadronId, openWinchIds, onSelectWinch }: Wi
                                     flexGrow: 1,
                                     flexBasis: 'calc(33.333% - 16px)',
                                     py: 2.5,
-                                }
+                                },
                             ] as SxProps<Theme>)}
                         >
                             Winch {winch.id}

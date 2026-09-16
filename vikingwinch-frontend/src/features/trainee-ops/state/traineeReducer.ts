@@ -1,11 +1,6 @@
-export interface TraineeState {
-    traineeSn: string | null;
-    activeLauncherSn: string | null;
-}
+import type {TraineeAction, TraineeState} from '../types/state';
 
-export type TraineeAction =
-    | { type: 'SET_TRAINEE'; payload: { traineeSn: string | null; operatorSn: string } }
-    | { type: 'SET_ACTIVE_LAUNCHER'; payload: string };
+export type {TraineeState, TraineeAction} from '../types/state';
 
 export const initialTraineeState: TraineeState = {
     traineeSn: null,
@@ -18,12 +13,12 @@ export const traineeReducer = (state: TraineeState, action: TraineeAction): Trai
             return {
                 ...state,
                 traineeSn: action.payload.traineeSn,
-                activeLauncherSn: action.payload.operatorSn
+                activeLauncherSn: action.payload.operatorSn,
             };
         case 'SET_ACTIVE_LAUNCHER':
             return {
                 ...state,
-                activeLauncherSn: action.payload
+                activeLauncherSn: action.payload,
             };
         default:
             return state;
