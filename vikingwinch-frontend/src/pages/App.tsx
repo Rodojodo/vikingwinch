@@ -1,11 +1,109 @@
 import {useEffect, useState} from 'react';
 import {AuthenticatedTemplate, UnauthenticatedTemplate, useMsal} from '@azure/msal-react';
-import '../App.css'
+import {Show, useUser, UserButton} from '@clerk/react';
+import {Box} from '@mui/material';
+import type {SxProps, Theme} from '@mui/material/styles';
+import '../App.css';
 import {WinchOpsPage} from './WinchOpsPage';
 import {LoginPage} from './LoginPage';
 import {getUserDepartment, getUserProfile} from '../features/auth/api/graphAPI';
+import {OperatorSelectPanel} from '../features/auth';
+import {appBackgroundSx} from '../themes/styles';
 
-function App() {
+/**
+ * Auth Provider Selection:
+ * - 'clerk': Default authentication provider across all environments (development, staging, production).
+ * - 'msal': Microsoft Entra ID (MSAL) — preserved intact for future production use when required.
+ *
+ * Defaults to 'clerk' everywhere (including production), unless VITE_AUTH_PROVIDER is explicitly set to 'msal'.
+ * In unit testing mode without Clerk provider, falls back to 'msal' to preserve existing MSAL mock suites.
+ */
+export const AUTH_PROVIDER =
+    import.meta.env.MODE === 'test'
+        ? (import.meta.env.VITE_TEST_AUTH_PROVIDER || 'msal')
+        : (import.meta.env.VITE_AUTH_PROVIDER || 'clerk');
+
+const OPERATOR_SESSION_KEY = 'vikingwinch_operator_sn';
+
+function ClerkApp() {
+    const {user, isLoaded, isSignedIn} = useUser();
+    const [selectedOperatorSn, setSelectedOperatorSn] = useState<string | null>(() => {
+        try {
+            return sessionStorage.getItem(OPERATOR_SESSION_KEY);
+        } catch {
+            return null;
+        }
+    });
+
+    const isUserSignedIn = isSignedIn ?? Boolean(user);
+
+    useEffect(() => {
+        if (isLoaded && (!isUserSignedIn || !user)) {
+            try {
+                sessionStorage.removeItem(OPERATOR_SESSION_KEY);
+            } catch {
+                // ignore storage access errors
+            }
+            if (selectedOperatorSn !== null) {
+                // oxlint-disable-next-line react/set-state-in-effect
+                setSelectedOperatorSn(null);
+            }
+        }
+    }, [isLoaded, isUserSignedIn, user, selectedOperatorSn]);
+
+    if (!isLoaded) {
+        return (
+            <div style={{
+                color: 'white',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100vh'
+            }}>
+                Loading profile...
+            </div>
+        );
+    }
+
+    const squadronId = (user?.username as string) || (user?.publicMetadata?.squadronId as string) || '123 VGS';
+
+    const handleSelectOperator = (operatorSn: string) => {
+        try {
+            sessionStorage.setItem(OPERATOR_SESSION_KEY, operatorSn);
+        } catch {
+            // ignore storage access errors
+        }
+        setSelectedOperatorSn(operatorSn);
+    };
+
+    return (
+        <>
+            <Show when="signed-in">
+                {selectedOperatorSn ? (
+                    <WinchOpsPage squadronId={squadronId} operatorSn={selectedOperatorSn}/>
+                ) : (
+                    <Box sx={[appBackgroundSx, { minHeight: '100vh', position: 'relative' }] as SxProps<Theme>}>
+                        <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+                            <UserButton/>
+                        </Box>
+                        <OperatorSelectPanel
+                            squadronId={squadronId}
+                            onSelectOperator={handleSelectOperator}
+                        />
+                    </Box>
+                )}
+            </Show>
+            <Show when="signed-out">
+                <LoginPage/>
+            </Show>
+        </>
+    );
+}
+
+/**
+ * MSAL App flow — preserved intact for future production use
+ */
+function MsalApp() {
     const { instance, accounts, inProgress } = useMsal();
     const [operatorSn, setOperatorSn] = useState<string | null>(null);
     const [squadronId, setSquadronId] = useState<string | null>(null);
@@ -32,7 +130,7 @@ function App() {
                         } catch (profileErr) {
                             console.warn("Failed to fetch user profile (e.g., 404 Not Found), falling back to v1.0 data:", profileErr);
                         }
-                        
+
                         if (profileData?.positions && Array.isArray(profileData.positions)) {
                             for (const pos of profileData.positions) {
                                 if (pos.detail?.employeeId) {
@@ -42,7 +140,7 @@ function App() {
                             }
                         }
                     }
-                    
+
                     // Fallback for testing: check graphData.employeeId from the v1.0/me endpoint
                     setOperatorSn(employeeId || graphData.displayName || 'Unknown Operator');
                     setSquadronId(graphData.department || 'Unknown Squadron');
@@ -96,6 +194,10 @@ function App() {
             </UnauthenticatedTemplate>
         </>
     );
+}
+
+function App() {
+    return AUTH_PROVIDER === 'clerk' ? <ClerkApp/> : <MsalApp/>;
 }
 
 export default App;

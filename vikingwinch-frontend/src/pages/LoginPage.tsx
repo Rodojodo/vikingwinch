@@ -1,10 +1,12 @@
 import React from 'react';
 import {Box, Button, Container, Paper, Typography} from '@mui/material';
 import {useMsal} from '@azure/msal-react';
+import {SignInButton, SignUpButton} from '@clerk/react';
 import winchLogo from '../assets/SkylaunchWinchPixel.png';
-
+import {AUTH_PROVIDER} from './App';
 
 export const LoginPage: React.FC = () => {
+    // MSAL preserved for production
     const {instance} = useMsal();
     const [error, setError] = React.useState<string | null>(null);
 
@@ -15,7 +17,6 @@ export const LoginPage: React.FC = () => {
             setError("Failed to initiate login. Please try again.");
         });
     };
-
 
     return (
         <Box
@@ -89,8 +90,9 @@ export const LoginPage: React.FC = () => {
                     </Typography>
 
                     <Typography variant="body1" sx={{mb: 4, color: 'text.secondary', textAlign: 'center'}}>
-                        Welcome back. Please sign in with your Microsoft account to continue to the winch operations
-                        dashboard.
+                        {AUTH_PROVIDER === 'clerk'
+                            ? 'Welcome back. Please sign in or create an account to continue to the winch operations dashboard.'
+                            : 'Welcome back. Please sign in with your Microsoft account to continue to the winch operations dashboard.'}
                     </Typography>
 
                     {error && (
@@ -99,28 +101,82 @@ export const LoginPage: React.FC = () => {
                         </Typography>
                     )}
 
-                    <Button
-                        variant="contained"
-                        size="large"
-                        onClick={handleLogin}
-                        sx={{
-                            py: 1.5,
-                            px: 4,
-                            fontSize: '1.1rem',
-                            fontWeight: 600,
-                            borderRadius: '12px',
-                            background: 'linear-gradient(to right, #3b82f6, #2563eb)',
-                            boxShadow: '0 4px 20px rgba(59, 130, 246, 0.4)',
-                            transition: 'all 0.2s',
-                            '&:hover': {
-                                transform: 'translateY(-2px)',
-                                boxShadow: '0 6px 24px rgba(59, 130, 246, 0.6)',
-                                background: 'linear-gradient(to right, #60a5fa, #3b82f6)',
-                            }
-                        }}
-                    >
-                        Sign in with Microsoft
-                    </Button>
+                    {AUTH_PROVIDER === 'clerk' ? (
+                        <Box sx={{display: 'flex', flexDirection: 'column', gap: 2, width: '100%'}}>
+                            <SignInButton mode="modal">
+                                <Button
+                                    variant="contained"
+                                    size="large"
+                                    fullWidth
+                                    sx={{
+                                        py: 1.5,
+                                        px: 4,
+                                        fontSize: '1.1rem',
+                                        fontWeight: 600,
+                                        borderRadius: '12px',
+                                        background: 'linear-gradient(to right, #3b82f6, #2563eb)',
+                                        boxShadow: '0 4px 20px rgba(59, 130, 246, 0.4)',
+                                        transition: 'all 0.2s',
+                                        '&:hover': {
+                                            transform: 'translateY(-2px)',
+                                            boxShadow: '0 6px 24px rgba(59, 130, 246, 0.6)',
+                                            background: 'linear-gradient(to right, #60a5fa, #3b82f6)',
+                                        }
+                                    }}
+                                >
+                                    Sign In
+                                </Button>
+                            </SignInButton>
+
+                            <SignUpButton mode="modal">
+                                <Button
+                                    variant="outlined"
+                                    size="large"
+                                    fullWidth
+                                    sx={{
+                                        py: 1.5,
+                                        px: 4,
+                                        fontSize: '1rem',
+                                        fontWeight: 600,
+                                        borderRadius: '12px',
+                                        borderColor: 'rgba(255, 255, 255, 0.2)',
+                                        color: '#fff',
+                                        transition: 'all 0.2s',
+                                        '&:hover': {
+                                            borderColor: 'primary.main',
+                                            background: 'rgba(59, 130, 246, 0.1)',
+                                            transform: 'translateY(-2px)',
+                                        }
+                                    }}
+                                >
+                                    Create an Account (Sign Up)
+                                </Button>
+                            </SignUpButton>
+                        </Box>
+                    ) : (
+                        <Button
+                            variant="contained"
+                            size="large"
+                            onClick={handleLogin}
+                            sx={{
+                                py: 1.5,
+                                px: 4,
+                                fontSize: '1.1rem',
+                                fontWeight: 600,
+                                borderRadius: '12px',
+                                background: 'linear-gradient(to right, #3b82f6, #2563eb)',
+                                boxShadow: '0 4px 20px rgba(59, 130, 246, 0.4)',
+                                transition: 'all 0.2s',
+                                '&:hover': {
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: '0 6px 24px rgba(59, 130, 246, 0.6)',
+                                    background: 'linear-gradient(to right, #60a5fa, #3b82f6)',
+                                }
+                            }}
+                        >
+                            Sign in with Microsoft
+                        </Button>
+                    )}
                 </Paper>
             </Container>
         </Box>
