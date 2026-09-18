@@ -38,6 +38,11 @@ export async function apiFetch<T>(endpoint: string, options?: RequestInit): Prom
 
     await handleApiError(response);
 
+    const contentType = response.headers.get('content-type');
+    if (contentType && !contentType.includes('application/json')) {
+        throw new Error(`Expected JSON response but received ${contentType}`);
+    }
+
     const text = await response.text();
     return JSON.parse(text || 'null') as T;
 }

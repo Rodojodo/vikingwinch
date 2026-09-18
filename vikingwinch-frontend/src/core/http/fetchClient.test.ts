@@ -98,6 +98,17 @@ describe('fetchClient', () => {
             expect(result).toEqual(mockData);
         });
 
+        it('throws if response is 200 but content-type is not json', async () => {
+            globalThis.fetch = vi.fn().mockResolvedValue(
+                new Response('<!doctype html><html></html>', {
+                    status: 200,
+                    headers: { 'content-type': 'text/html; charset=utf-8' },
+                })
+            );
+
+            await expect(apiFetch('/test-endpoint')).rejects.toThrow('Expected JSON response but received text/html; charset=utf-8');
+        });
+
         it('merges custom options and headers', async () => {
             const mockData = { saved: true };
             globalThis.fetch = vi.fn().mockResolvedValue(
