@@ -9,9 +9,33 @@ import {appTheme} from './themes/theme'; // Import your new theme
 import {msalInstance} from './features/auth/config/authConfig';
 import App, {AUTH_PROVIDER} from './pages/App.tsx';
 
-const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+// Support official Clerk integration variables (NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) alongside VITE_ prefix
+const PUBLISHABLE_KEY =
+    import.meta.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+    import.meta.env.VITE_CLERK_PUBLISHABLE_KEY ||
+    import.meta.env.CLERK_PUBLISHABLE_KEY;
 
 const renderApp = () => {
+    if (AUTH_PROVIDER === 'clerk' && !PUBLISHABLE_KEY) {
+        createRoot(document.getElementById('root')!).render(
+            <div style={{
+                color: 'white',
+                padding: '2rem',
+                textAlign: 'center',
+                fontFamily: 'sans-serif',
+                height: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
+                alignItems: 'center'
+            }}>
+                <h2>Clerk Configuration Error</h2>
+                <p>Missing Clerk Publishable Key (NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY or VITE_CLERK_PUBLISHABLE_KEY).</p>
+            </div>
+        );
+        return;
+    }
+
     createRoot(document.getElementById('root')!).render(
         <StrictMode>
             <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
@@ -38,7 +62,9 @@ if (AUTH_PROVIDER === 'msal') {
 } else {
     // Render app immediately with Clerk
     renderApp();
-    // Non-blocking background MSAL initialization
-    msalInstance.initialize().catch(() => {
-    });
+    // Only initialize MSAL in background if Azure credentials are configured
+    if (import.meta.env.VITE_AZURE_CLIENT_ID && import.meta.env.VITE_AZURE_TENANT_ID) {
+        msalInstance.initialize().catch(() => {
+        });
+    }
 }
