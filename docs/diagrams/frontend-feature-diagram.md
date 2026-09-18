@@ -6,49 +6,57 @@ Source of truth: `vikingwinch-frontend/.oxlintrc.json` and
 ## Architecture Layers
 
 The Viking Winch frontend enforces a strict unidirectional layer hierarchy:
-`app / pages` → `features` → `core`. Lower layers must never depend on higher
+`app/` → `features/{name}/` → `core/`. Lower layers must never depend on higher
 layers, and feature slices must never import from sibling feature slices.
 
 ```mermaid
 flowchart TD
-    subgraph appLayer["Application Layer (src/app/, src/pages/)"]
-        winch_page["WinchOpsPage"]
-        winch_tab["WinchTab (Orchestrator)"]
-        session_id["SessionIdentityProvider"]
+   subgraph app["app/ (Application Layer)"]
+      app_main["app/ & pages/ (WinchOpsPage, WinchTab, SessionIdentityProvider)"]
     end
 
-    subgraph featureLayer["Feature Slices (src/features/)"]
-        auth["auth"]
-        day_ops["day-ops"]
-        launch_ops["launch-ops"]
-        remarks_repairs["remarks-repairs"]
-        trainee_ops["trainee-ops"]
-        winch_ops["winch-ops"]
+   subgraph features["features/{name}/ (Vertical Feature Slices)"]
+      direction TB
+      subgraph feat_row1["Feature Slices"]
+         feat_auth["features/auth/"]
+         feat_day["features/day-ops/"]
+         feat_launch["features/launch-ops/"]
+      end
+      subgraph feat_row2["Feature Slices"]
+         feat_remarks["features/remarks-repairs/"]
+         feat_trainee["features/trainee-ops/"]
+         feat_winch["features/winch-ops/"]
+      end
     end
 
-    subgraph coreLayer["Core Layer (src/core/)"]
-        http["http (fetchClient, operatorsClient)"]
-        types["types (DrumPosition, OperatorRead)"]
+   subgraph core["core/ (Core Shared Layer)"]
+      core_main["core/ (http, types)"]
     end
 
-    appLayer --> featureLayer
-    featureLayer --> coreLayer
+   app -->|" ALLOWED "| features
+   features -->|" ALLOWED "| core
+%% Explicitly marked forbidden sideways imports between feature slices
+   feat_day x-.-x|" FORBIDDEN (Oxlint) "| feat_launch
+   feat_launch x-.-x|" FORBIDDEN (Oxlint) "| feat_remarks
+   feat_trainee x-.-x|" FORBIDDEN (Oxlint) "| feat_launch
+   feat_winch x-.-x|" FORBIDDEN (Oxlint) "| feat_day
+   feat_auth x-.-x|" FORBIDDEN (Oxlint) "| feat_winch
 ```
 
 ## Feature Slice Independence and Oxlint Enforcement
 
-Sibling feature slices under `src/features/` are isolated. Direct cross-feature
-imports are strictly forbidden.
+Sibling feature slices under `src/features/` are completely isolated. Direct cross-feature
+imports are strictly forbidden by architectural rules and static linting.
 
 ```mermaid
 flowchart LR
-    subgraph features["src/features/ (Isolated Slices)"]
-        auth["auth"]
-        day_ops["day-ops"]
-        launch_ops["launch-ops"]
-        remarks_repairs["remarks-repairs"]
-        trainee_ops["trainee-ops"]
-        winch_ops["winch-ops"]
+   subgraph slices["features/{name}/ (Isolated Feature Slices)"]
+      auth["features/auth/"]
+      day_ops["features/day-ops/"]
+      launch_ops["features/launch-ops/"]
+      remarks_repairs["features/remarks-repairs/"]
+      trainee_ops["features/trainee-ops/"]
+      winch_ops["features/winch-ops/"]
     end
 
     day_ops x-.-x|" FORBIDDEN "| launch_ops

@@ -5,14 +5,17 @@
 The Viking Winch frontend follows a strict unidirectional state flow based on
 pure aggregate reducers and React Context providers. This architecture ensures
 predictable state transitions, eliminates cross-feature coupling, and maintains
-optimal rendering performance.
+optimal rendering performance across mobile and airfield tablets.
+
+State flows through a deterministic six-stage pipeline:
 
 ```mermaid
 flowchart LR
-    Action["Action (dispatch)"] --> Reducer["Aggregate Reducer (pure function)"]
-    Reducer --> Context["Provider / Context (useReducer)"]
-    Context --> Selector["Memoized Selector / Derived State (useMemo)"]
-    Selector --> Component["UI Component (Consumers)"]
+   Action["Action (dispatch)"] --> SliceReducer["Slice Reducer (pure function)"]
+   SliceReducer --> RootReducer["Root / Composed Reducer"]
+   RootReducer --> Context["Context Provider (useReducer)"]
+   Context --> Selector["Memoized Selector (useMemo)"]
+   Selector --> Component["UI Component (Consumer)"]
     Component -.->|"User Event (onClick / onChange)"| Action
 ```
 
@@ -31,19 +34,12 @@ An operator interacts with an interactive element (e.g. clicking "Launch" in
 </Button>
 ```
 
-### 2. Custom Hook Invocation
-The component calls a handler exposed by a feature-specific hook (e.g.
-`useLaunchOps()`, `useDayOps()`, or `useTraineeOps()`):
+### 2. Action Dispatch via Custom Hook
 
-```tsx
-// In LaunchPanel.tsx
-const { executeLaunch } = useLaunchOps();
-```
-
-### 3. Action Dispatch
-The provider performs necessary side effects (such as asynchronous HTTP calls)
-and dispatches a strongly-typed action object containing a `type` discriminator
-and a typed `payload`:
+The component calls an action handler exposed by a feature-specific hook (e.g.
+`useLaunchOps()`, `useDayOps()`, or `useTraineeOps()`). The provider performs
+necessary side effects (such as asynchronous HTTP calls) and dispatches a
+strongly-typed action containing a discriminator `type` and a typed `payload`:
 
 ```typescript
 // Inside LaunchOpsProvider.tsx
@@ -52,9 +48,10 @@ const record = toLaunchRecord(response);
 dispatch({ type: 'RECORD_LAUNCH', payload: { drum, record } });
 ```
 
-### 4. Pure Reducer State Computation
-The aggregate reducer receives the current `state` and the `action`. It computes
-the next state without mutating the existing state object:
+### 3. Pure Slice Reducer State Computation
+
+The slice reducer receives its specific slice of `state` and the `action`. It
+computes the next slice state without mutating existing state objects:
 
 ```typescript
 // Inside launchReducer.ts
@@ -67,16 +64,40 @@ export const launchReducer = (state: LaunchState, action: LaunchAction): LaunchS
             }
             return { ...state, rightHistory: [...state.rightHistory, record] };
         }
-        // ...
         default:
+           // CRITICAL: Preserve slice reference on unhandled actions
             return state;
     }
 };
 ```
 
-### 5. Context Value and Derived Selectors
+### 4. Root / Composed Reducer Composition & Reference Check
+
+Where slice reducers are composed into an aggregate or root reducer (e.g.
+combining `launches`, `crew`, and `day` slices), the root reducer invokes child
+reducers and compares the returned references against previous references. If
+none of the slices changed, the root reducer returns the existing root state:
+
+```typescript
+// Root Reducer Composition Pattern
+export const rootSessionReducer = (state: SessionState, action: SessionAction): SessionState => {
+   const launches = launchReducer(state.launches, action);
+   const trainee = traineeReducer(state.trainee, action);
+   const day = dayReducer(state.day, action);
+
+   // If every slice preserved its reference, preserve root state reference:
+   if (launches === state.launches && trainee === state.trainee && day === state.day) {
+      return state; // Object.is(prevState, nextState) === true
+   }
+
+   return {...state, launches, trainee, day};
+};
+```
+
+### 5. Context Provider State Management
 The provider holds the reducer state via `useReducer`. Derived statistics are
-computed via `useMemo` using the reducer `state` as a dependency:
+computed via memoized selectors (`useMemo`) that take `state` (or specific slices)
+as dependencies:
 
 ```typescript
 // Inside LaunchOpsProvider.tsx
@@ -90,9 +111,10 @@ const derived = useMemo<DerivedWinchState>(() => {
 }, [state]);
 ```
 
-### 6. Component Re-rendering
-Downstream components subscribing to the context receive the updated state and
-re-render to reflect the change.
+### 6. Component Re-rendering via Selectors
+
+Downstream components subscribing to the context receive the updated state or
+memoized selector outputs and re-render only when relevant references change.
 
 ---
 
@@ -101,7 +123,7 @@ re-render to reflect the change.
 > [!IMPORTANT]
 > **The Golden Rule of Reducers:**
 > If an action is unhandled, unrecognized, or results in no effective change,
-> the reducer **MUST return the exact existing `state` reference**.
+> both slice reducers and root/composed reducers **MUST return the exact existing `state` reference**.
 > **NEVER** return a newly spread object `{ ...state }` on the default or no-op path.
 
 ### Why Identity Preservation Matters in React
@@ -121,6 +143,54 @@ React's `useReducer` and Context API rely strictly on referential equality
 4. **Re-render Cascades:** Every component subscribed to the context — along
    with its child component tree — is forced to re-render, degrading UI
    responsiveness and draining mobile/tablet battery life on the airfield.
+
+---
+
+### Root Reducer Referential Stability
+
+A common failure mode in modular state architectures is implementing identity
+preservation at the slice level while inadvertently breaking it at the root or
+composition level.
+
+#### ❌ Anti-Pattern: Unconditional Root Object Re-allocation
+
+```typescript
+// ❌ BROKEN: Slice reducers preserve identity, but root allocates a new wrapper object!
+export const badRootReducer = (state: RootState, action: RootAction): RootState => {
+   return {
+      launches: launchReducer(state.launches, action),
+      trainee: traineeReducer(state.trainee, action),
+      day: dayReducer(state.day, action),
+   };
+};
+```
+
+**Consequence:** Even when `action` is completely ignored by all three slices (e.g. `launchReducer` returns
+`state.launches`, `traineeReducer` returns
+`state.trainee`, `dayReducer` returns `state.day`), `badRootReducer` returns a
+brand new object `{ ... }`. React's `useReducer` sees `Object.is(prev, next) === false`,
+causing every context consumer in the entire application to re-render.
+
+#### ✅ Correct Pattern: Composed Identity Guard
+
+```typescript
+// ✅ CORRECT: Preserves root referential identity across all slices
+export const rootReducer = (state: RootState, action: RootAction): RootState => {
+   const launches = launchReducer(state.launches, action);
+   const trainee = traineeReducer(state.trainee, action);
+   const day = dayReducer(state.day, action);
+
+   if (
+           launches === state.launches &&
+           trainee === state.trainee &&
+           day === state.day
+   ) {
+      return state; // Zero allocation, skips React re-render cascade
+   }
+
+   return {launches, trainee, day};
+};
+```
 
 ---
 

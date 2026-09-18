@@ -63,8 +63,8 @@ sequenceDiagram
 
 In the optimistic architecture, a client-side unique identifier (`clientId`)
 is generated locally. The launch record is immediately committed to the
-local `launchReducer` state and reflected in the UI, while the network request
-executes asynchronously in the background.
+local `launchReducer` state (`launch/recorded` local event) and reflected in the UI,
+while the network request executes asynchronously in the background.
 
 ```mermaid
 sequenceDiagram
@@ -77,18 +77,18 @@ sequenceDiagram
     Operator ->> UI: Click Launch (drum: 'left')
     UI ->> Provider: executeLaunch('left', burn)
     activate Provider
-
-    %% Step 1: Local Optimistic Dispatch
-    Note over Provider: Generate client-side UUID
+%% Step 1: Local Optimistic Dispatch (launch/recorded)
+    Note over Provider: clientId generation: crypto.randomUUID()
     Provider ->> Provider: clientId = crypto.randomUUID()
     Provider ->> Provider: optimisticRecord = { id: clientId, clientId, status: 'pending', ... }
+    Note over Provider, Reducer: Domain Event: launch/recorded (local)
     Provider ->> Reducer: dispatch({ type: 'RECORD_LAUNCH', payload: { drum: 'left', record: optimisticRecord } })
     activate Reducer
     Reducer -->> Provider: nextState (optimistic record in leftHistory)
     deactivate Reducer
     Provider -->> UI: Instant UI update (counters increment, pending indicator shown)
-
-    %% Step 2: Background Network Request
+%% Step 2: Background Network Request (clientId consumed)
+    Note over Provider, Backend: clientId consumption in network payload
     Provider ->> Backend: POST /launches { ...payload, client_id: clientId }
     activate Backend
 
@@ -113,7 +113,7 @@ sequenceDiagram
         Reducer ->> Reducer: Remove record matching clientId from history
         Reducer -->> Provider: nextState (reverted to pre-launch state)
         deactivate Reducer
-        Provider -->> UI: Counters revert; display error notification / toast
+        Provider -->> UI: Counters revert, display error notification / toast
         UI -->> Operator: "Launch failed to record. Please retry."
     end
     deactivate Provider
@@ -126,11 +126,11 @@ sequenceDiagram
 The optimistic lifecycle coordinates high-level domain events with concrete
 TypeScript reducer actions:
 
-| Domain Event | Reducer Action Discriminator | Payload | Purpose |
-|---|---|---|---|
-| `launch/recorded` (or `launch/dispatched`) | `RECORD_LAUNCH` (or `RECORD_LAUNCH_OPTIMISTIC`) | `{ drum: DrumPosition, record: LaunchRecord }` | Appends optimistic record with `status: 'pending'` and `clientId` to local history |
-| `launch/confirmed` | `CONFIRM_LAUNCH` | `{ drum: DrumPosition, clientId: string, confirmedRecord: LaunchRecord }` | Swaps optimistic entry with canonical server-assigned `id` and `launch_number` |
-| `launch/rejected` | `ROLLBACK_LAUNCH` | `{ drum: DrumPosition, clientId: string, error?: string }` | Evicts the unconfirmed entry from history upon server or network failure |
+| Domain Event              | Reducer Action Discriminator                    | Payload                                                                   | Purpose                                                                                      |
+|---------------------------|-------------------------------------------------|---------------------------------------------------------------------------|----------------------------------------------------------------------------------------------|
+| `launch/recorded` (local) | `RECORD_LAUNCH` (or `RECORD_LAUNCH_OPTIMISTIC`) | `{ drum: DrumPosition, record: LaunchRecord }`                            | Appends optimistic record with `status: 'pending'` and generated `clientId` to local history |
+| `launch/confirmed`        | `CONFIRM_LAUNCH`                                | `{ drum: DrumPosition, clientId: string, confirmedRecord: LaunchRecord }` | Swaps optimistic entry with canonical server-assigned `id` and `launch_number`               |
+| `launch/rejected`         | `ROLLBACK_LAUNCH`                               | `{ drum: DrumPosition, clientId: string, error?: string }`                | Evicts the unconfirmed entry from history upon server or network failure                     |
 
 ---
 

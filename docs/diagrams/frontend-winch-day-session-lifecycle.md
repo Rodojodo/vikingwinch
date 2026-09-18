@@ -131,7 +131,7 @@ sequenceDiagram
     DayOps ->> DayOps: dispatch({ type: 'FINISH_DAY' })
     DayOps ->> Tab: onDayFinished()
     Tab ->> Identity: setSessionStatus({ status: 'closed', winchId })
-    Content ->> Content: UI reflects closed status; exportLog available
+  Content ->> Content: UI reflects closed status, exportLog available
 ```
 
 ---
