@@ -1,10 +1,14 @@
 import {useEffect, useState} from 'react';
 import {AuthenticatedTemplate, UnauthenticatedTemplate, useMsal} from '@azure/msal-react';
-import {Show, useUser} from '@clerk/react';
+import {Show, useUser, UserButton} from '@clerk/react';
+import {Box} from '@mui/material';
+import type {SxProps, Theme} from '@mui/material/styles';
 import '../App.css';
 import {WinchOpsPage} from './WinchOpsPage';
 import {LoginPage} from './LoginPage';
 import {getUserDepartment, getUserProfile} from '../features/auth/api/graphAPI';
+import {OperatorSelectPanel} from '../features/auth';
+import {appBackgroundSx} from '../themes/styles';
 
 /**
  * Auth Provider Selection:
@@ -19,8 +23,33 @@ export const AUTH_PROVIDER =
         ? (import.meta.env.VITE_TEST_AUTH_PROVIDER || 'msal')
         : (import.meta.env.VITE_AUTH_PROVIDER || 'clerk');
 
+const OPERATOR_SESSION_KEY = 'vikingwinch_operator_sn';
+
 function ClerkApp() {
-    const {user, isLoaded} = useUser();
+    const {user, isLoaded, isSignedIn} = useUser();
+    const [selectedOperatorSn, setSelectedOperatorSn] = useState<string | null>(() => {
+        try {
+            return sessionStorage.getItem(OPERATOR_SESSION_KEY);
+        } catch {
+            return null;
+        }
+    });
+
+    const isUserSignedIn = isSignedIn ?? Boolean(user);
+
+    useEffect(() => {
+        if (isLoaded && (!isUserSignedIn || !user)) {
+            try {
+                sessionStorage.removeItem(OPERATOR_SESSION_KEY);
+            } catch {
+                // ignore storage access errors
+            }
+            if (selectedOperatorSn !== null) {
+                // oxlint-disable-next-line react/set-state-in-effect
+                setSelectedOperatorSn(null);
+            }
+        }
+    }, [isLoaded, isUserSignedIn, user, selectedOperatorSn]);
 
     if (!isLoaded) {
         return (
@@ -36,13 +65,33 @@ function ClerkApp() {
         );
     }
 
-    const operatorSn = (user?.publicMetadata?.operatorSn as string) || user?.fullName || user?.firstName || user?.primaryEmailAddress?.emailAddress || 'Dev Operator';
-    const squadronId = (user?.publicMetadata?.squadronId as string) || '621 VGS';
+    const squadronId = (user?.username as string) || (user?.publicMetadata?.squadronId as string) || '123 VGS';
+
+    const handleSelectOperator = (operatorSn: string) => {
+        try {
+            sessionStorage.setItem(OPERATOR_SESSION_KEY, operatorSn);
+        } catch {
+            // ignore storage access errors
+        }
+        setSelectedOperatorSn(operatorSn);
+    };
 
     return (
         <>
             <Show when="signed-in">
-                <WinchOpsPage squadronId={squadronId} operatorSn={operatorSn}/>
+                {selectedOperatorSn ? (
+                    <WinchOpsPage squadronId={squadronId} operatorSn={selectedOperatorSn}/>
+                ) : (
+                    <Box sx={[appBackgroundSx, { minHeight: '100vh', position: 'relative' }] as SxProps<Theme>}>
+                        <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+                            <UserButton/>
+                        </Box>
+                        <OperatorSelectPanel
+                            squadronId={squadronId}
+                            onSelectOperator={handleSelectOperator}
+                        />
+                    </Box>
+                )}
             </Show>
             <Show when="signed-out">
                 <LoginPage/>
