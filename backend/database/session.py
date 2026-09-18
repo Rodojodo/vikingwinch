@@ -8,11 +8,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# Use environment variables
-DB_USER = os.environ["DB_USER"]
-DB_NAME = os.environ["DB_NAME"]
-DB_HOST = os.environ["DB_HOST"]
-DB_PORT = os.environ["DB_PORT"]
+# Use environment variables with Railway MySQL fallbacks
+DB_USER = os.environ.get("DB_USER") or os.environ.get("MYSQLUSER") or os.environ.get("MYSQL_USER")
+DB_NAME = os.environ.get("DB_NAME") or os.environ.get("MYSQLDATABASE") or os.environ.get("MYSQL_DATABASE")
+DB_HOST = os.environ.get("DB_HOST") or os.environ.get("MYSQLHOST") or os.environ.get("MYSQL_HOST")
+DB_PORT = os.environ.get("DB_PORT") or os.environ.get("MYSQLPORT") or os.environ.get("MYSQL_PORT")
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "local")
 
 if ENVIRONMENT == "production":
@@ -20,7 +20,7 @@ if ENVIRONMENT == "production":
     credential = DefaultAzureCredential()
     DB_PASSWORD = credential.get_token("https://ossrdbms-aad.database.windows.net/.default").token
 else:
-    DB_PASSWORD = os.environ["DB_PASSWORD"]
+    DB_PASSWORD = os.environ.get("DB_PASSWORD") or os.environ.get("MYSQLPASSWORD") or os.environ.get("MYSQL_PASSWORD")
 
 # MySQL async dialect: asyncmy (faster) or aiomysql (more stable)
 DATABASE_URL = f"mysql+asyncmy://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
