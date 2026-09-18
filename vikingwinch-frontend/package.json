@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "serve -s dist -l $PORT"
   },
   "dependencies": {
     "@azure/msal-browser": "^5.19.0",
@@ -23,7 +24,8 @@
     "exceljs": "^4.4.0",
     "file-saver": "^2.0.5",
     "react": "^19.2.8",
-    "react-dom": "^19.2.8"
+    "react-dom": "^19.2.8",
+    "serve": "^14.2.6"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^7.0.1",
