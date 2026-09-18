@@ -20,5 +20,5 @@ COPY . .
 # Expose default port (overridden at runtime by Railway's $PORT)
 EXPOSE 8000
 
-# Run database migrations on startup, then launch Uvicorn respecting $PORT
-CMD ["sh", "-c", "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Run database migrations on startup, then launch Uvicorn with dual-stack IPv6 (::) for Railway private networking
+CMD ["sh", "-c", "alembic upgrade head && uvicorn main:app --host \"::\" --port ${PORT:-8000} --workers 2"]
