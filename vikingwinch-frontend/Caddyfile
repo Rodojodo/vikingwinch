@@ -1,0 +1,17 @@
+{
+    auto_https off
+}
+
+:{$PORT:8080} {
+    # Forward API requests to the private backend service
+    handle_path /api/* {
+        reverse_proxy {$BACKEND_URL:preview.railway.internal:8080}
+    }
+
+    # Serve static assets and handle client-side SPA routing
+    handle {
+        root * dist
+        try_files {path} /index.html
+        file_server
+    }
+}
