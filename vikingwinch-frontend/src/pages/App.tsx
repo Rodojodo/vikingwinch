@@ -1,11 +1,60 @@
 import {useEffect, useState} from 'react';
 import {AuthenticatedTemplate, UnauthenticatedTemplate, useMsal} from '@azure/msal-react';
-import '../App.css'
+import {Show, useUser} from '@clerk/react';
+import '../App.css';
 import {WinchOpsPage} from './WinchOpsPage';
 import {LoginPage} from './LoginPage';
 import {getUserDepartment, getUserProfile} from '../features/auth/api/graphAPI';
 
-function App() {
+/**
+ * Auth Provider Selection:
+ * - 'clerk': Default authentication provider across all environments (development, staging, production).
+ * - 'msal': Microsoft Entra ID (MSAL) — preserved intact for future production use when required.
+ *
+ * Defaults to 'clerk' everywhere (including production), unless VITE_AUTH_PROVIDER is explicitly set to 'msal'.
+ * In unit testing mode without Clerk provider, falls back to 'msal' to preserve existing MSAL mock suites.
+ */
+export const AUTH_PROVIDER =
+    import.meta.env.MODE === 'test'
+        ? (import.meta.env.VITE_TEST_AUTH_PROVIDER || 'msal')
+        : (import.meta.env.VITE_AUTH_PROVIDER || 'clerk');
+
+function ClerkApp() {
+    const {user, isLoaded} = useUser();
+
+    if (!isLoaded) {
+        return (
+            <div style={{
+                color: 'white',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                height: '100vh'
+            }}>
+                Loading profile...
+            </div>
+        );
+    }
+
+    const operatorSn = (user?.publicMetadata?.operatorSn as string) || user?.fullName || user?.firstName || user?.primaryEmailAddress?.emailAddress || 'Dev Operator';
+    const squadronId = (user?.publicMetadata?.squadronId as string) || '621 VGS';
+
+    return (
+        <>
+            <Show when="signed-in">
+                <WinchOpsPage squadronId={squadronId} operatorSn={operatorSn}/>
+            </Show>
+            <Show when="signed-out">
+                <LoginPage/>
+            </Show>
+        </>
+    );
+}
+
+/**
+ * MSAL App flow — preserved intact for future production use
+ */
+function MsalApp() {
     const { instance, accounts, inProgress } = useMsal();
     const [operatorSn, setOperatorSn] = useState<string | null>(null);
     const [squadronId, setSquadronId] = useState<string | null>(null);
@@ -32,7 +81,7 @@ function App() {
                         } catch (profileErr) {
                             console.warn("Failed to fetch user profile (e.g., 404 Not Found), falling back to v1.0 data:", profileErr);
                         }
-                        
+
                         if (profileData?.positions && Array.isArray(profileData.positions)) {
                             for (const pos of profileData.positions) {
                                 if (pos.detail?.employeeId) {
@@ -42,7 +91,7 @@ function App() {
                             }
                         }
                     }
-                    
+
                     // Fallback for testing: check graphData.employeeId from the v1.0/me endpoint
                     setOperatorSn(employeeId || graphData.displayName || 'Unknown Operator');
                     setSquadronId(graphData.department || 'Unknown Squadron');
@@ -96,6 +145,10 @@ function App() {
             </UnauthenticatedTemplate>
         </>
     );
+}
+
+function App() {
+    return AUTH_PROVIDER === 'clerk' ? <ClerkApp/> : <MsalApp/>;
 }
 
 export default App;

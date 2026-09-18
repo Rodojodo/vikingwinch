@@ -3,9 +3,11 @@ import {AppBar, Box, Button, IconButton, Tab, Tabs, Toolbar, Typography} from '@
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
 import {useMsal} from '@azure/msal-react';
+import {UserButton} from '@clerk/react';
 import {WinchTab} from './WinchTab';
 import {getWinchesForSquadron} from '../features/winch-ops/api/winchClient';
 import type {WinchRead} from '../features/winch-ops/types';
+import {AUTH_PROVIDER} from './App';
 
 interface WinchOpsPageProps {
     squadronId: string;
@@ -18,9 +20,10 @@ interface TabData {
 }
 
 export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
+    // MSAL account handling preserved for production
     const { accounts, instance } = useMsal();
-    const activeAccount = instance.getActiveAccount() || accounts[0];
-    const operatorName = activeAccount?.name || 'Unknown Operator';
+    const activeAccount = instance?.getActiveAccount ? instance.getActiveAccount() || accounts?.[0] : undefined;
+    const operatorName = AUTH_PROVIDER === 'clerk' ? operatorSn : (activeAccount?.name || 'Unknown Operator');
 
     const [tabs, setTabs] = useState<TabData[]>([{ id: '1', winchId: null }]);
     const [activeTabId, setActiveTabId] = useState<string>('1');
@@ -92,28 +95,32 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
                     <Typography variant="body1" sx={{mr: 2, color: 'text.primary', fontWeight: 500}}>
                         {operatorName}
                     </Typography>
-                    <Button
-                        size="small"
-                        onClick={() => instance.logoutRedirect().catch(console.error)}
-                        sx={{
-                            textTransform: 'none',
-                            backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                            borderRadius: '12px',
-                            color: 'text.primary',
-                            overflow: 'hidden',
-                            transition: 'all 0.2s ease',
-                            px: 2,
-                            '&:hover': {
-                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                                borderColor: 'primary.main',
-                                color: 'primary.main',
-                                transform: 'translateY(-2px)',
-                            },
-                        }}
-                    >
-                        Sign out
-                    </Button>
+                    {AUTH_PROVIDER === 'clerk' ? (
+                        <UserButton/>
+                    ) : (
+                        <Button
+                            size="small"
+                            onClick={() => instance.logoutRedirect().catch(console.error)}
+                            sx={{
+                                textTransform: 'none',
+                                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                                border: '1px solid rgba(255, 255, 255, 0.1)',
+                                borderRadius: '12px',
+                                color: 'text.primary',
+                                overflow: 'hidden',
+                                transition: 'all 0.2s ease',
+                                px: 2,
+                                '&:hover': {
+                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                    borderColor: 'primary.main',
+                                    color: 'primary.main',
+                                    transform: 'translateY(-2px)',
+                                },
+                            }}
+                        >
+                            Sign out
+                        </Button>
+                    )}
                 </Toolbar>
             </AppBar>
             <Box
