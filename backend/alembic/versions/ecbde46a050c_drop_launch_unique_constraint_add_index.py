@@ -18,10 +18,12 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.drop_constraint('uix_winch_drum_launch_number', 'launches', type_='unique')
+    # Create the new index covering winch_id first so MySQL InnoDB foreign key constraint on winch_id is preserved
     op.create_index('ix_launches_winch_drum_launch_id', 'launches', ['winch_id', 'drum', 'launch_id'], unique=False)
+    op.drop_constraint('uix_winch_drum_launch_number', 'launches', type_='unique')
 
 
 def downgrade() -> None:
-    op.drop_index('ix_launches_winch_drum_launch_id', table_name='launches')
+    # Recreate the unique constraint covering winch_id first before dropping the non-unique index
     op.create_unique_constraint('uix_winch_drum_launch_number', 'launches', ['winch_id', 'drum', 'launch_number'])
+    op.drop_index('ix_launches_winch_drum_launch_id', table_name='launches')
