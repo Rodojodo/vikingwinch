@@ -147,8 +147,8 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
         setError(null);
 
         const validHours = parsedHours !== null && !isNaN(parsedHours) ? parsedHours : null;
-        const leftChanged = cloudLeft !== null && parsedLeft !== null && !isNaN(parsedLeft) && parsedLeft !== cloudLeft;
-        const rightChanged = cloudRight !== null && parsedRight !== null && !isNaN(parsedRight) && parsedRight !== cloudRight;
+        const leftChanged = parsedLeft !== null && !isNaN(parsedLeft) && (cloudLeft === null || parsedLeft !== cloudLeft);
+        const rightChanged = parsedRight !== null && !isNaN(parsedRight) && (cloudRight === null || parsedRight !== cloudRight);
         const drumsChanged = leftChanged || rightChanged;
 
         let signed = diSigned;
@@ -298,7 +298,9 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
                     {py: 2, px: 5},
                 ] as SxProps<Theme>}
             >
-                Sign DI
+                {isSubmitting
+                    ? (diSigned ? 'Submitting...' : 'Signing...')
+                    : (diSigned ? 'Submit Drum Corrections' : 'Sign DI')}
             </Button>
         </Box>
     );

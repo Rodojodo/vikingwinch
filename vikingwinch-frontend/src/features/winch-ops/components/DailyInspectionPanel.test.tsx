@@ -31,7 +31,7 @@ describe('DailyInspectionPanel', () => {
         });
     });
 
-    it('renders the component with inputs', () => {
+    it('renders the component with inputs', async () => {
         render(<DailyInspectionPanel onComplete={mockOnComplete} onSignDI={mockOnSignDI}/>);
         expect(screen.getByText('Winch 42')).toBeInTheDocument();
         expect(screen.getByPlaceholderText('e.g. 12')).toBeInTheDocument(); // left drum
@@ -39,6 +39,9 @@ describe('DailyInspectionPanel', () => {
         expect(screen.getByPlaceholderText('e.g. 123.5')).toBeInTheDocument(); // hours
         expect(screen.getByRole('button', { name: 'Retrieve data from cloud' })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Sign DI' })).toBeInTheDocument();
+        await waitFor(() => {
+            expect(screen.getByRole('button', {name: 'Sign DI'})).not.toBeDisabled();
+        });
     });
 
     it('retrieves data from cloud and updates fields', async () => {
@@ -549,6 +552,9 @@ describe('DailyInspectionPanel', () => {
         // Hours field is disabled because DI was already signed
         expect(hoursInput).toBeDisabled();
 
+        // Button text changes to indicate retrying drum corrections
+        expect(screen.getByRole('button', {name: 'Submit Drum Corrections'})).toBeInTheDocument();
+
         // Now retry corrections (mock succeeds this time)
         mockOnSubmitCorrections.mockResolvedValueOnce([]);
         await user.click(signBtn);
@@ -563,7 +569,42 @@ describe('DailyInspectionPanel', () => {
 
         consoleSpy.mockRestore();
     });
-it("shows warning and submits corrections when user enters values without clicking retrieve data from cloud", async () => {
+
+    it('submits corrections when cloud totals are null (new winch) and user enters drum totals', async () => {
+        const user = userEvent.setup();
+        vi.mocked(getBroughtForward).mockResolvedValue({left: null, right: null, hours: null});
+        vi.mocked(getWinchHours).mockResolvedValue({hours: null});
+        mockOnSignDI.mockResolvedValue(undefined);
+        mockOnSubmitCorrections.mockResolvedValue([]);
+
+        render(
+            <DailyInspectionPanel
+                onComplete={mockOnComplete}
+                onSignDI={mockOnSignDI}
+                onSubmitCorrections={mockOnSubmitCorrections}
+            />
+        );
+
+        await waitFor(() => {
+            expect(screen.getByRole('button', {name: 'Sign DI'})).not.toBeDisabled();
+        });
+
+        const leftInput = screen.getByPlaceholderText('e.g. 12');
+        const rightInput = screen.getByPlaceholderText('e.g. 5');
+        const hoursInput = screen.getByPlaceholderText('e.g. 123.5');
+
+        await user.type(leftInput, '10');
+        await user.type(rightInput, '20');
+        await user.type(hoursInput, '5.0');
+
+        await user.click(screen.getByRole('button', {name: 'Sign DI'}));
+
+        expect(mockOnSignDI).toHaveBeenCalledWith(5.0);
+        expect(mockOnSubmitCorrections).toHaveBeenCalledWith({left: 10, right: 20});
+        expect(mockOnComplete).toHaveBeenCalled();
+    });
+
+    it('shows warning and submits corrections when user enters values without clicking retrieve data from cloud', async () => {
         const user = userEvent.setup();
         vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.0});
         vi.mocked(getWinchHours).mockResolvedValue({hours: 50.0});
@@ -583,27 +624,27 @@ it("shows warning and submits corrections when user enters values without clicki
             expect(getBroughtForward).toHaveBeenCalledWith(42, expect.any(String));
         });
 
-        const leftInput = screen.getByPlaceholderText("e.g. 12");
-        const rightInput = screen.getByPlaceholderText("e.g. 5");
-        const hoursInput = screen.getByPlaceholderText("e.g. 123.5");
+        const leftInput = screen.getByPlaceholderText('e.g. 12');
+        const rightInput = screen.getByPlaceholderText('e.g. 5');
+        const hoursInput = screen.getByPlaceholderText('e.g. 123.5');
 
         // Fields remain empty initially without clicking retrieve
         expect(leftInput).toHaveValue(null);
         expect(rightInput).toHaveValue(null);
         expect(hoursInput).toHaveValue(null);
 
-    // User manually types values differing from cloud baseline
-        await user.type(leftInput, "25");
-        await user.type(rightInput, "8");
-        await user.type(hoursInput, "55.0");
+        // User manually types values differing from cloud baseline
+        await user.type(leftInput, '25');
+        await user.type(rightInput, '8');
+        await user.type(hoursInput, '55.0');
 
-    // Warnings appear based on background-fetched cloud baseline
-    expect(screen.getByText("Entered: 25, cloud: 15")).toBeInTheDocument();
-    expect(screen.getByText("Entered: 55, cloud: 50")).toBeInTheDocument();
-    expect(screen.queryByText(/cloud: 8/)).not.toBeInTheDocument();
+        // Warnings appear based on background-fetched cloud baseline
+        expect(screen.getByText('Entered: 25, cloud: 15')).toBeInTheDocument();
+        expect(screen.getByText('Entered: 55, cloud: 50')).toBeInTheDocument();
+        expect(screen.queryByText(/cloud: 8/)).not.toBeInTheDocument();
 
         // Sign DI
-        const signBtn = screen.getByRole("button", { name: "Sign DI" });
+        const signBtn = screen.getByRole('button', {name: 'Sign DI'});
         await user.click(signBtn);
 
         expect(mockOnSignDI).toHaveBeenCalledWith(55.0);
