@@ -20,15 +20,15 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
     const [leftDrum, setLeftDrum] = useState<string>('');
     const [rightDrum, setRightDrum] = useState<string>('');
     const [hours, setHours] = useState<string>('');
-    const [storedLeft, setStoredLeft] = useState<number | null>(null);
-    const [storedRight, setStoredRight] = useState<number | null>(null);
-    const [storedHours, setStoredHours] = useState<number | null>(null);
+    const [cloudLeft, setCloudLeft] = useState<number | null>(null);
+    const [cloudRight, setCloudRight] = useState<number | null>(null);
+    const [cloudHours, setCloudHours] = useState<number | null>(null);
     const [diSigned, setDiSigned] = useState(false);
     const [isFetching, setIsFetching] = useState(Boolean(winchId));
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const storedValuesRef = useRef<{ left: number | null; right: number | null; hours: number | null }>({
+    const cloudValuesRef = useRef<{ left: number | null; right: number | null; hours: number | null }>({
         left: null,
         right: null,
         hours: null,
@@ -49,10 +49,10 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
                 if (isMounted && bf) {
                     const l = bf.left !== null && bf.left !== undefined ? bf.left : null;
                     const r = bf.right !== null && bf.right !== undefined ? bf.right : null;
-                    storedValuesRef.current.left = l;
-                    storedValuesRef.current.right = r;
-                    setStoredLeft(l);
-                    setStoredRight(r);
+                    cloudValuesRef.current.left = l;
+                    cloudValuesRef.current.right = r;
+                    setCloudLeft(l);
+                    setCloudRight(r);
                 }
             } catch (e) {
                 console.error('Failed to fetch drums', e);
@@ -63,8 +63,8 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
                 const h = await getWinchHours(winchId);
                 if (isMounted && h) {
                     const hrs = h.hours !== null && h.hours !== undefined ? h.hours : null;
-                    storedValuesRef.current.hours = hrs;
-                    setStoredHours(hrs);
+                    cloudValuesRef.current.hours = hrs;
+                    setCloudHours(hrs);
                 }
             } catch (e) {
                 console.error('Failed to fetch hours', e);
@@ -88,7 +88,7 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
         if (fetchPromiseRef.current) {
             await fetchPromiseRef.current;
         }
-        const {left, right, hours: h} = storedValuesRef.current;
+        const {left, right, hours: h} = cloudValuesRef.current;
         if (left !== null) {
             setLeftDrum(left.toString());
         }
@@ -137,9 +137,9 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
     const parsedRight = rightDrum !== '' ? parseInt(rightDrum, 10) : null;
     const parsedHours = hours !== '' ? parseFloat(hours) : null;
 
-    const leftDiffers = storedLeft !== null && parsedLeft !== null && !isNaN(parsedLeft) && parsedLeft !== storedLeft;
-    const rightDiffers = storedRight !== null && parsedRight !== null && !isNaN(parsedRight) && parsedRight !== storedRight;
-    const hoursDiffers = storedHours !== null && parsedHours !== null && !isNaN(parsedHours) && parsedHours !== storedHours;
+    const leftDiffers = cloudLeft !== null && parsedLeft !== null && !isNaN(parsedLeft) && parsedLeft !== cloudLeft;
+    const rightDiffers = cloudRight !== null && parsedRight !== null && !isNaN(parsedRight) && parsedRight !== cloudRight;
+    const hoursDiffers = cloudHours !== null && parsedHours !== null && !isNaN(parsedHours) && parsedHours !== cloudHours;
 
     const handleSignDI = async () => {
         if (!winchId || !squadronId || !operatorSn) return;
@@ -147,8 +147,8 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
         setError(null);
 
         const validHours = parsedHours !== null && !isNaN(parsedHours) ? parsedHours : null;
-        const leftChanged = storedLeft !== null && parsedLeft !== null && !isNaN(parsedLeft) && parsedLeft !== storedLeft;
-        const rightChanged = storedRight !== null && parsedRight !== null && !isNaN(parsedRight) && parsedRight !== storedRight;
+        const leftChanged = cloudLeft !== null && parsedLeft !== null && !isNaN(parsedLeft) && parsedLeft !== cloudLeft;
+        const rightChanged = cloudRight !== null && parsedRight !== null && !isNaN(parsedRight) && parsedRight !== cloudRight;
         const drumsChanged = leftChanged || rightChanged;
 
         let signed = diSigned;
@@ -238,7 +238,7 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
                     />
                     {leftDiffers && (
                         <Typography variant="caption" sx={{ color: 'warning.main', mt: 0.5, display: 'block' }}>
-                            {`Entered: ${leftDrum}, stored: ${storedLeft}`}
+                            {`Entered: ${leftDrum}, cloud: ${cloudLeft}`}
                         </Typography>
                     )}
                 </Box>
@@ -259,7 +259,7 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
                     />
                     {rightDiffers && (
                         <Typography variant="caption" sx={{ color: 'warning.main', mt: 0.5, display: 'block' }}>
-                            {`Entered: ${rightDrum}, stored: ${storedRight}`}
+                            {`Entered: ${rightDrum}, cloud: ${cloudRight}`}
                         </Typography>
                     )}
                 </Box>
@@ -283,7 +283,7 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
                 />
                 {hoursDiffers && (
                     <Typography variant="caption" sx={{ color: 'warning.main', mt: 0.5, display: 'block' }}>
-                        {`Entered: ${hours}, stored: ${storedHours}`}
+                        {`Entered: ${hours}, cloud: ${cloudHours}`}
                     </Typography>
                 )}
             </Box>

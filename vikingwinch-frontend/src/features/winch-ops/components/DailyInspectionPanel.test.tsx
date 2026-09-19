@@ -223,7 +223,7 @@ describe('DailyInspectionPanel', () => {
         expect(getBroughtForward).not.toHaveBeenCalled();
     });
 
-    it('shows inline warning when drum value differs from stored value and clears when restored', async () => {
+    it('shows inline warning when drum value differs from cloud value and clears when restored', async () => {
         const user = userEvent.setup();
         vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.0});
         vi.mocked(getWinchHours).mockResolvedValue({hours: 50.0});
@@ -242,13 +242,13 @@ describe('DailyInspectionPanel', () => {
         await user.clear(leftInput);
         await user.type(leftInput, '20');
 
-        expect(screen.getByText('Entered: 20, stored: 15')).toBeInTheDocument();
+        expect(screen.getByText('Entered: 20, cloud: 15')).toBeInTheDocument();
 
         // Restore left drum to 15
         await user.clear(leftInput);
         await user.type(leftInput, '15');
 
-        expect(screen.queryByText('Entered: 20, stored: 15')).not.toBeInTheDocument();
+        expect(screen.queryByText('Entered: 20, cloud: 15')).not.toBeInTheDocument();
     });
 
     it('shows inline warning for hours when changed and clears when restored', async () => {
@@ -270,13 +270,13 @@ describe('DailyInspectionPanel', () => {
         await user.clear(hoursInput);
         await user.type(hoursInput, '55');
 
-        expect(screen.getByText('Entered: 55, stored: 50')).toBeInTheDocument();
+        expect(screen.getByText('Entered: 55, cloud: 50')).toBeInTheDocument();
 
         // Restore hours to 50
         await user.clear(hoursInput);
         await user.type(hoursInput, '50');
 
-        expect(screen.queryByText('Entered: 55, stored: 50')).not.toBeInTheDocument();
+        expect(screen.queryByText('Entered: 55, cloud: 50')).not.toBeInTheDocument();
     });
 
     it('allows signing while inline warnings are displayed (non-blocking)', async () => {
@@ -304,7 +304,7 @@ describe('DailyInspectionPanel', () => {
         await user.clear(leftInput);
         await user.type(leftInput, '20');
 
-        expect(screen.getByText('Entered: 20, stored: 15')).toBeInTheDocument();
+        expect(screen.getByText('Entered: 20, cloud: 15')).toBeInTheDocument();
 
         const signBtn = screen.getByRole('button', { name: 'Sign DI' });
         expect(signBtn).not.toBeDisabled();
@@ -414,7 +414,7 @@ describe('DailyInspectionPanel', () => {
         expect(mockOnComplete).toHaveBeenCalled();
     });
 
-    it('does not submit corrections when drums match stored values', async () => {
+    it('does not submit corrections when drums match cloud values', async () => {
         const user = userEvent.setup();
         vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.0});
         vi.mocked(getWinchHours).mockResolvedValue({hours: 50.0});
@@ -592,15 +592,15 @@ it("shows warning and submits corrections when user enters values without clicki
         expect(rightInput).toHaveValue(null);
         expect(hoursInput).toHaveValue(null);
 
-        // User manually types values differing from stored baseline
+    // User manually types values differing from cloud baseline
         await user.type(leftInput, "25");
         await user.type(rightInput, "8");
         await user.type(hoursInput, "55.0");
 
-        // Warnings appear based on background-fetched stored baseline
-        expect(screen.getByText("Entered: 25, stored: 15")).toBeInTheDocument();
-        expect(screen.getByText("Entered: 55, stored: 50")).toBeInTheDocument();
-        expect(screen.queryByText(/stored: 8/)).not.toBeInTheDocument();
+    // Warnings appear based on background-fetched cloud baseline
+    expect(screen.getByText("Entered: 25, cloud: 15")).toBeInTheDocument();
+    expect(screen.getByText("Entered: 55, cloud: 50")).toBeInTheDocument();
+    expect(screen.queryByText(/cloud: 8/)).not.toBeInTheDocument();
 
         // Sign DI
         const signBtn = screen.getByRole("button", { name: "Sign DI" });
