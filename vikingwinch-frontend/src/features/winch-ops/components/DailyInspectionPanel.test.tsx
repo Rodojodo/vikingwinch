@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {DailyInspectionPanel} from './DailyInspectionPanel.tsx';
 import {useSessionIdentity} from '../../../app/hooks/useSessionIdentity.ts';
-import {getBroughtForward, getWinchHours} from '../api/winchClient.ts';
+import {getBroughtForward} from '../api/winchClient.ts';
 
 vi.mock('../../../app/hooks/useSessionIdentity.ts', () => ({
     useSessionIdentity: vi.fn(),
@@ -11,7 +11,6 @@ vi.mock('../../../app/hooks/useSessionIdentity.ts', () => ({
 
 vi.mock('../api/winchClient.ts', () => ({
     getBroughtForward: vi.fn(),
-    getWinchHours: vi.fn(),
 }));
 
 describe('DailyInspectionPanel', () => {
@@ -22,7 +21,6 @@ describe('DailyInspectionPanel', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         vi.mocked(getBroughtForward).mockResolvedValue({left: null, right: null, hours: null});
-        vi.mocked(getWinchHours).mockResolvedValue({hours: null});
         vi.mocked(useSessionIdentity).mockReturnValue({
             squadronId: 'sqn1',
             winchId: 42,
@@ -46,8 +44,7 @@ describe('DailyInspectionPanel', () => {
 
     it('retrieves data from cloud and updates fields', async () => {
         const user = userEvent.setup();
-        vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.5});
-        vi.mocked(getWinchHours).mockResolvedValue({hours: 150.5});
+        vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 150.5});
 
         render(<DailyInspectionPanel onComplete={mockOnComplete} onSignDI={mockOnSignDI}/>);
 
@@ -63,7 +60,6 @@ describe('DailyInspectionPanel', () => {
         vi.mocked(getBroughtForward).mockImplementation(() => new Promise((resolve) => {
             resolveBf = resolve;
         }));
-        vi.mocked(getWinchHours).mockResolvedValue({hours: 100});
 
         render(<DailyInspectionPanel onComplete={mockOnComplete} onSignDI={mockOnSignDI}/>);
 
@@ -81,8 +77,7 @@ describe('DailyInspectionPanel', () => {
 
     it('fetches cloud data once on mount and populates fields when clicking retrieve button without re-fetching', async () => {
         const user = userEvent.setup();
-        vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.5});
-        vi.mocked(getWinchHours).mockResolvedValue({hours: 150.5});
+        vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 150.5});
 
         render(<DailyInspectionPanel onComplete={mockOnComplete} onSignDI={mockOnSignDI}/>);
 
@@ -101,13 +96,11 @@ describe('DailyInspectionPanel', () => {
         // Clicking it again does NOT call API again
         await user.click(retrieveBtn);
         expect(getBroughtForward).toHaveBeenCalledTimes(1);
-        expect(getWinchHours).toHaveBeenCalledTimes(1);
     });
 
     it('handles retrieve data missing fields', async () => {
         const user = userEvent.setup();
         vi.mocked(getBroughtForward).mockResolvedValue({left: null, right: null, hours: null});
-        vi.mocked(getWinchHours).mockResolvedValue({hours: null});
 
         render(<DailyInspectionPanel onComplete={mockOnComplete} onSignDI={mockOnSignDI}/>);
 
@@ -125,8 +118,7 @@ describe('DailyInspectionPanel', () => {
         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         const user = userEvent.setup();
 
-        vi.mocked(getBroughtForward).mockRejectedValue(new Error('Fetch drums failed'));
-        vi.mocked(getWinchHours).mockRejectedValue(new Error('Fetch hours failed'));
+        vi.mocked(getBroughtForward).mockRejectedValue(new Error('Fetch failed'));
 
         render(<DailyInspectionPanel onComplete={mockOnComplete} onSignDI={mockOnSignDI}/>);
 
@@ -134,8 +126,7 @@ describe('DailyInspectionPanel', () => {
         await user.click(retrieveBtn);
 
         await waitFor(() => {
-            expect(consoleSpy).toHaveBeenCalledWith('Failed to fetch drums', expect.any(Error));
-            expect(consoleSpy).toHaveBeenCalledWith('Failed to fetch hours', expect.any(Error));
+            expect(consoleSpy).toHaveBeenCalledWith('Failed to fetch brought forward data', expect.any(Error));
         });
 
         consoleSpy.mockRestore();
@@ -229,7 +220,6 @@ describe('DailyInspectionPanel', () => {
     it('shows inline warning when drum value differs from cloud value and clears when restored', async () => {
         const user = userEvent.setup();
         vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.0});
-        vi.mocked(getWinchHours).mockResolvedValue({hours: 50.0});
 
         render(<DailyInspectionPanel onComplete={mockOnComplete} onSignDI={mockOnSignDI}/>);
 
@@ -257,7 +247,6 @@ describe('DailyInspectionPanel', () => {
     it('shows inline warning for hours when changed and clears when restored', async () => {
         const user = userEvent.setup();
         vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.0});
-        vi.mocked(getWinchHours).mockResolvedValue({hours: 50.0});
 
         render(<DailyInspectionPanel onComplete={mockOnComplete} onSignDI={mockOnSignDI}/>);
 
@@ -285,7 +274,6 @@ describe('DailyInspectionPanel', () => {
     it('allows signing while inline warnings are displayed (non-blocking)', async () => {
         const user = userEvent.setup();
         vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.0});
-        vi.mocked(getWinchHours).mockResolvedValue({hours: 50.0});
         mockOnSignDI.mockResolvedValue(undefined);
         mockOnSubmitCorrections.mockResolvedValue([]);
 
@@ -321,7 +309,6 @@ describe('DailyInspectionPanel', () => {
     it('submits corrections for both drums when both are changed', async () => {
         const user = userEvent.setup();
         vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.0});
-        vi.mocked(getWinchHours).mockResolvedValue({hours: 50.0});
         mockOnSignDI.mockResolvedValue(undefined);
         mockOnSubmitCorrections.mockResolvedValue([]);
 
@@ -356,7 +343,6 @@ describe('DailyInspectionPanel', () => {
     it('submits corrections with null for right drum when only left drum changed', async () => {
         const user = userEvent.setup();
         vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.0});
-        vi.mocked(getWinchHours).mockResolvedValue({hours: 50.0});
         mockOnSignDI.mockResolvedValue(undefined);
         mockOnSubmitCorrections.mockResolvedValue([]);
 
@@ -388,7 +374,6 @@ describe('DailyInspectionPanel', () => {
     it('submits corrections with null for left drum when only right drum changed', async () => {
         const user = userEvent.setup();
         vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.0});
-        vi.mocked(getWinchHours).mockResolvedValue({hours: 50.0});
         mockOnSignDI.mockResolvedValue(undefined);
         mockOnSubmitCorrections.mockResolvedValue([]);
 
@@ -420,7 +405,6 @@ describe('DailyInspectionPanel', () => {
     it('does not submit corrections when drums match cloud values', async () => {
         const user = userEvent.setup();
         vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.0});
-        vi.mocked(getWinchHours).mockResolvedValue({hours: 50.0});
         mockOnSignDI.mockResolvedValue(undefined);
 
         render(
@@ -447,7 +431,6 @@ describe('DailyInspectionPanel', () => {
     it('calls onSignDI with entered hours and makes no correction call when only hours changed', async () => {
         const user = userEvent.setup();
         vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.0});
-        vi.mocked(getWinchHours).mockResolvedValue({hours: 50.0});
         mockOnSignDI.mockResolvedValue(undefined);
 
         render(
@@ -509,7 +492,6 @@ describe('DailyInspectionPanel', () => {
         const user = userEvent.setup();
 
         vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.0});
-        vi.mocked(getWinchHours).mockResolvedValue({hours: 50.0});
         mockOnSignDI.mockResolvedValue(undefined);
         mockOnSubmitCorrections.mockRejectedValueOnce(new Error('Network error'));
 
@@ -573,7 +555,6 @@ describe('DailyInspectionPanel', () => {
     it('submits corrections when cloud totals are null (new winch) and user enters drum totals', async () => {
         const user = userEvent.setup();
         vi.mocked(getBroughtForward).mockResolvedValue({left: null, right: null, hours: null});
-        vi.mocked(getWinchHours).mockResolvedValue({hours: null});
         mockOnSignDI.mockResolvedValue(undefined);
         mockOnSubmitCorrections.mockResolvedValue([]);
 
@@ -607,7 +588,6 @@ describe('DailyInspectionPanel', () => {
     it('shows warning and submits corrections when user enters values without clicking retrieve data from cloud', async () => {
         const user = userEvent.setup();
         vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.0});
-        vi.mocked(getWinchHours).mockResolvedValue({hours: 50.0});
         mockOnSignDI.mockResolvedValue(undefined);
         mockOnSubmitCorrections.mockResolvedValue([]);
 

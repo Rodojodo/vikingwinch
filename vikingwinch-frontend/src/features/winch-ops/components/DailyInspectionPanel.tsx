@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {Box, Button, TextField, Typography} from '@mui/material';
-import {getBroughtForward, getWinchHours} from '../api/winchClient.ts';
+import {getBroughtForward} from '../api/winchClient.ts';
 import {useSessionIdentity} from '../../../app/hooks/useSessionIdentity.ts';
 import {darkTextFieldStyles, errorBannerSx, glassPanelSx, glowingPrimaryButtonSx} from '../../../themes/styles.ts';
 import type {SxProps, Theme} from '@mui/material/styles';
@@ -49,26 +49,17 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
                 if (isMounted && bf) {
                     const l = bf.left !== null && bf.left !== undefined ? bf.left : null;
                     const r = bf.right !== null && bf.right !== undefined ? bf.right : null;
+                    const hrs = bf.hours !== null && bf.hours !== undefined ? bf.hours : null;
                     cloudValuesRef.current.left = l;
                     cloudValuesRef.current.right = r;
+                    cloudValuesRef.current.hours = hrs;
                     setCloudLeft(l);
                     setCloudRight(r);
-                }
-            } catch (e) {
-                console.error('Failed to fetch drums', e);
-                if (isMounted) setError('Failed to retrieve drum totals.');
-            }
-
-            try {
-                const h = await getWinchHours(winchId);
-                if (isMounted && h) {
-                    const hrs = h.hours !== null && h.hours !== undefined ? h.hours : null;
-                    cloudValuesRef.current.hours = hrs;
                     setCloudHours(hrs);
                 }
             } catch (e) {
-                console.error('Failed to fetch hours', e);
-                if (isMounted) setError('Failed to retrieve winch hours.');
+                console.error('Failed to fetch brought forward data', e);
+                if (isMounted) setError('Failed to retrieve brought forward data.');
             } finally {
                 if (isMounted) {
                     setIsFetching(false);
