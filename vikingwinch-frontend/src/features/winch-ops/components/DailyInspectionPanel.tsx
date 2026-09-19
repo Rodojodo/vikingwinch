@@ -46,16 +46,27 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
                 const today = new Date();
                 const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
                 const bf = await getBroughtForward(winchId, todayStr);
-                if (isMounted && bf) {
-                    const l = bf.left !== null && bf.left !== undefined ? bf.left : null;
-                    const r = bf.right !== null && bf.right !== undefined ? bf.right : null;
-                    const hrs = bf.hours !== null && bf.hours !== undefined ? bf.hours : null;
+                if (isMounted) {
+                    const l = bf?.left ?? null;
+                    const r = bf?.right ?? null;
+                    const hrs = bf?.hours ?? null;
+
                     cloudValuesRef.current.left = l;
                     cloudValuesRef.current.right = r;
                     cloudValuesRef.current.hours = hrs;
                     setCloudLeft(l);
                     setCloudRight(r);
                     setCloudHours(hrs);
+
+                    const missing = [
+                        l === null && 'left drum',
+                        r === null && 'right drum',
+                        hrs === null && 'hours',
+                    ].filter((m): m is string => Boolean(m));
+
+                    if (missing.length > 0) {
+                        setError(`Brought forward data missing: ${missing.join(', ')}.`);
+                    }
                 }
             } catch (e) {
                 console.error('Failed to fetch brought forward data', e);
