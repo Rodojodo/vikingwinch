@@ -39,9 +39,10 @@ describe('LogsheetExportPanel', () => {
         });
     });
 
-    it('renders empty message when no winches have finished day and no notices', async () => {
+    it('renders panel with title Export Logsheets and empty message when no winches have finished day and no notices', async () => {
         render(<LogsheetExportPanel squadronId={squadronId} winches={mockWinches} />);
 
+        expect(screen.getByRole('heading', { level: 2, name: 'Export Logsheets' })).toBeInTheDocument();
         expect(await screen.findByText('No logsheets ready for export.')).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: /Export Winch/ })).not.toBeInTheDocument();
     });
@@ -78,6 +79,7 @@ describe('LogsheetExportPanel', () => {
 
         render(<LogsheetExportPanel squadronId={squadronId} winches={mockWinches} />);
 
+        expect(screen.getByRole('heading', { level: 2, name: 'Export Logsheets' })).toBeInTheDocument();
         expect(await screen.findByRole('button', { name: 'Export Winch 1' })).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: 'Export Winch 2' })).not.toBeInTheDocument();
         expect(screen.queryByText(/has launches but day not finished/)).not.toBeInTheDocument();
@@ -113,6 +115,7 @@ describe('LogsheetExportPanel', () => {
     it('renders empty indicator when squadron has no winches', async () => {
         render(<LogsheetExportPanel squadronId={squadronId} winches={[]} />);
 
+        expect(screen.getByRole('heading', { level: 2, name: 'Export Logsheets' })).toBeInTheDocument();
         expect(screen.getByText('No winches available for export.')).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: /Export Winch/ })).not.toBeInTheDocument();
     });

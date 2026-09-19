@@ -146,6 +146,10 @@ export const LogsheetExportPanel: React.FC<LogsheetExportPanelProps> = ({
                 },
             ] as SxProps<Theme>)}
         >
+            <Typography variant="h2" sx={{mb: 1}}>
+                Export Logsheets
+            </Typography>
+
             {exportError && (
                 <Typography variant="body2" sx={errorBannerSx} role="alert">
                     {exportError}
