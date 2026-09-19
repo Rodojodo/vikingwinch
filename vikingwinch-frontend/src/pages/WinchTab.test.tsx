@@ -124,7 +124,7 @@ describe('WinchTab', () => {
         });
     });
 
-    it('passes onSubmitCorrections to DailyInspectionPanel which calls postLaunchCorrections and hydrates history', async () => {
+    it('passes onSubmitCorrections to DailyInspectionPanel which calls postLaunchCorrections without polluting launch history', async () => {
         vi.mocked(getDayLog).mockResolvedValue([]);
         vi.mocked(getLaunches).mockResolvedValue([]);
         const mockCorrectionsResponse = [

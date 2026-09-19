@@ -205,16 +205,13 @@ const WinchTabContent = ({
                             if (!winchId) {
                                 throw new Error('Cannot submit corrections without an active winchId');
                             }
-                            const created = await postLaunchCorrections({
+                            await postLaunchCorrections({
                                 winch_id: winchId,
                                 squadron_id: squadronId,
                                 operator_sn: operatorSn,
                                 left: corrections.left,
                                 right: corrections.right,
                             });
-                            if (created && created.length > 0) {
-                                hydrateHistory(created);
-                            }
                         }}
                     />
                 );
