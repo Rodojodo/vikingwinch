@@ -18,3 +18,11 @@ export interface LaunchResponse {
     operator_sn: string;
     remarks: string | null;
 }
+
+export interface LaunchCorrectionPayload {
+    winch_id: number;
+    squadron_id?: string | null;
+    operator_sn?: string | null;
+    left?: number | null;
+    right?: number | null;
+}

@@ -6,7 +6,7 @@ import {useSessionIdentity} from '../../../app/hooks/useSessionIdentity.ts';
 import {getBroughtForward, getWinchHours} from '../api/winchClient.ts';
 
 vi.mock('../../../app/hooks/useSessionIdentity.ts', () => ({
-    useSessionIdentity: vi.fn(() => ({squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1'})),
+    useSessionIdentity: vi.fn(),
 }));
 
 vi.mock('../api/winchClient.ts', () => ({
@@ -17,9 +17,16 @@ vi.mock('../api/winchClient.ts', () => ({
 describe('DailyInspectionPanel', () => {
     const mockOnComplete = vi.fn();
     const mockOnSignDI = vi.fn();
+    const mockOnSubmitCorrections = vi.fn();
 
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.mocked(useSessionIdentity).mockReturnValue({
+            squadronId: 'sqn1',
+            winchId: 42,
+            operatorSn: 'OP1',
+            status: { status: 'open', winchId: 42 },
+        });
     });
 
     it('renders the component with inputs', () => {
@@ -41,9 +48,32 @@ describe('DailyInspectionPanel', () => {
 
         const retrieveBtn = screen.getByRole('button', { name: 'Retrieve data from cloud' });
         await user.click(retrieveBtn);
-
         await waitFor(() => {
             expect(screen.getByDisplayValue('150.5')).toBeInTheDocument();
+        });
+    });
+
+    it('disables Sign DI button while retrieving data from cloud', async () => {
+        const user = userEvent.setup();
+        let resolveBf: (val: { left: number | null; right: number | null; hours: number | null }) => void;
+        vi.mocked(getBroughtForward).mockImplementation(() => new Promise((resolve) => {
+            resolveBf = resolve;
+        }));
+        vi.mocked(getWinchHours).mockResolvedValue({hours: 100});
+
+        render(<DailyInspectionPanel onComplete={mockOnComplete} onSignDI={mockOnSignDI}/>);
+
+        const signBtn = screen.getByRole('button', { name: 'Sign DI' });
+        expect(signBtn).not.toBeDisabled();
+
+        const retrieveBtn = screen.getByRole('button', { name: 'Retrieve data from cloud' });
+        await user.click(retrieveBtn);
+
+        expect(signBtn).toBeDisabled();
+
+        resolveBf!({left: 10, right: 10, hours: 100});
+        await waitFor(() => {
+            expect(signBtn).not.toBeDisabled();
         });
     });
 
@@ -167,5 +197,346 @@ describe('DailyInspectionPanel', () => {
         await user.click(retrieveBtn);
 
         expect(getBroughtForward).not.toHaveBeenCalled();
+    });
+
+    it('shows inline warning when drum value differs from stored value and clears when restored', async () => {
+        const user = userEvent.setup();
+        vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.0});
+        vi.mocked(getWinchHours).mockResolvedValue({hours: 50.0});
+
+        render(<DailyInspectionPanel onComplete={mockOnComplete} onSignDI={mockOnSignDI}/>);
+
+        const retrieveBtn = screen.getByRole('button', { name: 'Retrieve data from cloud' });
+        await user.click(retrieveBtn);
+
+        const leftInput = screen.getByPlaceholderText('e.g. 12');
+        await waitFor(() => {
+            expect(leftInput).toHaveValue(15);
+        });
+
+        // Change left drum to 20
+        await user.clear(leftInput);
+        await user.type(leftInput, '20');
+
+        expect(screen.getByText('Entered: 20, stored: 15')).toBeInTheDocument();
+
+        // Restore left drum to 15
+        await user.clear(leftInput);
+        await user.type(leftInput, '15');
+
+        expect(screen.queryByText('Entered: 20, stored: 15')).not.toBeInTheDocument();
+    });
+
+    it('shows inline warning for hours when changed and clears when restored', async () => {
+        const user = userEvent.setup();
+        vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.0});
+        vi.mocked(getWinchHours).mockResolvedValue({hours: 50.0});
+
+        render(<DailyInspectionPanel onComplete={mockOnComplete} onSignDI={mockOnSignDI}/>);
+
+        const retrieveBtn = screen.getByRole('button', { name: 'Retrieve data from cloud' });
+        await user.click(retrieveBtn);
+
+        const hoursInput = screen.getByPlaceholderText('e.g. 123.5');
+        await waitFor(() => {
+            expect(hoursInput).toHaveValue(50.0);
+        });
+
+        // Change hours to 55
+        await user.clear(hoursInput);
+        await user.type(hoursInput, '55');
+
+        expect(screen.getByText('Entered: 55, stored: 50')).toBeInTheDocument();
+
+        // Restore hours to 50
+        await user.clear(hoursInput);
+        await user.type(hoursInput, '50');
+
+        expect(screen.queryByText('Entered: 55, stored: 50')).not.toBeInTheDocument();
+    });
+
+    it('allows signing while inline warnings are displayed (non-blocking)', async () => {
+        const user = userEvent.setup();
+        vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.0});
+        vi.mocked(getWinchHours).mockResolvedValue({hours: 50.0});
+        mockOnSignDI.mockResolvedValue(undefined);
+        mockOnSubmitCorrections.mockResolvedValue([]);
+
+        render(
+            <DailyInspectionPanel
+                onComplete={mockOnComplete}
+                onSignDI={mockOnSignDI}
+                onSubmitCorrections={mockOnSubmitCorrections}
+            />
+        );
+
+        await user.click(screen.getByRole('button', { name: 'Retrieve data from cloud' }));
+
+        const leftInput = screen.getByPlaceholderText('e.g. 12');
+        await waitFor(() => {
+            expect(leftInput).toHaveValue(15);
+        });
+
+        await user.clear(leftInput);
+        await user.type(leftInput, '20');
+
+        expect(screen.getByText('Entered: 20, stored: 15')).toBeInTheDocument();
+
+        const signBtn = screen.getByRole('button', { name: 'Sign DI' });
+        expect(signBtn).not.toBeDisabled();
+        await user.click(signBtn);
+
+        expect(mockOnSignDI).toHaveBeenCalledWith(50);
+        expect(mockOnSubmitCorrections).toHaveBeenCalledWith({left: 20, right: null});
+        expect(mockOnComplete).toHaveBeenCalled();
+    });
+
+    it('submits corrections for both drums when both are changed', async () => {
+        const user = userEvent.setup();
+        vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.0});
+        vi.mocked(getWinchHours).mockResolvedValue({hours: 50.0});
+        mockOnSignDI.mockResolvedValue(undefined);
+        mockOnSubmitCorrections.mockResolvedValue([]);
+
+        render(
+            <DailyInspectionPanel
+                onComplete={mockOnComplete}
+                onSignDI={mockOnSignDI}
+                onSubmitCorrections={mockOnSubmitCorrections}
+            />
+        );
+
+        await user.click(screen.getByRole('button', { name: 'Retrieve data from cloud' }));
+
+        const leftInput = screen.getByPlaceholderText('e.g. 12');
+        const rightInput = screen.getByPlaceholderText('e.g. 5');
+        await waitFor(() => {
+            expect(leftInput).toHaveValue(15);
+        });
+
+        await user.clear(leftInput);
+        await user.type(leftInput, '20');
+        await user.clear(rightInput);
+        await user.type(rightInput, '10');
+
+        await user.click(screen.getByRole('button', { name: 'Sign DI' }));
+
+        expect(mockOnSignDI).toHaveBeenCalledWith(50);
+        expect(mockOnSubmitCorrections).toHaveBeenCalledWith({left: 20, right: 10});
+        expect(mockOnComplete).toHaveBeenCalled();
+    });
+
+    it('submits corrections with null for right drum when only left drum changed', async () => {
+        const user = userEvent.setup();
+        vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.0});
+        vi.mocked(getWinchHours).mockResolvedValue({hours: 50.0});
+        mockOnSignDI.mockResolvedValue(undefined);
+        mockOnSubmitCorrections.mockResolvedValue([]);
+
+        render(
+            <DailyInspectionPanel
+                onComplete={mockOnComplete}
+                onSignDI={mockOnSignDI}
+                onSubmitCorrections={mockOnSubmitCorrections}
+            />
+        );
+
+        await user.click(screen.getByRole('button', { name: 'Retrieve data from cloud' }));
+
+        const leftInput = screen.getByPlaceholderText('e.g. 12');
+        await waitFor(() => {
+            expect(leftInput).toHaveValue(15);
+        });
+
+        await user.clear(leftInput);
+        await user.type(leftInput, '20');
+
+        await user.click(screen.getByRole('button', { name: 'Sign DI' }));
+
+        expect(mockOnSignDI).toHaveBeenCalledWith(50);
+        expect(mockOnSubmitCorrections).toHaveBeenCalledWith({left: 20, right: null});
+        expect(mockOnComplete).toHaveBeenCalled();
+    });
+
+    it('submits corrections with null for left drum when only right drum changed', async () => {
+        const user = userEvent.setup();
+        vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.0});
+        vi.mocked(getWinchHours).mockResolvedValue({hours: 50.0});
+        mockOnSignDI.mockResolvedValue(undefined);
+        mockOnSubmitCorrections.mockResolvedValue([]);
+
+        render(
+            <DailyInspectionPanel
+                onComplete={mockOnComplete}
+                onSignDI={mockOnSignDI}
+                onSubmitCorrections={mockOnSubmitCorrections}
+            />
+        );
+
+        await user.click(screen.getByRole('button', { name: 'Retrieve data from cloud' }));
+
+        const rightInput = screen.getByPlaceholderText('e.g. 5');
+        await waitFor(() => {
+            expect(rightInput).toHaveValue(8);
+        });
+
+        await user.clear(rightInput);
+        await user.type(rightInput, '12');
+
+        await user.click(screen.getByRole('button', { name: 'Sign DI' }));
+
+        expect(mockOnSignDI).toHaveBeenCalledWith(50);
+        expect(mockOnSubmitCorrections).toHaveBeenCalledWith({left: null, right: 12});
+        expect(mockOnComplete).toHaveBeenCalled();
+    });
+
+    it('does not submit corrections when drums match stored values', async () => {
+        const user = userEvent.setup();
+        vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.0});
+        vi.mocked(getWinchHours).mockResolvedValue({hours: 50.0});
+        mockOnSignDI.mockResolvedValue(undefined);
+
+        render(
+            <DailyInspectionPanel
+                onComplete={mockOnComplete}
+                onSignDI={mockOnSignDI}
+                onSubmitCorrections={mockOnSubmitCorrections}
+            />
+        );
+
+        await user.click(screen.getByRole('button', { name: 'Retrieve data from cloud' }));
+
+        await waitFor(() => {
+            expect(screen.getByPlaceholderText('e.g. 12')).toHaveValue(15);
+        });
+
+        await user.click(screen.getByRole('button', { name: 'Sign DI' }));
+
+        expect(mockOnSignDI).toHaveBeenCalledWith(50);
+        expect(mockOnSubmitCorrections).not.toHaveBeenCalled();
+        expect(mockOnComplete).toHaveBeenCalled();
+    });
+
+    it('calls onSignDI with entered hours and makes no correction call when only hours changed', async () => {
+        const user = userEvent.setup();
+        vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.0});
+        vi.mocked(getWinchHours).mockResolvedValue({hours: 50.0});
+        mockOnSignDI.mockResolvedValue(undefined);
+
+        render(
+            <DailyInspectionPanel
+                onComplete={mockOnComplete}
+                onSignDI={mockOnSignDI}
+                onSubmitCorrections={mockOnSubmitCorrections}
+            />
+        );
+
+        await user.click(screen.getByRole('button', { name: 'Retrieve data from cloud' }));
+
+        const hoursInput = screen.getByPlaceholderText('e.g. 123.5');
+        await waitFor(() => {
+            expect(hoursInput).toHaveValue(50.0);
+        });
+
+        await user.clear(hoursInput);
+        await user.type(hoursInput, '65.5');
+
+        await user.click(screen.getByRole('button', { name: 'Sign DI' }));
+
+        expect(mockOnSignDI).toHaveBeenCalledWith(65.5);
+        expect(mockOnSubmitCorrections).not.toHaveBeenCalled();
+        expect(mockOnComplete).toHaveBeenCalled();
+    });
+
+    it('blocks negative and non-integer characters on drum inputs and negative on hours while allowing decimal hours', async () => {
+        const user = userEvent.setup();
+        render(<DailyInspectionPanel onComplete={mockOnComplete} onSignDI={mockOnSignDI}/>);
+
+        const leftInput = screen.getByPlaceholderText('e.g. 12');
+        const hoursInput = screen.getByPlaceholderText('e.g. 123.5');
+
+        // Type negative into drum input
+        await user.type(leftInput, '-5');
+        // Negative sign should be rejected, resulting in just 5
+        expect(leftInput).toHaveValue(5);
+
+        // Try typing decimal point into drum input
+        await user.clear(leftInput);
+        await user.type(leftInput, '12.5');
+        // Decimal point should be rejected, resulting in 125
+        expect(leftInput).toHaveValue(125);
+
+        // Try typing negative into hours input
+        await user.type(hoursInput, '-10.5');
+        // Negative sign should be rejected, resulting in 10.5
+        expect(hoursInput).toHaveValue(10.5);
+
+        // Positive fractional value should be allowed on hours input
+        await user.clear(hoursInput);
+        await user.type(hoursInput, '123.5');
+        expect(hoursInput).toHaveValue(123.5);
+    });
+
+    it('preserves panel state, disables hours, and retries corrections without re-posting DI when corrections fail', async () => {
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const user = userEvent.setup();
+
+        vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.0});
+        vi.mocked(getWinchHours).mockResolvedValue({hours: 50.0});
+        mockOnSignDI.mockResolvedValue(undefined);
+        mockOnSubmitCorrections.mockRejectedValueOnce(new Error('Network error'));
+
+        render(
+            <DailyInspectionPanel
+                onComplete={mockOnComplete}
+                onSignDI={mockOnSignDI}
+                onSubmitCorrections={mockOnSubmitCorrections}
+            />
+        );
+
+        await user.click(screen.getByRole('button', { name: 'Retrieve data from cloud' }));
+
+        const leftInput = screen.getByPlaceholderText('e.g. 12');
+        const hoursInput = screen.getByPlaceholderText('e.g. 123.5');
+        await waitFor(() => {
+            expect(leftInput).toHaveValue(15);
+        });
+
+        await user.clear(leftInput);
+        await user.type(leftInput, '20');
+
+        const signBtn = screen.getByRole('button', { name: 'Sign DI' });
+        await user.click(signBtn);
+
+        // DI posted successfully, but correction failed
+        await waitFor(() => {
+            expect(screen.getByText('Failed to submit drum corrections.')).toBeInTheDocument();
+        });
+
+        expect(mockOnSignDI).toHaveBeenCalledTimes(1);
+        expect(mockOnSubmitCorrections).toHaveBeenCalledTimes(1);
+        expect(mockOnComplete).not.toHaveBeenCalled();
+
+        // State preserved: entered values still in fields
+        expect(leftInput).toHaveValue(20);
+        expect(screen.getByPlaceholderText('e.g. 5')).toHaveValue(8);
+        expect(hoursInput).toHaveValue(50);
+
+        // Hours field is disabled because DI was already signed
+        expect(hoursInput).toBeDisabled();
+
+        // Now retry corrections (mock succeeds this time)
+        mockOnSubmitCorrections.mockResolvedValueOnce([]);
+        await user.click(signBtn);
+
+        await waitFor(() => {
+            expect(mockOnComplete).toHaveBeenCalled();
+        });
+
+        // onSignDI must NOT be called again on retry
+        expect(mockOnSignDI).toHaveBeenCalledTimes(1);
+        expect(mockOnSubmitCorrections).toHaveBeenCalledTimes(2);
+
+        consoleSpy.mockRestore();
     });
 });

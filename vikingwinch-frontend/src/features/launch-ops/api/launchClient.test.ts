@@ -1,7 +1,7 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {getLaunches, postLaunchToDb, removeLaunchFromDb} from './launchClient';
+import {getLaunches, postLaunchCorrections, postLaunchToDb, removeLaunchFromDb} from './launchClient';
 import {apiFetch} from '../../../core/http/fetchClient';
-import type {LaunchPayload, LaunchResponse} from '../types';
+import type {LaunchCorrectionPayload, LaunchPayload, LaunchResponse} from '../types';
 
 vi.mock('../../../core/http/fetchClient', () => ({
     apiFetch: vi.fn(),
@@ -37,6 +37,39 @@ describe('launchClient', () => {
         const result = await postLaunchToDb(payload);
 
         expect(apiFetch).toHaveBeenCalledWith('/launches', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        });
+        expect(result).toEqual(mockResponse);
+    });
+
+    it('postLaunchCorrections sends POST request to /launches/corrections with payload', async () => {
+        const payload: LaunchCorrectionPayload = {
+            winch_id: 1,
+            squadron_id: '621 VGS',
+            operator_sn: 'OP-1234',
+            left: 20,
+            right: null,
+        };
+
+        const mockResponse: LaunchResponse[] = [
+            {
+                launch_id: 102,
+                launch_number: 20,
+                squadron_id: '621 VGS',
+                winch_id: 1,
+                drum: 'left',
+                timestamp: '2026-09-16T00:00:00Z',
+                operator_sn: 'OP-1234',
+                remarks: 'corrected brought forward',
+            },
+        ];
+
+        vi.mocked(apiFetch).mockResolvedValue(mockResponse);
+
+        const result = await postLaunchCorrections(payload);
+
+        expect(apiFetch).toHaveBeenCalledWith('/launches/corrections', {
             method: 'POST',
             body: JSON.stringify(payload),
         });

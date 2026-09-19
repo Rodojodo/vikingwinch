@@ -20,7 +20,7 @@ import {SignOnPanel} from '../features/day-ops/components/SignOnPanel.tsx';
 import {DailyInspectionPanel} from '../features/winch-ops/components/DailyInspectionPanel';
 import {getDayLog} from '../features/day-ops/api/dayOpsClient.ts';
 import {toDayLogRecord} from '../features/day-ops/api/dayOpsMapper.ts';
-import {getLaunches} from '../features/launch-ops/api/launchClient.ts';
+import {getLaunches, postLaunchCorrections} from '../features/launch-ops/api/launchClient.ts';
 import {postRemarkToDb} from '../features/remarks-repairs/api/remarksClient.ts';
 import {getOperatorsForSquadron} from '../core/http/operatorsClient.ts';
 import {exportLog} from '../app/utils/exportLog.ts';
@@ -200,6 +200,21 @@ const WinchTabContent = ({
                         onComplete={() => setView('sign_on')}
                         onSignDI={async (hours) => {
                             await recordDI(null, hours);
+                        }}
+                        onSubmitCorrections={async (corrections) => {
+                            if (!winchId) {
+                                throw new Error('Cannot submit corrections without an active winchId');
+                            }
+                            const created = await postLaunchCorrections({
+                                winch_id: winchId,
+                                squadron_id: squadronId,
+                                operator_sn: operatorSn,
+                                left: corrections.left,
+                                right: corrections.right,
+                            });
+                            if (created && created.length > 0) {
+                                hydrateHistory(created);
+                            }
                         }}
                     />
                 );
