@@ -5,20 +5,17 @@ import {toWinch} from '../api/winchMapper.ts';
 import type {Winch} from '../types/domain.ts';
 import {darkBlueButton, glassPanelSx} from '../../../themes/styles.ts';
 import type {SxProps, Theme} from '@mui/material/styles';
-import {LogsheetExportPanel} from './LogsheetExportPanel';
 
 export interface WinchSelectPanelProps {
     squadronId: string;
     openWinchIds: number[];
     onSelectWinch: (winchId: number) => void;
-    onExportLogsheet?: (winchId: number) => Promise<void>;
 }
 
 export const WinchSelectPanel = ({
     squadronId,
     openWinchIds,
     onSelectWinch,
-    onExportLogsheet,
 }: WinchSelectPanelProps) => {
     const [winches, setWinches] = useState<Winch[]>([]);
     const [loading, setLoading] = useState(true);
@@ -57,7 +54,7 @@ export const WinchSelectPanel = ({
     const availableWinches = winches.filter(winch => !openWinchIds.includes(winch.id));
 
     return (
-        <Box sx={[glassPanelSx, {maxWidth: 540, gap: 3}] as SxProps<Theme>}>
+        <Box sx={[glassPanelSx, {maxWidth: 540, gap: 3, width: '100%'}] as SxProps<Theme>}>
             <Typography variant="h2" sx={{mb: 1}}>
                 Select a Winch
             </Typography>
@@ -88,14 +85,6 @@ export const WinchSelectPanel = ({
                         </Button>
                     ))}
                 </Box>
-            )}
-
-            {!loading && !error && (
-                <LogsheetExportPanel
-                    squadronId={squadronId}
-                    winches={winches}
-                    onExport={onExportLogsheet}
-                />
             )}
         </Box>
     );

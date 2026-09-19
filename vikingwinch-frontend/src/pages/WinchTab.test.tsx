@@ -43,16 +43,20 @@ vi.mock('../features/day-ops/components/SignOnPanel.tsx', () => ({
     SignOnPanel: () => <div data-testid="sign-on-panel" />,
 }));
 vi.mock('../features/winch-ops/components/WinchSelectPanel', () => ({
-    WinchSelectPanel: ({
-        onSelectWinch,
-        onExportLogsheet,
-    }: {
-        onSelectWinch: (winchId: number) => void;
-        onExportLogsheet?: (winchId: number) => Promise<void>;
-    }) => (
+    WinchSelectPanel: ({ onSelectWinch }: { onSelectWinch: (winchId: number) => void }) => (
         <div data-testid="winch-select">
             <button onClick={() => onSelectWinch(1)}>Select Winch</button>
-            <button onClick={() => onExportLogsheet?.(2)}>Export Winch 2</button>
+        </div>
+    ),
+}));
+vi.mock('../features/winch-ops/components/LogsheetExportPanel', () => ({
+    LogsheetExportPanel: ({
+        onExport,
+    }: {
+        onExport?: (winchId: number) => Promise<void>;
+    }) => (
+        <div data-testid="logsheet-export-panel">
+            <button onClick={() => onExport?.(2)}>Export Winch 2</button>
         </div>
     ),
 }));
@@ -92,7 +96,7 @@ describe('WinchTab', () => {
         vi.mocked(getOperatorsForSquadron).mockResolvedValue([]);
     });
 
-    it('renders WinchSelectPanel initially if winchId is null and forwards onExportLogsheet', async () => {
+    it('renders WinchSelectPanel and LogsheetExportPanel initially if winchId is null', async () => {
         const onWinchSelectMock = vi.fn();
 
         render(
@@ -107,6 +111,7 @@ describe('WinchTab', () => {
         );
 
         expect(screen.getByTestId('winch-select')).toBeInTheDocument();
+        expect(screen.getByTestId('logsheet-export-panel')).toBeInTheDocument();
 
         await act(async () => {
             fireEvent.click(screen.getByText('Export Winch 2'));

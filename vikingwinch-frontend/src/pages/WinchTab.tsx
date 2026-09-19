@@ -16,6 +16,7 @@ import {TraineeAssignmentPanel} from '../features/trainee-ops/components/Trainee
 import {SkylogValues} from '../features/day-ops/components/SkylogValues';
 
 import {WinchSelectPanel} from '../features/winch-ops/components/WinchSelectPanel';
+import {LogsheetExportPanel} from '../features/winch-ops/components/LogsheetExportPanel';
 import {SignOnPanel} from '../features/day-ops/components/SignOnPanel.tsx';
 import {DailyInspectionPanel} from '../features/winch-ops/components/DailyInspectionPanel';
 import {getDayLog} from '../features/day-ops/api/dayOpsClient.ts';
@@ -189,12 +190,25 @@ const WinchTabContent = ({
                 return null;
             case 'select_winch':
                 return (
-                    <WinchSelectPanel
-                        squadronId={squadronId}
-                        onSelectWinch={(newWinchId) => onWinchSelect(tabId, newWinchId)}
-                        openWinchIds={openWinchIds}
-                        onExportLogsheet={(winchIdToExport) => exportWinchLogsheet(winchIdToExport, squadronId)}
-                    />
+                    <Box
+                        sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 3,
+                            width: '100%',
+                        }}
+                    >
+                        <WinchSelectPanel
+                            squadronId={squadronId}
+                            onSelectWinch={(newWinchId) => onWinchSelect(tabId, newWinchId)}
+                            openWinchIds={openWinchIds}
+                        />
+                        <LogsheetExportPanel
+                            squadronId={squadronId}
+                            onExport={(winchIdToExport) => exportWinchLogsheet(winchIdToExport, squadronId)}
+                        />
+                    </Box>
                 );
             case 'inspection':
                 return (

@@ -4,7 +4,7 @@ import type {SxProps, Theme} from '@mui/material/styles';
 import type {Winch, WinchRead} from '../types';
 import {getWinchesForSquadron} from '../api/winchClient';
 import {exportWinchLogsheet, getTodayDateString, getWinchDayStatus} from '../../../app/utils/exportWinchLog';
-import {darkBlueButton, elevatedPanel, errorBannerSx, warningBannerSx} from '../../../themes/styles';
+import {darkBlueButton, errorBannerSx, glassPanelSx, warningBannerSx} from '../../../themes/styles';
 
 export interface LogsheetExportPanelProps {
     squadronId: string;
@@ -29,10 +29,22 @@ export const LogsheetExportPanel: React.FC<LogsheetExportPanelProps> = ({
     const [fetchedSquadronId, setFetchedSquadronId] = useState<string | null>(null);
     const [exportingWinchId, setExportingWinchId] = useState<number | null>(null);
     const [exportError, setExportError] = useState<string | null>(null);
-    const [unfinishedWinchIds, setUnfinishedWinchIds] = useState<number[]>([]);
+    const [fetchedStatuses, setFetchedStatuses] = useState<{
+        finished: number[];
+        unfinished: number[];
+    } | null>(null);
+    const [prevSqnForStatus, setPrevSqnForStatus] = useState(squadronId);
+
+    if (squadronId !== prevSqnForStatus) {
+        setPrevSqnForStatus(squadronId);
+        setFetchedStatuses(null);
+    }
 
     const loadingWinches = winchesProp === undefined && fetchedSquadronId !== squadronId;
     const winches = winchesProp ?? (fetchedSquadronId === squadronId ? fetchedWinches : EMPTY_WINCHES);
+    const loadingStatus = !loadingWinches && winches.length > 0 && fetchedStatuses === null;
+    const finishedWinchIds = fetchedStatuses?.finished ?? [];
+    const unfinishedWinchIds = fetchedStatuses?.unfinished ?? [];
 
     useEffect(() => {
         if (winchesProp !== undefined) {
@@ -63,7 +75,9 @@ export const LogsheetExportPanel: React.FC<LogsheetExportPanelProps> = ({
     }, [squadronId, winchesProp]);
 
     useEffect(() => {
-        if (loadingWinches || winches.length === 0) return;
+        if (loadingWinches || winches.length === 0) {
+            return;
+        }
 
         let isMounted = true;
         const todayStr = getTodayDateString();
@@ -71,13 +85,21 @@ export const LogsheetExportPanel: React.FC<LogsheetExportPanelProps> = ({
 
         Promise.allSettled(winches.map(w => getWinchDayStatus(w.id, todayStr, controller.signal))).then(results => {
             if (!isMounted) return;
+            const finished: number[] = [];
             const unfinished: number[] = [];
+
             results.forEach((res, idx) => {
-                if (res.status === 'fulfilled' && res.value.hasUnfinishedDay) {
-                    unfinished.push(winches[idx].id);
+                if (res.status === 'fulfilled') {
+                    if (res.value.hasFinishDay) {
+                        finished.push(winches[idx].id);
+                    }
+                    if (res.value.hasUnfinishedDay) {
+                        unfinished.push(winches[idx].id);
+                    }
                 }
             });
-            setUnfinishedWinchIds(unfinished);
+
+            setFetchedStatuses({finished, unfinished});
         });
 
         return () => {
@@ -104,73 +126,77 @@ export const LogsheetExportPanel: React.FC<LogsheetExportPanelProps> = ({
     };
 
     const activeWinchIds = new Set(winches.map(w => w.id));
+    const displayedFinished = winches.filter(w => finishedWinchIds.includes(w.id));
     const displayedUnfinished = unfinishedWinchIds.filter(id => activeWinchIds.has(id));
 
     return (
         <Box
             data-testid="logsheet-export-panel"
             sx={([
-                elevatedPanel,
+                glassPanelSx,
                 {
                     width: '100%',
+                    maxWidth: 540,
                     boxSizing: 'border-box',
-                    mt: 3,
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                     gap: 2,
+                    p: 3,
                 },
             ] as SxProps<Theme>)}
         >
-            <Typography variant="h3" sx={{mb: 1, textAlign: 'center'}}>
-                Export Logsheet
-            </Typography>
-
-            {displayedUnfinished.map(id => (
-                <Typography key={id} variant="body2" sx={warningBannerSx} role="alert">
-                    Winch {id} has launches, but day not finished
-                </Typography>
-            ))}
-
             {exportError && (
                 <Typography variant="body2" sx={errorBannerSx} role="alert">
                     {exportError}
                 </Typography>
             )}
 
-            {loadingWinches ? (
+            {loadingWinches || loadingStatus ? (
                 <CircularProgress size={28} color="inherit" />
             ) : winches.length === 0 ? (
                 <Typography color="text.secondary">No winches available for export.</Typography>
+            ) : displayedFinished.length === 0 && displayedUnfinished.length === 0 ? (
+                <Typography color="text.secondary">No logsheets ready for export.</Typography>
             ) : (
-                <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 2, width: '100%'}}>
-                    {winches.map(winch => {
-                        const isExporting = exportingWinchId === winch.id;
-                        return (
-                            <Button
-                                key={winch.id}
-                                variant="outlined"
-                                aria-label={isExporting ? `Exporting logsheet ${winch.id}` : undefined}
-                                disabled={exportingWinchId !== null}
-                                onClick={() => handleExport(winch.id)}
-                                sx={([
-                                    darkBlueButton,
-                                    {
-                                        flexGrow: 1,
-                                        flexBasis: 'calc(50% - 8px)',
-                                        py: 2,
-                                    },
-                                ] as SxProps<Theme>)}
-                            >
-                                {isExporting ? (
-                                    <CircularProgress size={24} color="inherit" />
-                                ) : (
-                                    `Export Logsheet ${winch.id}`
-                                )}
-                            </Button>
-                        );
-                    })}
-                </Box>
+                <>
+                    {displayedFinished.length > 0 && (
+                        <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 2, width: '100%'}}>
+                            {displayedFinished.map(winch => {
+                                const isExporting = exportingWinchId === winch.id;
+                                return (
+                                    <Button
+                                        key={winch.id}
+                                        variant="outlined"
+                                        aria-label={isExporting ? `Exporting logsheet ${winch.id}` : undefined}
+                                        disabled={exportingWinchId !== null}
+                                        onClick={() => handleExport(winch.id)}
+                                        sx={([
+                                            darkBlueButton,
+                                            {
+                                                flexGrow: 1,
+                                                flexBasis: 'calc(50% - 8px)',
+                                                py: 2,
+                                            },
+                                        ] as SxProps<Theme>)}
+                                    >
+                                        {isExporting ? (
+                                            <CircularProgress size={24} color="inherit" />
+                                        ) : (
+                                            `Export Winch ${winch.id}`
+                                        )}
+                                    </Button>
+                                );
+                            })}
+                        </Box>
+                    )}
+
+                    {displayedUnfinished.map(id => (
+                        <Typography key={id} variant="body2" sx={warningBannerSx} role="alert">
+                            Winch {id} has launches but day not finished
+                        </Typography>
+                    ))}
+                </>
             )}
         </Box>
     );
