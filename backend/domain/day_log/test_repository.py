@@ -2,7 +2,11 @@ from datetime import date, datetime, timezone
 import pytest
 
 from domain.day_log.model import Day_Log
-from domain.day_log.repository import get_day_log_from_date
+from domain.day_log.repository import (
+    get_day_log_from_date,
+    has_di_for_day,
+    get_di_for_day,
+)
 
 
 def make_day_log(**overrides) -> Day_Log:
@@ -92,6 +96,7 @@ async def test_get_winch_hours_success(db_session):
     result = await get_winch_hours(db_session, 1)
     assert result == 105.5
 
+
 @pytest.mark.asyncio
 async def test_get_winch_hours_returns_none_when_no_records(db_session):
     from domain.day_log.repository import get_winch_hours
@@ -102,14 +107,11 @@ async def test_get_winch_hours_returns_none_when_no_records(db_session):
     result = await get_winch_hours(db_session, 1)
     assert result is None
 
+
 @pytest.mark.asyncio
 async def test_add_day_log_success(db_session):
     from domain.day_log.repository import add_day_log
     from domain.day_log.schema import DayLogCreate
-    
-    
-    
-    await db_session.commit()
 
     payload = DayLogCreate(
         squadron_id="123 VGS",
@@ -123,3 +125,47 @@ async def test_add_day_log_success(db_session):
     assert log.id is not None
     assert log.winch_id == 1
     assert log.hours == 10.5
+
+
+@pytest.mark.asyncio
+async def test_has_di_for_day_success(db_session):
+    target_date = date(2026, 6, 6)
+    db_session.add_all([
+        make_day_log(winch_id=1, type="sign_on", timestamp=datetime(2026, 6, 6, 8, 0, 0)),
+        make_day_log(winch_id=1, type="di", timestamp=datetime(2026, 6, 6, 8, 30, 0)),
+        make_day_log(winch_id=2, type="di", timestamp=datetime(2026, 6, 6, 8, 30, 0)),
+    ])
+    await db_session.commit()
+
+    assert await has_di_for_day(db_session, 1, target_date) is True
+    assert await has_di_for_day(db_session, 2, target_date) is True
+    assert await has_di_for_day(db_session, 3, target_date) is False
+    assert await has_di_for_day(db_session, 1, date(2026, 6, 7)) is False
+
+
+@pytest.mark.asyncio
+async def test_has_di_for_day_no_di_entry(db_session):
+    target_date = date(2026, 6, 6)
+    db_session.add_all([
+        make_day_log(winch_id=1, type="sign_on", timestamp=datetime(2026, 6, 6, 8, 0, 0)),
+        make_day_log(winch_id=1, type="finish_day", timestamp=datetime(2026, 6, 6, 17, 0, 0)),
+    ])
+    await db_session.commit()
+
+    assert await has_di_for_day(db_session, 1, target_date) is False
+
+
+@pytest.mark.asyncio
+async def test_get_di_for_day(db_session):
+    target_date = date(2026, 6, 6)
+    di1 = make_day_log(winch_id=1, type="di", operator_sn="OP-1", timestamp=datetime(2026, 6, 6, 8, 0, 0))
+    di2 = make_day_log(winch_id=1, type="di", operator_sn="OP-2", timestamp=datetime(2026, 6, 6, 9, 0, 0))
+    db_session.add_all([di1, di2])
+    await db_session.commit()
+
+    latest_di = await get_di_for_day(db_session, 1, target_date)
+    assert latest_di is not None
+    assert latest_di.operator_sn == "OP-2"
+
+    none_di = await get_di_for_day(db_session, 1, date(2026, 6, 7))
+    assert none_di is None

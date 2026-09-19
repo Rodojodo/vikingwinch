@@ -1,11 +1,20 @@
-from datetime import date
+from datetime import date, datetime, timezone, time, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.session import get_db
+from domain.day_log import repository as day_log_repo
 from domain.launch import repository as launch_repo
-from domain.launch.schema import LaunchCreate, LaunchRead, RemarkCreate, RepairCreate
+from domain.winch.model import Winch
+from domain.launch.schema import (
+    LaunchCreate,
+    LaunchRead,
+    RemarkCreate,
+    RepairCreate,
+    LaunchCorrectionCreate,
+)
 
 router = APIRouter(prefix="/launches", tags=["launches"])
 
@@ -25,6 +34,66 @@ async def create_launch(
             is_burn=payload.is_burn,
         )
     return launch
+
+
+@router.post("/corrections", response_model=list[LaunchRead], status_code=status.HTTP_201_CREATED)
+async def create_launch_correction(
+    payload: LaunchCorrectionCreate,
+    db: AsyncSession = Depends(get_db),
+):
+    today = datetime.now(timezone.utc).date()
+    async with db.begin():
+        await db.execute(select(Winch.id).where(Winch.id == payload.winch_id).with_for_update())
+
+        di = await day_log_repo.get_di_for_day(db, payload.winch_id, today)
+        if not di:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="A signed Daily Inspection (DI) for this winch on today's date is required before recording corrections",
+            )
+
+        payload_sqn = payload.squadron_id.strip() if payload.squadron_id else None
+        payload_op = payload.operator_sn.strip() if payload.operator_sn else None
+
+        squadron_id = payload_sqn or di.squadron_id
+        operator_sn = payload_op or di.operator_sn
+
+        if not squadron_id or not operator_sn:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Missing squadron_id or operator_sn for launch correction",
+            )
+
+        correction_timestamp = datetime.combine(today, time.min) - timedelta(seconds=1)
+
+        results = []
+        if payload.left is not None:
+            left_launch = await launch_repo.add_launch_correction(
+                db_session=db,
+                squadron_id=squadron_id,
+                winch_id=payload.winch_id,
+                operator_sn=operator_sn,
+                drum="left",
+                launch_num=payload.left,
+                remarks="corrected brought forward",
+                timestamp=correction_timestamp,
+            )
+            results.append(left_launch)
+
+        if payload.right is not None:
+            right_launch = await launch_repo.add_launch_correction(
+                db_session=db,
+                squadron_id=squadron_id,
+                winch_id=payload.winch_id,
+                operator_sn=operator_sn,
+                drum="right",
+                launch_num=payload.right,
+                remarks="corrected brought forward",
+                timestamp=correction_timestamp,
+            )
+            results.append(right_launch)
+
+    return results
 
 
 @router.delete("/{launch_id}", status_code=status.HTTP_204_NO_CONTENT)

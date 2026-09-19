@@ -1,6 +1,6 @@
 from datetime import datetime
 from typing import Literal
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator, model_validator
 from core.schemas import ORMModel
 
 class LaunchCreate(BaseModel):
@@ -9,6 +9,29 @@ class LaunchCreate(BaseModel):
     operator_sn: str
     drum: Literal["left", "right"]
     is_burn: bool = False
+
+class LaunchCorrectionCreate(BaseModel):
+    winch_id: int = Field(ge=1)
+    squadron_id: str | None = None
+    operator_sn: str | None = None
+    left: int | None = None
+    right: int | None = None
+
+    @field_validator("left", "right")
+    @classmethod
+    def validate_non_negative(cls, v: int | None) -> int | None:
+        if v is not None:
+            if v < 0:
+                raise ValueError("Drum correction value must be non-negative (>= 0)")
+            if v > 2147483647:
+                raise ValueError("Drum correction value must be <= 2147483647")
+        return v
+
+    @model_validator(mode="after")
+    def validate_at_least_one_drum(self) -> "LaunchCorrectionCreate":
+        if self.left is None and self.right is None:
+            raise ValueError("At least one drum correction (left or right) must be specified")
+        return self
 
 class RemarkCreate(BaseModel):
     launch_id: int

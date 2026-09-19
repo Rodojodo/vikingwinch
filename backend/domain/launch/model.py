@@ -1,4 +1,4 @@
-from sqlalchemy import Integer, TIMESTAMP, Enum, UniqueConstraint, Text, ForeignKey
+from sqlalchemy import Integer, TIMESTAMP, Enum, Index, Text, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime
 
@@ -14,7 +14,7 @@ class Launch(Base):
     __tablename__ = "launches"
     
     __table_args__ = (
-        UniqueConstraint('winch_id', 'drum', 'launch_number', name='uix_winch_drum_launch_number'),
+        Index('ix_launches_winch_drum_launch_id', 'winch_id', 'drum', 'launch_id'),
     )
     
     launch_id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
