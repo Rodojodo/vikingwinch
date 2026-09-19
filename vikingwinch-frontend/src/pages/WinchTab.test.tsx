@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { WinchTab } from './WinchTab.tsx';
 import { getDayLog, postDayLogToDb } from '../features/day-ops/api/dayOpsClient.ts';
-import { getLaunches } from '../features/launch-ops/api/launchClient.ts';
+import { getLaunches, postLaunchCorrections } from '../features/launch-ops/api/launchClient.ts';
 import { getOperatorsForSquadron } from '../core/http/operatorsClient.ts';
 import { exportLog } from '../app/utils/exportLog.ts';
 
@@ -12,6 +12,7 @@ vi.mock('../features/day-ops/api/dayOpsClient.ts', () => ({
 }));
 vi.mock('../features/launch-ops/api/launchClient.ts', () => ({
     getLaunches: vi.fn(),
+    postLaunchCorrections: vi.fn().mockResolvedValue([]),
 }));
 vi.mock('../core/http/operatorsClient.ts', () => ({
     getOperatorsForSquadron: vi.fn(),
@@ -24,7 +25,15 @@ vi.mock('../features/launch-ops/components/LaunchPanel', () => ({
     LaunchPanel: ({ children }: { children?: React.ReactNode }) => <div data-testid="launch-panel">{children}</div>,
 }));
 vi.mock('../features/winch-ops/components/DailyInspectionPanel', () => ({
-    DailyInspectionPanel: () => <div data-testid="daily-inspection-panel" />,
+    DailyInspectionPanel: ({
+        onSubmitCorrections,
+    }: {
+        onSubmitCorrections?: (corrections: { left: number | null; right: number | null }) => Promise<unknown>;
+    }) => (
+        <div data-testid="daily-inspection-panel">
+            <button onClick={() => onSubmitCorrections?.({ left: 20, right: null })}>Submit Test Corrections</button>
+        </div>
+    ),
 }));
 vi.mock('../features/day-ops/components/SignOnPanel.tsx', () => ({
     SignOnPanel: () => <div data-testid="sign-on-panel" />,
@@ -56,7 +65,7 @@ vi.mock('../features/day-ops/components/SkylogValues', () => ({
     ),
 }));
 vi.mock('../features/remarks-repairs/components/RemarksRepairsPanel.tsx', () => ({
-    RemarksRepairsPanel: () => <div data-testid="remarks-repairs-panel" />,
+    RemarksRepairsPanel: () => <div data-testid="remarks-repairs-panel" /> as React.ReactElement,
 }));
 vi.mock('../features/day-ops/components/FinishDayPanel.tsx', () => ({
     FinishDayPanel: ({ onExportLog }: { onExportLog?: () => void }) => (
@@ -112,6 +121,51 @@ describe('WinchTab', () => {
 
         await waitFor(() => {
             expect(screen.getByTestId('daily-inspection-panel')).toBeInTheDocument();
+        });
+    });
+
+    it('passes onSubmitCorrections to DailyInspectionPanel which calls postLaunchCorrections without polluting launch history', async () => {
+        vi.mocked(getDayLog).mockResolvedValue([]);
+        vi.mocked(getLaunches).mockResolvedValue([]);
+        const mockCorrectionsResponse = [
+            {
+                launch_id: 101,
+                launch_number: 20,
+                squadron_id: '123 VGS',
+                winch_id: 1,
+                drum: 'left' as const,
+                timestamp: '2026-09-16T00:00:00Z',
+                operator_sn: 'OFF-1001',
+                remarks: 'corrected brought forward',
+            },
+        ];
+        vi.mocked(postLaunchCorrections).mockResolvedValue(mockCorrectionsResponse);
+
+        render(
+            <WinchTab
+                tabId="1"
+                squadronId="123 VGS"
+                operatorSn="OFF-1001"
+                winchId={1}
+                openWinchIds={[]}
+                onWinchSelect={vi.fn()}
+            />
+        );
+
+        await waitFor(() => {
+            expect(screen.getByTestId('daily-inspection-panel')).toBeInTheDocument();
+        });
+
+        await act(async () => {
+            fireEvent.click(screen.getByText('Submit Test Corrections'));
+        });
+
+        expect(postLaunchCorrections).toHaveBeenCalledWith({
+            winch_id: 1,
+            squadron_id: '123 VGS',
+            operator_sn: 'OFF-1001',
+            left: 20,
+            right: null,
         });
     });
 

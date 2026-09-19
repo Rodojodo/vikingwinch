@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { getWinchesForSquadron, getWinch, getWinchHours, getBroughtForward } from './winchClient';
-import { apiFetch } from '../../../core/http/fetchClient';
-import type { WinchRead } from '../types/api';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {getBroughtForward, getWinch, getWinchesForSquadron} from './winchClient';
+import {apiFetch} from '../../../core/http/fetchClient';
+import type {WinchRead} from '../types';
 
 vi.mock('../../../core/http/fetchClient', () => ({
     apiFetch: vi.fn(),
@@ -35,15 +35,6 @@ describe('winchClient', () => {
 
         expect(apiFetch).toHaveBeenCalledWith('/winches/2');
         expect(result).toEqual(mockWinch);
-    });
-
-    it('getWinchHours calls /winch/:winchId/hours', async () => {
-        vi.mocked(apiFetch).mockResolvedValue({ hours: 145.2 });
-
-        const result = await getWinchHours(1);
-
-        expect(apiFetch).toHaveBeenCalledWith('/winch/1/hours');
-        expect(result).toEqual({ hours: 145.2 });
     });
 
     it('getBroughtForward calls /winch/:id/bf_info?day=:day', async () => {
