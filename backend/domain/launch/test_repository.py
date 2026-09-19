@@ -3,12 +3,16 @@ from datetime import date, datetime, timezone
 from domain.launch.model import Launch
 from domain.launch.repository import (
     add_launch,
+    add_launch_correction,
     get_launches_from_date,
+    get_brought_forward,
     add_remark_to_launch,
     add_repair_to_launch,
+    delete_launch,
 )
 from domain.squadron.model import Squadron
 from domain.winch.model import Winch
+from domain.operator.model import Operator
 from typing import Literal
 
 
@@ -254,6 +258,28 @@ async def test_get_launches_from_date_returns_empty_list_when_no_matches(db_sess
 
 
 @pytest.mark.asyncio
+async def test_get_launches_from_date_orders_by_launch_id_asc(db_session):
+    """Test that get_launches_from_date orders records by launch_id ASC."""
+    squadron = Squadron(id="123 VGS")
+    winch = Winch(id=1, registration="EF 34 GH", squadron_id="123 VGS")
+    operator = Operator(service_no="12345678", entra_oid="oid1", name="Op", squadron_id="123 VGS", qualification_level="operator")
+    db_session.add_all([squadron, winch, operator])
+    await db_session.commit()
+
+    l1 = make_launch(launch_number=100, timestamp=datetime(2026, 6, 6, 9, 0, 0))
+    l2 = make_launch(launch_number=20, timestamp=datetime(2026, 6, 6, 9, 30, 0), remarks="corrected brought forward")
+    l3 = make_launch(launch_number=21, timestamp=datetime(2026, 6, 6, 10, 0, 0))
+    db_session.add_all([l1, l2, l3])
+    await db_session.commit()
+
+    results = await get_launches_from_date(db_session, 1, date(2026, 6, 6))
+    assert len(results) == 3
+    assert [r.launch_id for r in results] == sorted([r.launch_id for r in results])
+    assert results[1].remarks == "corrected brought forward"
+    assert results[1].launch_number == 20
+
+
+@pytest.mark.asyncio
 async def test_add_launch_burn(db_session):
     squadron = Squadron(id="123 VGS")
     winch = Winch(id=1, registration="EF 34 GH", squadron_id="123 VGS")
@@ -279,7 +305,6 @@ async def test_delete_launch_success(db_session):
     db_session.add_all([squadron, winch, launch])
     await db_session.commit()
     
-    from domain.launch.repository import delete_launch
     deleted = await delete_launch(db_session, launch.launch_id)
     assert deleted is not None
     assert deleted.launch_id == launch.launch_id
@@ -297,8 +322,6 @@ async def test_get_brought_forward(db_session):
     """Test retrieving brought forward values for a winch."""
     squadron = Squadron(id="123 VGS")
     winch = Winch(id=1, registration="EF 34 GH", squadron_id="123 VGS")
-    
-    from domain.launch.repository import get_brought_forward
     db_session.add_all([squadron, winch])
     
     # Add historical launches for previous days
@@ -318,3 +341,141 @@ async def test_get_brought_forward(db_session):
 
     # Expect last valid left is 11, right is 5
     assert result == {"left": 11, "right": 5}
+
+
+@pytest.mark.asyncio
+async def test_add_launch_correction_success(db_session):
+    """Test add_launch_correction creates a Launch with 'corrected brought forward' remark."""
+    squadron = Squadron(id="123 VGS")
+    winch = Winch(id=1, registration="EF 34 GH", squadron_id="123 VGS")
+    operator = Operator(service_no="12345678", entra_oid="oid1", name="Op", squadron_id="123 VGS", qualification_level="operator")
+    db_session.add_all([squadron, winch, operator])
+    await db_session.commit()
+
+    correction = await add_launch_correction(
+        db_session,
+        squadron_id="123 VGS",
+        winch_id=1,
+        operator_sn="12345678",
+        drum="left",
+        launch_num=40,
+    )
+    assert correction.launch_id is not None
+    assert correction.launch_number == 40
+    assert correction.drum == "left"
+    assert correction.remarks == "corrected brought forward"
+    assert correction.operator_sn == "12345678"
+    assert correction.winch_id == 1
+
+
+@pytest.mark.asyncio
+async def test_downward_correction_effect(db_session):
+    """Given existing launch 100, when correction is set to 20, subsequent add_launch produces 21."""
+    squadron = Squadron(id="123 VGS")
+    winch = Winch(id=1, registration="EF 34 GH", squadron_id="123 VGS")
+    operator = Operator(service_no="12345678", entra_oid="oid1", name="Op", squadron_id="123 VGS", qualification_level="operator")
+    db_session.add_all([squadron, winch, operator])
+    await db_session.commit()
+
+    # Existing launch 100
+    l1 = make_launch(launch_number=100, drum="left")
+    db_session.add(l1)
+    await db_session.commit()
+
+    # Downward correction sets left = 20
+    await add_launch_correction(
+        db_session,
+        squadron_id="123 VGS",
+        winch_id=1,
+        operator_sn="12345678",
+        drum="left",
+        launch_num=20,
+    )
+    await db_session.commit()
+
+    # Subsequent add_launch produces 21
+    next_launch = await add_launch(
+        db_session,
+        squadron_id="123 VGS",
+        winch_id=1,
+        operator_sn="12345678",
+        drum="left",
+    )
+    assert next_launch.launch_number == 21
+
+
+@pytest.mark.asyncio
+async def test_upward_correction_effect(db_session):
+    """Given existing launch 100, when correction is set to 150, subsequent add_launch produces 151."""
+    squadron = Squadron(id="123 VGS")
+    winch = Winch(id=1, registration="EF 34 GH", squadron_id="123 VGS")
+    operator = Operator(service_no="12345678", entra_oid="oid1", name="Op", squadron_id="123 VGS", qualification_level="operator")
+    db_session.add_all([squadron, winch, operator])
+    await db_session.commit()
+
+    # Existing launch 100
+    l1 = make_launch(launch_number=100, drum="left")
+    db_session.add(l1)
+    await db_session.commit()
+
+    # Upward correction sets left = 150
+    await add_launch_correction(
+        db_session,
+        squadron_id="123 VGS",
+        winch_id=1,
+        operator_sn="12345678",
+        drum="left",
+        launch_num=150,
+    )
+    await db_session.commit()
+
+    # Subsequent add_launch produces 151
+    next_launch = await add_launch(
+        db_session,
+        squadron_id="123 VGS",
+        winch_id=1,
+        operator_sn="12345678",
+        drum="left",
+    )
+    assert next_launch.launch_number == 151
+
+
+@pytest.mark.asyncio
+async def test_next_day_brought_forward_with_correction(db_session):
+    """Test get_brought_forward reflects the latest correction before current_day."""
+    squadron = Squadron(id="123 VGS")
+    winch = Winch(id=1, registration="EF 34 GH", squadron_id="123 VGS")
+    operator = Operator(service_no="12345678", entra_oid="oid1", name="Op", squadron_id="123 VGS", qualification_level="operator")
+    db_session.add_all([squadron, winch, operator])
+
+    # Day 1: normal launch 10, then downward correction to 5
+    l1 = make_launch(launch_number=10, timestamp=datetime(2026, 6, 5, 9, 0, 0), drum="left")
+    c1 = make_launch(
+        launch_number=5,
+        timestamp=datetime(2026, 6, 5, 10, 0, 0),
+        drum="left",
+        remarks="corrected brought forward",
+    )
+    db_session.add_all([l1, c1])
+    await db_session.commit()
+
+    bf = await get_brought_forward(db_session, 1, date(2026, 6, 6))
+    assert bf["left"] == 5
+    assert bf["right"] is None
+
+
+@pytest.mark.asyncio
+async def test_sequential_add_launches_monotonically_increasing(db_session):
+    """Test multiple add_launch calls allocate distinct, monotonically increasing numbers."""
+    squadron = Squadron(id="123 VGS")
+    winch = Winch(id=1, registration="EF 34 GH", squadron_id="123 VGS")
+    operator = Operator(service_no="12345678", entra_oid="oid1", name="Op", squadron_id="123 VGS", qualification_level="operator")
+    db_session.add_all([squadron, winch, operator])
+    await db_session.commit()
+
+    launches = []
+    for _ in range(5):
+        launch_entry = await add_launch(db_session, "123 VGS", 1, "12345678", "left")
+        launches.append(launch_entry)
+
+    assert [entry.launch_number for entry in launches] == [1, 2, 3, 4, 5]

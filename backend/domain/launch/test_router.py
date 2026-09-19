@@ -2,6 +2,7 @@ import pytest
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy import text
 from unittest.mock import patch
+from datetime import datetime, timezone
 from main import app
 
 @pytest.mark.asyncio
@@ -96,3 +97,228 @@ async def test_add_repair_success(db_session):
     
     result = await db_session.execute(text("SELECT remarks FROM launches WHERE launch_id = 101"))
     assert result.scalar() == "Repair: Fixed engine S_id: sup1"
+
+
+# ============================================================
+# Tests for POST /launches/corrections
+# ============================================================
+
+
+@pytest.mark.asyncio
+async def test_create_launch_correction_both_drums_success(db_session):
+    now = datetime.now(timezone.utc).isoformat()
+    await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn8')"))
+    await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (893, 'Winch 893', 'sqn8')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op8', 'oid8', 'Op8', 'sqn8', 'operator')"))
+    await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (500, 'sqn8', 893, 'di', '{now}', 'op8')"))
+    await db_session.commit()
+
+    payload = {
+        "winch_id": 893,
+        "left": 50,
+        "right": 80,
+    }
+
+    async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as ac:
+        response = await ac.post("/launches/corrections", json=payload)
+        assert response.status_code == 201
+        data = response.json()
+        assert len(data) == 2
+        assert data[0]["drum"] == "left"
+        assert data[0]["launch_number"] == 50
+        assert data[0]["remarks"] == "corrected brought forward"
+        assert data[0]["operator_sn"] == "op8"
+        assert data[0]["squadron_id"] == "sqn8"
+
+        assert data[1]["drum"] == "right"
+        assert data[1]["launch_number"] == 80
+        assert data[1]["remarks"] == "corrected brought forward"
+
+
+@pytest.mark.asyncio
+async def test_create_launch_correction_single_drum_left(db_session):
+    now = datetime.now(timezone.utc).isoformat()
+    await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn9')"))
+    await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (894, 'Winch 894', 'sqn9')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op9', 'oid9', 'Op9', 'sqn9', 'operator')"))
+    await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (501, 'sqn9', 894, 'di', '{now}', 'op9')"))
+    await db_session.commit()
+
+    payload = {
+        "winch_id": 894,
+        "left": 12,
+        "right": None,
+    }
+
+    async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as ac:
+        response = await ac.post("/launches/corrections", json=payload)
+        assert response.status_code == 201
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["drum"] == "left"
+        assert data[0]["launch_number"] == 12
+        assert data[0]["remarks"] == "corrected brought forward"
+
+
+@pytest.mark.asyncio
+async def test_create_launch_correction_single_drum_right(db_session):
+    now = datetime.now(timezone.utc).isoformat()
+    await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn10')"))
+    await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (895, 'Winch 895', 'sqn10')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op10', 'oid10', 'Op10', 'sqn10', 'operator')"))
+    await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (502, 'sqn10', 895, 'di', '{now}', 'op10')"))
+    await db_session.commit()
+
+    payload = {
+        "winch_id": 895,
+        "left": None,
+        "right": 25,
+    }
+
+    async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as ac:
+        response = await ac.post("/launches/corrections", json=payload)
+        assert response.status_code == 201
+        data = response.json()
+        assert len(data) == 1
+        assert data[0]["drum"] == "right"
+        assert data[0]["launch_number"] == 25
+        assert data[0]["remarks"] == "corrected brought forward"
+
+
+@pytest.mark.asyncio
+async def test_create_launch_correction_both_drums_null(db_session):
+    payload = {
+        "winch_id": 895,
+        "left": None,
+        "right": None,
+    }
+
+    async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as ac:
+        response = await ac.post("/launches/corrections", json=payload)
+        assert response.status_code == 422
+
+    result = await db_session.execute(text("SELECT COUNT(*) FROM launches WHERE remarks = 'corrected brought forward'"))
+    assert result.scalar() == 0
+
+
+@pytest.mark.asyncio
+async def test_create_launch_correction_negative_value(db_session):
+    payload = {
+        "winch_id": 895,
+        "left": -5,
+        "right": 10,
+    }
+
+    async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as ac:
+        response = await ac.post("/launches/corrections", json=payload)
+        assert response.status_code == 422
+
+    result = await db_session.execute(text("SELECT COUNT(*) FROM launches WHERE remarks = 'corrected brought forward'"))
+    assert result.scalar() == 0
+
+
+@pytest.mark.asyncio
+async def test_create_launch_correction_invalid_winch_id(db_session):
+    payload = {
+        "winch_id": 0,
+        "left": 10,
+    }
+
+    async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as ac:
+        response = await ac.post("/launches/corrections", json=payload)
+        assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_launch_correction_exceeds_max_int(db_session):
+    payload = {
+        "winch_id": 1,
+        "left": 2147483648,
+    }
+
+    async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as ac:
+        response = await ac.post("/launches/corrections", json=payload)
+        assert response.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_create_launch_correction_strips_whitespace(db_session):
+    now = datetime.now(timezone.utc).isoformat()
+    await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn_strip')"))
+    await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (898, 'Winch 898', 'sqn_strip')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op_strip', 'oid_s', 'Op Strip', 'sqn_strip', 'operator')"))
+    await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (505, 'sqn_strip', 898, 'di', '{now}', 'op_strip')"))
+    await db_session.commit()
+
+    payload = {
+        "winch_id": 898,
+        "squadron_id": "   sqn_strip   ",
+        "operator_sn": "   op_strip   ",
+        "left": 5,
+    }
+
+    async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as ac:
+        response = await ac.post("/launches/corrections", json=payload)
+        assert response.status_code == 201
+        data = response.json()
+        assert data[0]["squadron_id"] == "sqn_strip"
+        assert data[0]["operator_sn"] == "op_strip"
+
+
+@pytest.mark.asyncio
+async def test_create_launch_correction_missing_di_today(db_session):
+    await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn11')"))
+    await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (896, 'Winch 896', 'sqn11')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op11', 'oid11', 'Op11', 'sqn11', 'operator')"))
+    # Old DI from yesterday
+    await db_session.execute(text("INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (503, 'sqn11', 896, 'di', '2026-06-01T10:00:00', 'op11')"))
+    await db_session.commit()
+
+    payload = {
+        "winch_id": 896,
+        "left": 50,
+    }
+
+    async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as ac:
+        response = await ac.post("/launches/corrections", json=payload)
+        assert response.status_code == 400
+        assert "Daily Inspection" in response.json()["detail"] or "DI" in response.json()["detail"]
+
+    result = await db_session.execute(text("SELECT COUNT(*) FROM launches WHERE winch_id = 896"))
+    assert result.scalar() == 0
+
+
+@pytest.mark.asyncio
+async def test_create_launch_correction_atomic_rollback(db_session):
+    now = datetime.now(timezone.utc).isoformat()
+    await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn12')"))
+    await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (897, 'Winch 897', 'sqn12')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op12', 'oid12', 'Op12', 'sqn12', 'operator')"))
+    await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (504, 'sqn12', 897, 'di', '{now}', 'op12')"))
+    await db_session.commit()
+
+    payload = {
+        "winch_id": 897,
+        "left": 50,
+        "right": 80,
+    }
+
+    call_count = 0
+    from domain.launch import repository as launch_repo
+    real_add_launch_correction = launch_repo.add_launch_correction
+
+    async def side_effect(*args, **kwargs):
+        nonlocal call_count
+        call_count += 1
+        if call_count == 2:
+            raise RuntimeError("Database error on right drum")
+        return await real_add_launch_correction(*args, **kwargs)
+
+    with patch('domain.launch.repository.add_launch_correction', side_effect=side_effect):
+        async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as ac:
+            response = await ac.post("/launches/corrections", json=payload)
+            assert response.status_code == 500
+
+    # Verify atomic rollback: both left and right drum inserts rolled back!
+    result = await db_session.execute(text("SELECT COUNT(*) FROM launches WHERE winch_id = 897"))
+    assert result.scalar() == 0

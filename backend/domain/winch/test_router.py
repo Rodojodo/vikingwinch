@@ -117,3 +117,57 @@ async def test_create_day_log_success(db_session):
     
     result = await db_session.execute(text("SELECT COUNT(*) FROM day_log WHERE winch_id = 1001"))
     assert result.scalar() == 1
+
+
+@pytest.mark.asyncio
+async def test_get_export_data_ordering_and_remarks(db_session):
+    day = date(2026, 6, 6)
+    day_str = day.isoformat()
+
+    sqn = Squadron(id="600 VGS")
+    winch = Winch(id=600, registration="VX600", squadron_id="600 VGS")
+    op = Operator(service_no="SN600", entra_oid="oid600", name="Op 600", squadron_id="600 VGS", qualification_level="operator")
+    db_session.add_all([sqn, winch, op])
+    await db_session.commit()
+
+    l1 = Launch(squadron_id="600 VGS", winch_id=600, drum="left", launch_number=100, timestamp=datetime(2026, 6, 6, 9, 0, 0), operator_sn="SN600")
+    l2 = Launch(squadron_id="600 VGS", winch_id=600, drum="left", launch_number=20, remarks="corrected brought forward", timestamp=datetime(2026, 6, 6, 9, 30, 0), operator_sn="SN600")
+    l3 = Launch(squadron_id="600 VGS", winch_id=600, drum="left", launch_number=21, timestamp=datetime(2026, 6, 6, 10, 0, 0), operator_sn="SN600")
+    db_session.add_all([l1, l2, l3])
+    await db_session.commit()
+
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        response = await ac.get(f"/winch/600/export_data?squadron_id=600%20VGS&day={day_str}")
+    assert response.status_code == 200
+    data = response.json()
+    launches = data["launches"]
+    assert len(launches) == 3
+    # Check ordered by launch_id ASC
+    launch_ids = [entry["launch_id"] for entry in launches]
+    assert launch_ids == sorted(launch_ids)
+    # Check remarks preserved
+    assert launches[1]["remarks"] == "corrected brought forward"
+    assert launches[1]["launch_number"] == 20
+
+
+@pytest.mark.asyncio
+async def test_get_bf_info_with_prior_day_correction(db_session):
+    sqn = Squadron(id="700 VGS")
+    winch = Winch(id=700, registration="VX700", squadron_id="700 VGS")
+    op = Operator(service_no="SN700", entra_oid="oid700", name="Op 700", squadron_id="700 VGS", qualification_level="operator")
+    db_session.add_all([sqn, winch, op])
+    await db_session.commit()
+
+    # Day 1: normal launch 10, then correction 50
+    l1 = Launch(squadron_id="700 VGS", winch_id=700, drum="left", launch_number=10, timestamp=datetime(2026, 6, 1, 9, 0, 0), operator_sn="SN700")
+    c1 = Launch(squadron_id="700 VGS", winch_id=700, drum="left", launch_number=50, remarks="corrected brought forward", timestamp=datetime(2026, 6, 1, 9, 30, 0), operator_sn="SN700")
+    db_session.add_all([l1, c1])
+    await db_session.commit()
+
+    day2_str = "2026-06-02"
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        response = await ac.get(f"/winch/700/bf_info?day={day2_str}")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["left"] == 50
+    assert data["right"] is None
