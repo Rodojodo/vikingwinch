@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Box, Button, TextField, Typography} from '@mui/material';
 import {getBroughtForward, getWinchHours} from '../api/winchClient.ts';
 import {useSessionIdentity} from '../../../app/hooks/useSessionIdentity.ts';
@@ -24,93 +24,80 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
     const [storedRight, setStoredRight] = useState<number | null>(null);
     const [storedHours, setStoredHours] = useState<number | null>(null);
     const [diSigned, setDiSigned] = useState(false);
-    const [isFetching, setIsFetching] = useState(false);
+    const [isFetching, setIsFetching] = useState(Boolean(winchId));
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    const storedValuesRef = useRef<{ left: number | null; right: number | null; hours: number | null }>({
+        left: null,
+        right: null,
+        hours: null,
+    });
+    const fetchPromiseRef = useRef<Promise<void> | null>(null);
 
     useEffect(() => {
         if (!winchId) return;
         let isMounted = true;
 
-        const fetchBaseline = async () => {
+        const promise = (async () => {
+            setIsFetching(true);
+            setError(null);
             try {
                 const today = new Date();
-                const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+                const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
                 const bf = await getBroughtForward(winchId, todayStr);
-                if (!isMounted || !bf) return;
-                if (bf.left !== null && bf.left !== undefined) {
-                    setStoredLeft(bf.left);
-                } else {
-                    setStoredLeft(null);
-                }
-                if (bf.right !== null && bf.right !== undefined) {
-                    setStoredRight(bf.right);
-                } else {
-                    setStoredRight(null);
+                if (isMounted && bf) {
+                    const l = bf.left !== null && bf.left !== undefined ? bf.left : null;
+                    const r = bf.right !== null && bf.right !== undefined ? bf.right : null;
+                    storedValuesRef.current.left = l;
+                    storedValuesRef.current.right = r;
+                    setStoredLeft(l);
+                    setStoredRight(r);
                 }
             } catch (e) {
-                console.error("Failed to pre-fetch drum totals", e);
+                console.error('Failed to fetch drums', e);
+                if (isMounted) setError('Failed to retrieve drum totals.');
             }
 
             try {
                 const h = await getWinchHours(winchId);
-                if (!isMounted || !h) return;
-                if (h.hours !== null && h.hours !== undefined) {
-                    setStoredHours(h.hours);
-                } else {
-                    setStoredHours(null);
+                if (isMounted && h) {
+                    const hrs = h.hours !== null && h.hours !== undefined ? h.hours : null;
+                    storedValuesRef.current.hours = hrs;
+                    setStoredHours(hrs);
                 }
             } catch (e) {
-                console.error("Failed to pre-fetch winch hours", e);
+                console.error('Failed to fetch hours', e);
+                if (isMounted) setError('Failed to retrieve winch hours.');
+            } finally {
+                if (isMounted) {
+                    setIsFetching(false);
+                }
             }
-        };
+        })();
 
-        fetchBaseline();
+        fetchPromiseRef.current = promise;
 
         return () => {
             isMounted = false;
         };
     }, [winchId]);
 
-
-    const handleRetrieveData = async () => {
+    const handlePopulateFromCloud = async () => {
         if (!winchId) return;
-        setIsFetching(true);
-        setError(null);
-        try {
-            const today = new Date();
-            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-            const bf = await getBroughtForward(winchId, todayStr);
-            if (bf.left !== null && bf.left !== undefined) {
-                setLeftDrum(bf.left.toString());
-                setStoredLeft(bf.left);
-            } else {
-                setStoredLeft(null);
-            }
-            if (bf.right !== null && bf.right !== undefined) {
-                setRightDrum(bf.right.toString());
-                setStoredRight(bf.right);
-            } else {
-                setStoredRight(null);
-            }
-        } catch (e) {
-            console.error('Failed to fetch drums', e);
-            setError('Failed to retrieve drum totals.');
+        if (fetchPromiseRef.current) {
+            await fetchPromiseRef.current;
         }
-
-        try {
-            const h = await getWinchHours(winchId);
-            if (h.hours !== null && h.hours !== undefined) {
-                setHours(h.hours.toString());
-                setStoredHours(h.hours);
-            } else {
-                setStoredHours(null);
-            }
-        } catch (e) {
-            console.error('Failed to fetch hours', e);
-            setError('Failed to retrieve winch hours.');
+        const {left, right, hours: h} = storedValuesRef.current;
+        if (left !== null) {
+            setLeftDrum(left.toString());
         }
-        setIsFetching(false);
+        if (right !== null) {
+            setRightDrum(right.toString());
+        }
+        if (h !== null) {
+            setHours(h.toString());
+        }
     };
 
     const handleDrumKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -220,7 +207,7 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
             <Button
                 variant="outlined"
                 color="primary"
-                onClick={handleRetrieveData}
+                onClick={handlePopulateFromCloud}
                 disabled={isFetching || isSubmitting}
                 sx={{
                     borderRadius: '20px',

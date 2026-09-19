@@ -55,8 +55,7 @@ describe('DailyInspectionPanel', () => {
         });
     });
 
-    it('disables Sign DI button while retrieving data from cloud', async () => {
-        const user = userEvent.setup();
+    it('disables Sign DI and Retrieve buttons while retrieving data from cloud on mount', async () => {
         let resolveBf: (val: { left: number | null; right: number | null; hours: number | null }) => void;
         vi.mocked(getBroughtForward).mockImplementation(() => new Promise((resolve) => {
             resolveBf = resolve;
@@ -66,17 +65,40 @@ describe('DailyInspectionPanel', () => {
         render(<DailyInspectionPanel onComplete={mockOnComplete} onSignDI={mockOnSignDI}/>);
 
         const signBtn = screen.getByRole('button', { name: 'Sign DI' });
-        expect(signBtn).not.toBeDisabled();
-
         const retrieveBtn = screen.getByRole('button', { name: 'Retrieve data from cloud' });
-        await user.click(retrieveBtn);
-
         expect(signBtn).toBeDisabled();
+        expect(retrieveBtn).toBeDisabled();
 
         resolveBf!({left: 10, right: 10, hours: 100});
         await waitFor(() => {
             expect(signBtn).not.toBeDisabled();
+            expect(retrieveBtn).not.toBeDisabled();
         });
+    });
+
+    it('fetches cloud data once on mount and populates fields when clicking retrieve button without re-fetching', async () => {
+        const user = userEvent.setup();
+        vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.5});
+        vi.mocked(getWinchHours).mockResolvedValue({hours: 150.5});
+
+        render(<DailyInspectionPanel onComplete={mockOnComplete} onSignDI={mockOnSignDI}/>);
+
+        const retrieveBtn = screen.getByRole('button', { name: 'Retrieve data from cloud' });
+        await waitFor(() => {
+            expect(retrieveBtn).not.toBeDisabled();
+        });
+
+        // Click retrieve button - populates fields from single fetch
+        await user.click(retrieveBtn);
+
+        expect(screen.getByDisplayValue('15')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('8')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('150.5')).toBeInTheDocument();
+
+        // Clicking it again does NOT call API again
+        await user.click(retrieveBtn);
+        expect(getBroughtForward).toHaveBeenCalledTimes(1);
+        expect(getWinchHours).toHaveBeenCalledTimes(1);
     });
 
     it('handles retrieve data missing fields', async () => {
