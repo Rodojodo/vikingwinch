@@ -5,6 +5,7 @@ import { getDayLog, postDayLogToDb } from '../features/day-ops/api/dayOpsClient.
 import { getLaunches, postLaunchCorrections } from '../features/launch-ops/api/launchClient.ts';
 import { getOperatorsForSquadron } from '../core/http/operatorsClient.ts';
 import { exportLog } from '../app/utils/exportLog.ts';
+import { exportWinchLogsheet } from '../app/utils/exportWinchLog.ts';
 
 vi.mock('../features/day-ops/api/dayOpsClient.ts', () => ({
     getDayLog: vi.fn(),
@@ -19,6 +20,9 @@ vi.mock('../core/http/operatorsClient.ts', () => ({
 }));
 vi.mock('../app/utils/exportLog.ts', () => ({
     exportLog: vi.fn(),
+}));
+vi.mock('../app/utils/exportWinchLog.ts', () => ({
+    exportWinchLogsheet: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock('../features/launch-ops/components/LaunchPanel', () => ({
@@ -39,9 +43,16 @@ vi.mock('../features/day-ops/components/SignOnPanel.tsx', () => ({
     SignOnPanel: () => <div data-testid="sign-on-panel" />,
 }));
 vi.mock('../features/winch-ops/components/WinchSelectPanel', () => ({
-    WinchSelectPanel: ({ onSelectWinch }: { onSelectWinch: (winchId: number) => void }) => (
+    WinchSelectPanel: ({
+        onSelectWinch,
+        onExportLogsheet,
+    }: {
+        onSelectWinch: (winchId: number) => void;
+        onExportLogsheet?: (winchId: number) => Promise<void>;
+    }) => (
         <div data-testid="winch-select">
             <button onClick={() => onSelectWinch(1)}>Select Winch</button>
+            <button onClick={() => onExportLogsheet?.(2)}>Export Winch 2</button>
         </div>
     ),
 }));
@@ -81,7 +92,7 @@ describe('WinchTab', () => {
         vi.mocked(getOperatorsForSquadron).mockResolvedValue([]);
     });
 
-    it('renders WinchSelectPanel initially if winchId is null', async () => {
+    it('renders WinchSelectPanel initially if winchId is null and forwards onExportLogsheet', async () => {
         const onWinchSelectMock = vi.fn();
 
         render(
@@ -96,6 +107,12 @@ describe('WinchTab', () => {
         );
 
         expect(screen.getByTestId('winch-select')).toBeInTheDocument();
+
+        await act(async () => {
+            fireEvent.click(screen.getByText('Export Winch 2'));
+        });
+
+        expect(exportWinchLogsheet).toHaveBeenCalledWith(2, '123 VGS');
 
         await act(async () => {
             fireEvent.click(screen.getByText('Select Winch'));

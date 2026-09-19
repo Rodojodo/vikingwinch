@@ -24,6 +24,7 @@ import {getLaunches, postLaunchCorrections} from '../features/launch-ops/api/lau
 import {postRemarkToDb} from '../features/remarks-repairs/api/remarksClient.ts';
 import {getOperatorsForSquadron} from '../core/http/operatorsClient.ts';
 import {exportLog} from '../app/utils/exportLog.ts';
+import {exportWinchLogsheet} from '../app/utils/exportWinchLog.ts';
 import type {SessionStatus} from '../app/types/session.ts';
 import type {TabView} from '../features/winch-ops/types';
 import type {OperatorRead} from '../core/types';
@@ -192,6 +193,7 @@ const WinchTabContent = ({
                         squadronId={squadronId}
                         onSelectWinch={(newWinchId) => onWinchSelect(tabId, newWinchId)}
                         openWinchIds={openWinchIds}
+                        onExportLogsheet={(winchIdToExport) => exportWinchLogsheet(winchIdToExport, squadronId)}
                     />
                 );
             case 'inspection':

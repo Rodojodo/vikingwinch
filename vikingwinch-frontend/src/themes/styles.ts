@@ -57,6 +57,16 @@ export const errorBannerSx: SxProps<Theme> = {
   color: 'error.main', // or error.light depending on theme setup
 };
 
+export const warningBannerSx: SxProps<Theme> = {
+  textAlign: 'center',
+  p: 1,
+  mb: 2,
+  borderRadius: 2,
+  width: '100%',
+  backgroundColor: (theme) => alpha(theme.palette.warning?.main ?? '#f59e0b', 0.1),
+  color: 'warning.main',
+};
+
 export const getTabButtonStyles = (isActive: boolean): SxProps<Theme> => ({
   py: 1.5,
   textTransform: 'none',

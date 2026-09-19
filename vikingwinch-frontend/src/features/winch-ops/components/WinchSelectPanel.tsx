@@ -5,14 +5,21 @@ import {toWinch} from '../api/winchMapper.ts';
 import type {Winch} from '../types/domain.ts';
 import {darkBlueButton, glassPanelSx} from '../../../themes/styles.ts';
 import type {SxProps, Theme} from '@mui/material/styles';
+import {LogsheetExportPanel} from './LogsheetExportPanel';
 
-interface WinchSelectPanelProps {
+export interface WinchSelectPanelProps {
     squadronId: string;
     openWinchIds: number[];
     onSelectWinch: (winchId: number) => void;
+    onExportLogsheet?: (winchId: number) => Promise<void>;
 }
 
-export const WinchSelectPanel = ({ squadronId, openWinchIds, onSelectWinch }: WinchSelectPanelProps) => {
+export const WinchSelectPanel = ({
+    squadronId,
+    openWinchIds,
+    onSelectWinch,
+    onExportLogsheet,
+}: WinchSelectPanelProps) => {
     const [winches, setWinches] = useState<Winch[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -81,6 +88,14 @@ export const WinchSelectPanel = ({ squadronId, openWinchIds, onSelectWinch }: Wi
                         </Button>
                     ))}
                 </Box>
+            )}
+
+            {!loading && !error && (
+                <LogsheetExportPanel
+                    squadronId={squadronId}
+                    winches={winches}
+                    onExport={onExportLogsheet}
+                />
             )}
         </Box>
     );
