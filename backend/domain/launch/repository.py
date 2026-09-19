@@ -63,13 +63,18 @@ async def add_launch_correction(
     drum: Literal['left', 'right'],
     launch_num: int,
     remarks: str = "corrected brought forward",
+    timestamp: datetime | None = None,
 ) -> Launch:
+    if timestamp is None:
+        today = datetime.now(timezone.utc).date()
+        timestamp = datetime.combine(today, time.min) - timedelta(seconds=1)
+
     new_launch = Launch(
         squadron_id=squadron_id,
         winch_id=winch_id,
         drum=drum,
         launch_number=launch_num,
-        timestamp=datetime.now(timezone.utc),
+        timestamp=timestamp,
         operator_sn=operator_sn,
         remarks=remarks,
     )

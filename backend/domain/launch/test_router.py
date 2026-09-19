@@ -322,3 +322,66 @@ async def test_create_launch_correction_atomic_rollback(db_session):
     # Verify atomic rollback: both left and right drum inserts rolled back!
     result = await db_session.execute(text("SELECT COUNT(*) FROM launches WHERE winch_id = 897"))
     assert result.scalar() == 0
+
+
+@pytest.mark.asyncio
+async def test_create_launch_correction_same_day_bf_and_zero_day_launches(db_session):
+    now = datetime.now(timezone.utc).isoformat()
+    today_str = datetime.now(timezone.utc).date().isoformat()
+    await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn13')"))
+    await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (899, 'Winch 899', 'sqn13')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op13', 'oid13', 'Op13', 'sqn13', 'operator')"))
+    await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (506, 'sqn13', 899, 'di', '{now}', 'op13')"))
+    await db_session.commit()
+
+    payload = {
+        "winch_id": 899,
+        "left": 50,
+        "right": 80,
+    }
+
+    async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as ac:
+        # 1. Post correction
+        response = await ac.post("/launches/corrections", json=payload)
+        assert response.status_code == 201
+
+        # 2. Check bf_info for today reflects corrected numbers immediately
+        bf_resp = await ac.get(f"/winch/899/bf_info?day={today_str}")
+        assert bf_resp.status_code == 200
+        assert bf_resp.json()["left"] == 50
+        assert bf_resp.json()["right"] == 80
+        await db_session.commit()
+
+        # 3. Check day_data for today: launches is empty (no phantom launch on drum buttons!)
+        day_resp = await ac.get(f"/winch/899/day_data?day={today_str}")
+        assert day_resp.status_code == 200
+        assert len(day_resp.json()["launches"]) == 0
+        await db_session.commit()
+
+        # 4. Create first real launch of the day
+        launch_payload = {
+            "squadron_id": "sqn13",
+            "winch_id": 899,
+            "operator_sn": "op13",
+            "drum": "left",
+            "is_burn": False,
+        }
+        l_resp = await ac.post("/launches", json=launch_payload)
+        assert l_resp.status_code == 201
+        assert l_resp.json()["launch_number"] == 51
+        await db_session.commit()
+
+        # 5. Check day_data now has exactly 1 launch
+        day_resp2 = await ac.get(f"/winch/899/day_data?day={today_str}")
+        assert len(day_resp2.json()["launches"]) == 1
+        assert day_resp2.json()["launches"][0]["launch_number"] == 51
+        await db_session.commit()
+
+        # 6. Check export_data: brought_forward has 50/80, launches has only the 1 flight
+        exp_resp = await ac.get(f"/winch/899/export_data?squadron_id=sqn13&day={today_str}")
+        assert exp_resp.status_code == 200
+        exp_data = exp_resp.json()
+        assert exp_data["brought_forward"]["left"] == 50
+        assert exp_data["brought_forward"]["right"] == 80
+        assert len(exp_data["launches"]) == 1
+        assert exp_data["launches"][0]["launch_number"] == 51

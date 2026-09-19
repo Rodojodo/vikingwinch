@@ -479,3 +479,50 @@ async def test_sequential_add_launches_monotonically_increasing(db_session):
         launches.append(launch_entry)
 
     assert [entry.launch_number for entry in launches] == [1, 2, 3, 4, 5]
+
+
+@pytest.mark.asyncio
+async def test_same_day_brought_forward_and_day_launches_with_correction(db_session):
+    """Test that correction created today immediately reflects in get_brought_forward for today,
+    does NOT appear in get_launches_from_date for today, and next add_launch derives from it."""
+    squadron = Squadron(id="123 VGS")
+    winch = Winch(id=1, registration="EF 34 GH", squadron_id="123 VGS")
+    operator = Operator(service_no="12345678", entra_oid="oid1", name="Op", squadron_id="123 VGS", qualification_level="operator")
+    db_session.add_all([squadron, winch, operator])
+    await db_session.commit()
+
+    today = datetime.now(timezone.utc).date()
+
+    # Add correction with default timestamp (23:59:59 the night before)
+    await add_launch_correction(
+        db_session,
+        squadron_id="123 VGS",
+        winch_id=1,
+        operator_sn="12345678",
+        drum="left",
+        launch_num=40,
+    )
+    await db_session.commit()
+
+    # 1. Brought forward for today reflects the correction
+    bf = await get_brought_forward(db_session, 1, today)
+    assert bf["left"] == 40
+
+    # 2. Today's launches do NOT include the correction (so 0 launches in UI)
+    today_launches = await get_launches_from_date(db_session, 1, today)
+    assert len(today_launches) == 0
+
+    # 3. Next launch today increments from 40 -> 41
+    new_launch = await add_launch(
+        db_session,
+        squadron_id="123 VGS",
+        winch_id=1,
+        operator_sn="12345678",
+        drum="left",
+    )
+    assert new_launch.launch_number == 41
+
+    # 4. Now today has 1 launch
+    today_launches_after = await get_launches_from_date(db_session, 1, today)
+    assert len(today_launches_after) == 1
+    assert today_launches_after[0].launch_number == 41

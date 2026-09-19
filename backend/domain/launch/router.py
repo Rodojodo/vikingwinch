@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timezone, time, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -64,6 +64,8 @@ async def create_launch_correction(
                 detail="Missing squadron_id or operator_sn for launch correction",
             )
 
+        correction_timestamp = datetime.combine(today, time.min) - timedelta(seconds=1)
+
         results = []
         if payload.left is not None:
             left_launch = await launch_repo.add_launch_correction(
@@ -74,6 +76,7 @@ async def create_launch_correction(
                 drum="left",
                 launch_num=payload.left,
                 remarks="corrected brought forward",
+                timestamp=correction_timestamp,
             )
             results.append(left_launch)
 
@@ -86,6 +89,7 @@ async def create_launch_correction(
                 drum="right",
                 launch_num=payload.right,
                 remarks="corrected brought forward",
+                timestamp=correction_timestamp,
             )
             results.append(right_launch)
 
