@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Box, Button, TextField, Typography} from '@mui/material';
 import {getBroughtForward, getWinchHours} from '../api/winchClient.ts';
 import {useSessionIdentity} from '../../../app/hooks/useSessionIdentity.ts';
@@ -27,6 +27,51 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
     const [isFetching, setIsFetching] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!winchId) return;
+        let isMounted = true;
+
+        const fetchBaseline = async () => {
+            try {
+                const today = new Date();
+                const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+                const bf = await getBroughtForward(winchId, todayStr);
+                if (!isMounted || !bf) return;
+                if (bf.left !== null && bf.left !== undefined) {
+                    setStoredLeft(bf.left);
+                } else {
+                    setStoredLeft(null);
+                }
+                if (bf.right !== null && bf.right !== undefined) {
+                    setStoredRight(bf.right);
+                } else {
+                    setStoredRight(null);
+                }
+            } catch (e) {
+                console.error("Failed to pre-fetch drum totals", e);
+            }
+
+            try {
+                const h = await getWinchHours(winchId);
+                if (!isMounted || !h) return;
+                if (h.hours !== null && h.hours !== undefined) {
+                    setStoredHours(h.hours);
+                } else {
+                    setStoredHours(null);
+                }
+            } catch (e) {
+                console.error("Failed to pre-fetch winch hours", e);
+            }
+        };
+
+        fetchBaseline();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [winchId]);
+
 
     const handleRetrieveData = async () => {
         if (!winchId) return;

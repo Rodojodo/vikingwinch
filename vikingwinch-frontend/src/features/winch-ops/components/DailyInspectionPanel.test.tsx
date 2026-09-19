@@ -21,6 +21,8 @@ describe('DailyInspectionPanel', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.mocked(getBroughtForward).mockResolvedValue({left: null, right: null, hours: null});
+        vi.mocked(getWinchHours).mockResolvedValue({hours: null});
         vi.mocked(useSessionIdentity).mockReturnValue({
             squadronId: 'sqn1',
             winchId: 42,
@@ -538,5 +540,52 @@ describe('DailyInspectionPanel', () => {
         expect(mockOnSubmitCorrections).toHaveBeenCalledTimes(2);
 
         consoleSpy.mockRestore();
+    });
+it("shows warning and submits corrections when user enters values without clicking retrieve data from cloud", async () => {
+        const user = userEvent.setup();
+        vi.mocked(getBroughtForward).mockResolvedValue({left: 15, right: 8, hours: 50.0});
+        vi.mocked(getWinchHours).mockResolvedValue({hours: 50.0});
+        mockOnSignDI.mockResolvedValue(undefined);
+        mockOnSubmitCorrections.mockResolvedValue([]);
+
+        render(
+            <DailyInspectionPanel
+                onComplete={mockOnComplete}
+                onSignDI={mockOnSignDI}
+                onSubmitCorrections={mockOnSubmitCorrections}
+            />
+        );
+
+        // Wait for background fetch to complete
+        await waitFor(() => {
+            expect(getBroughtForward).toHaveBeenCalledWith(42, expect.any(String));
+        });
+
+        const leftInput = screen.getByPlaceholderText("e.g. 12");
+        const rightInput = screen.getByPlaceholderText("e.g. 5");
+        const hoursInput = screen.getByPlaceholderText("e.g. 123.5");
+
+        // Fields remain empty initially without clicking retrieve
+        expect(leftInput).toHaveValue(null);
+        expect(rightInput).toHaveValue(null);
+        expect(hoursInput).toHaveValue(null);
+
+        // User manually types values differing from stored baseline
+        await user.type(leftInput, "25");
+        await user.type(rightInput, "8");
+        await user.type(hoursInput, "55.0");
+
+        // Warnings appear based on background-fetched stored baseline
+        expect(screen.getByText("Entered: 25, stored: 15")).toBeInTheDocument();
+        expect(screen.getByText("Entered: 55, stored: 50")).toBeInTheDocument();
+        expect(screen.queryByText(/stored: 8/)).not.toBeInTheDocument();
+
+        // Sign DI
+        const signBtn = screen.getByRole("button", { name: "Sign DI" });
+        await user.click(signBtn);
+
+        expect(mockOnSignDI).toHaveBeenCalledWith(55.0);
+        expect(mockOnSubmitCorrections).toHaveBeenCalledWith({left: 25, right: null});
+        expect(mockOnComplete).toHaveBeenCalled();
     });
 });
