@@ -11,3 +11,4 @@ __pycache__/
 /_bmad-output/*
 /node_modules/*
 .coverage
+/backend/database/real_seed.sql

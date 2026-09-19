@@ -17,8 +17,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the rest of the backend code
 COPY . .
 
-# Expose the FastAPI port
+# Expose default port (overridden at runtime by Railway's $PORT)
 EXPOSE 8000
 
-# Start Uvicorn
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run database migrations with retry on startup, then exec Uvicorn with dual-stack IPv6 (::) for Railway private networking
+CMD ["sh", "-c", "for i in $(seq 1 15); do alembic upgrade head && migrated=1 && break || { echo 'Waiting for database to be ready...'; sleep 2; }; done; [ \"$migrated\" = 1 ] && exec uvicorn main:app --host \"::\" --port ${PORT:-8000} --workers 2"]

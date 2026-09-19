@@ -1,4 +1,5 @@
-export const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
+const rawApiUrl = import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? '/api' : 'http://127.0.0.1:8000');
+export const API_BASE_URL = rawApiUrl.endsWith('/') ? rawApiUrl.slice(0, -1) : rawApiUrl;
 
 export async function handleApiError(response: Response): Promise<void> {
     if (!response.ok) {
@@ -36,6 +37,11 @@ export async function apiFetch<T>(endpoint: string, options?: RequestInit): Prom
     });
 
     await handleApiError(response);
+
+    const contentType = response.headers.get('content-type');
+    if (contentType && !contentType.includes('application/json')) {
+        throw new Error(`Expected JSON response but received ${contentType}`);
+    }
 
     const text = await response.text();
     return JSON.parse(text || 'null') as T;
