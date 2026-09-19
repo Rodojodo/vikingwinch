@@ -1,21 +1,20 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {fireEvent, render, screen, waitFor} from '@testing-library/react';
+import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
 import '@testing-library/jest-dom';
 import {LogsheetExportPanel} from './LogsheetExportPanel';
-import {getWinchesForSquadron, getWinchDayData} from '../api/winchClient';
-import {exportWinchLogsheet} from '../../../app/utils/exportLog';
-import type {Winch} from '../types';
+import {getExportData, getWinchDayStatus, getWinchesForSquadron} from '../api/winchClient';
+import {exportLog} from '../../../app/utils/exportLog';
+import type {ExportDataResponse, Winch} from '../types';
 
 vi.mock('../api/winchClient', () => ({
     getWinchesForSquadron: vi.fn(),
-    getWinchDayData: vi.fn(),
+    getWinchDayStatus: vi.fn(),
+    getExportData: vi.fn(),
 }));
 
 vi.mock('../../../app/utils/exportLog', async () => {
-    const actual = await vi.importActual<typeof import('../../../app/utils/exportLog')>('../../../app/utils/exportLog');
     return {
-        ...actual,
-        exportWinchLogsheet: vi.fn(),
+        exportLog: vi.fn().mockResolvedValue(undefined),
         getTodayDateString: () => '2026-09-19',
     };
 });
@@ -27,16 +26,26 @@ describe('LogsheetExportPanel', () => {
         { id: 2, registration: 'W2', squadronId },
     ];
 
+    const mockExportData: ExportDataResponse = {
+        winch: {id: 1, registration: 'W1', squadron_id: squadronId},
+        logs: [],
+        launches: [],
+        operators: [],
+        brought_forward: {left: null, right: null},
+    };
+
     beforeEach(() => {
         vi.clearAllMocks();
         vi.mocked(getWinchesForSquadron).mockResolvedValue([
             { id: 1, registration: 'W1', squadron_id: squadronId },
             { id: 2, registration: 'W2', squadron_id: squadronId },
         ]);
-        vi.mocked(getWinchDayData).mockResolvedValue({
-            logs: [],
-            launches: [],
+        vi.mocked(getWinchDayStatus).mockResolvedValue({
+            winch_id: 1,
+            has_finish_day: false,
+            has_launches: false,
         });
+        vi.mocked(getExportData).mockResolvedValue(mockExportData);
     });
 
     it('renders panel with title Export Logsheets and empty message when no winches have finished day and no notices', async () => {
@@ -48,33 +57,15 @@ describe('LogsheetExportPanel', () => {
     });
 
     it('renders export buttons only for winches with completed finish-day log', async () => {
-        vi.mocked(getWinchDayData).mockImplementation(async (winchId) => {
+        vi.mocked(getWinchDayStatus).mockImplementation(async (winchId) => {
             if (winchId === 1) {
                 return {
-                    logs: [
-                        {
-                            id: 1,
-                            winch_id: 1,
-                            squadron_id: squadronId,
-                            type: 'finish_day',
-                            timestamp: '2026-09-19T17:00:00Z',
-                            operator_sn: 'OP1',
-                        },
-                    ],
-                    launches: [
-                        {
-                            launch_id: 101,
-                            launch_number: 1,
-                            winch_id: 1,
-                            squadron_id: squadronId,
-                            drum: 'left',
-                            timestamp: '2026-09-19T09:00:00Z',
-                            operator_sn: 'OP1',
-                        },
-                    ],
+                    winch_id: 1,
+                    has_finish_day: true,
+                    has_launches: true,
                 };
             }
-            return { logs: [], launches: [] };
+            return {winch_id: winchId, has_finish_day: false, has_launches: false};
         });
 
         render(<LogsheetExportPanel squadronId={squadronId} winches={mockWinches} />);
@@ -86,23 +77,15 @@ describe('LogsheetExportPanel', () => {
     });
 
     it('fetches winches if winches prop is not provided', async () => {
-        vi.mocked(getWinchDayData).mockImplementation(async (winchId) => {
+        vi.mocked(getWinchDayStatus).mockImplementation(async (winchId) => {
             if (winchId === 1) {
                 return {
-                    logs: [
-                        {
-                            id: 1,
-                            winch_id: 1,
-                            squadron_id: squadronId,
-                            type: 'finish_day',
-                            timestamp: '2026-09-19T17:00:00Z',
-                            operator_sn: 'OP1',
-                        },
-                    ],
-                    launches: [],
+                    winch_id: 1,
+                    has_finish_day: true,
+                    has_launches: false,
                 };
             }
-            return { logs: [], launches: [] };
+            return {winch_id: winchId, has_finish_day: false, has_launches: false};
         });
 
         render(<LogsheetExportPanel squadronId={squadronId} />);
@@ -121,33 +104,15 @@ describe('LogsheetExportPanel', () => {
     });
 
     it('displays notice and NO export button when winch has launches today and no finish_day log', async () => {
-        vi.mocked(getWinchDayData).mockImplementation(async (winchId) => {
+        vi.mocked(getWinchDayStatus).mockImplementation(async (winchId) => {
             if (winchId === 1) {
                 return {
-                    logs: [
-                        {
-                            id: 1,
-                            winch_id: 1,
-                            squadron_id: squadronId,
-                            type: 'di',
-                            timestamp: '2026-09-19T08:00:00Z',
-                            operator_sn: 'OP1',
-                        },
-                    ],
-                    launches: [
-                        {
-                            launch_id: 101,
-                            launch_number: 1,
-                            winch_id: 1,
-                            squadron_id: squadronId,
-                            drum: 'left',
-                            timestamp: '2026-09-19T09:00:00Z',
-                            operator_sn: 'OP1',
-                        },
-                    ],
+                    winch_id: 1,
+                    has_finish_day: false,
+                    has_launches: true,
                 };
             }
-            return { logs: [], launches: [] };
+            return {winch_id: winchId, has_finish_day: false, has_launches: false};
         });
 
         render(<LogsheetExportPanel squadronId={squadronId} winches={mockWinches} />);
@@ -159,49 +124,22 @@ describe('LogsheetExportPanel', () => {
     });
 
     it('renders both export button and notice when mixed winches exist', async () => {
-        vi.mocked(getWinchDayData).mockImplementation(async (winchId) => {
+        vi.mocked(getWinchDayStatus).mockImplementation(async (winchId) => {
             if (winchId === 1) {
                 return {
-                    logs: [
-                        {
-                            id: 1,
-                            winch_id: 1,
-                            squadron_id: squadronId,
-                            type: 'finish_day',
-                            timestamp: '2026-09-19T17:00:00Z',
-                            operator_sn: 'OP1',
-                        },
-                    ],
-                    launches: [
-                        {
-                            launch_id: 101,
-                            launch_number: 1,
-                            winch_id: 1,
-                            squadron_id: squadronId,
-                            drum: 'left',
-                            timestamp: '2026-09-19T09:00:00Z',
-                            operator_sn: 'OP1',
-                        },
-                    ],
+                    winch_id: 1,
+                    has_finish_day: true,
+                    has_launches: true,
                 };
             }
             if (winchId === 2) {
                 return {
-                    logs: [],
-                    launches: [
-                        {
-                            launch_id: 102,
-                            launch_number: 1,
-                            winch_id: 2,
-                            squadron_id: squadronId,
-                            drum: 'right',
-                            timestamp: '2026-09-19T10:00:00Z',
-                            operator_sn: 'OP2',
-                        },
-                    ],
+                    winch_id: 2,
+                    has_finish_day: false,
+                    has_launches: true,
                 };
             }
-            return { logs: [], launches: [] };
+            return {winch_id: winchId, has_finish_day: false, has_launches: false};
         });
 
         render(<LogsheetExportPanel squadronId={squadronId} winches={mockWinches} />);
@@ -212,20 +150,11 @@ describe('LogsheetExportPanel', () => {
     });
 
     it('displays notices for multiple winches with unfinished days and no export buttons', async () => {
-        vi.mocked(getWinchDayData).mockResolvedValue({
-            logs: [],
-            launches: [
-                {
-                    launch_id: 101,
-                    launch_number: 1,
-                    winch_id: 1,
-                    squadron_id: squadronId,
-                    drum: 'left',
-                    timestamp: '2026-09-19T09:00:00Z',
-                    operator_sn: 'OP1',
-                },
-            ],
-        });
+        vi.mocked(getWinchDayStatus).mockImplementation(async (winchId) => ({
+            winch_id: winchId,
+            has_finish_day: false,
+            has_launches: true,
+        }));
 
         render(<LogsheetExportPanel squadronId={squadronId} winches={mockWinches} />);
 
@@ -235,32 +164,17 @@ describe('LogsheetExportPanel', () => {
     });
 
     it('triggers export and handles loading state on button click', async () => {
-        vi.mocked(getWinchDayData).mockResolvedValue({
-            logs: [
-                {
-                    id: 1,
-                    winch_id: 1,
-                    squadron_id: squadronId,
-                    type: 'finish_day',
-                    timestamp: '2026-09-19T17:00:00Z',
-                    operator_sn: 'OP1',
-                },
-                {
-                    id: 2,
-                    winch_id: 2,
-                    squadron_id: squadronId,
-                    type: 'finish_day',
-                    timestamp: '2026-09-19T17:05:00Z',
-                    operator_sn: 'OP2',
-                },
-            ],
-            launches: [],
-        });
+        vi.mocked(getWinchDayStatus).mockImplementation(async (winchId) => ({
+            winch_id: winchId,
+            has_finish_day: true,
+            has_launches: true,
+        }));
 
-        let resolveExport: () => void = () => {};
-        vi.mocked(exportWinchLogsheet).mockImplementation(
-            () => new Promise<void>((res) => { resolveExport = res; })
-        );
+        let resolveExport!: () => void;
+        const exportPromise = new Promise<void>((res) => {
+            resolveExport = res;
+        });
+        vi.mocked(exportLog).mockImplementation(() => exportPromise);
 
         render(<LogsheetExportPanel squadronId={squadronId} winches={mockWinches} />);
 
@@ -269,12 +183,14 @@ describe('LogsheetExportPanel', () => {
 
         fireEvent.click(btn1);
 
-        expect(exportWinchLogsheet).toHaveBeenCalledWith(1, squadronId);
+        expect(getExportData).toHaveBeenCalledWith(1, squadronId, '2026-09-19');
         expect(btn1).toBeDisabled();
         expect(btn2).toBeDisabled();
         expect(screen.getByRole('button', { name: 'Exporting logsheet 1' })).toBeInTheDocument();
 
-        resolveExport();
+        await act(async () => {
+            resolveExport();
+        });
         await waitFor(() => {
             expect(screen.getByRole('button', { name: 'Export Winch 1' })).toBeEnabled();
         });
@@ -282,19 +198,11 @@ describe('LogsheetExportPanel', () => {
     });
 
     it('calls custom onExport prop if provided', async () => {
-        vi.mocked(getWinchDayData).mockResolvedValue({
-            logs: [
-                {
-                    id: 2,
-                    winch_id: 2,
-                    squadron_id: squadronId,
-                    type: 'finish_day',
-                    timestamp: '2026-09-19T17:05:00Z',
-                    operator_sn: 'OP2',
-                },
-            ],
-            launches: [],
-        });
+        vi.mocked(getWinchDayStatus).mockImplementation(async (winchId) => ({
+            winch_id: winchId,
+            has_finish_day: winchId === 2,
+            has_launches: false,
+        }));
 
         const mockOnExport = vi.fn().mockResolvedValue(undefined);
         render(<LogsheetExportPanel squadronId={squadronId} winches={mockWinches} onExport={mockOnExport} />);
@@ -306,24 +214,17 @@ describe('LogsheetExportPanel', () => {
         await waitFor(() => {
             expect(btn2).toBeEnabled();
         });
-        expect(exportWinchLogsheet).not.toHaveBeenCalled();
+        expect(getExportData).not.toHaveBeenCalled();
+        expect(exportLog).not.toHaveBeenCalled();
     });
 
     it('handles export error by displaying error banner and allows retry', async () => {
-        vi.mocked(getWinchDayData).mockResolvedValue({
-            logs: [
-                {
-                    id: 1,
-                    winch_id: 1,
-                    squadron_id: squadronId,
-                    type: 'finish_day',
-                    timestamp: '2026-09-19T17:00:00Z',
-                    operator_sn: 'OP1',
-                },
-            ],
-            launches: [],
-        });
-        vi.mocked(exportWinchLogsheet).mockRejectedValueOnce(new Error('Export failed due to network'));
+        vi.mocked(getWinchDayStatus).mockImplementation(async (winchId) => ({
+            winch_id: winchId,
+            has_finish_day: winchId === 1,
+            has_launches: false,
+        }));
+        vi.mocked(exportLog).mockRejectedValueOnce(new Error('Export failed due to network'));
 
         render(<LogsheetExportPanel squadronId={squadronId} winches={mockWinches} />);
 
@@ -333,7 +234,7 @@ describe('LogsheetExportPanel', () => {
         expect(await screen.findByText('Export failed due to network')).toBeInTheDocument();
         expect(btn1).toBeEnabled();
 
-        vi.mocked(exportWinchLogsheet).mockResolvedValueOnce(undefined);
+        vi.mocked(exportLog).mockResolvedValueOnce(undefined);
         fireEvent.click(btn1);
 
         await waitFor(() => {
@@ -342,28 +243,20 @@ describe('LogsheetExportPanel', () => {
     });
 
     it('clears stale unfinished warnings when squadronId changes', async () => {
-        vi.mocked(getWinchDayData).mockResolvedValueOnce({
-            logs: [],
-            launches: [
-                {
-                    launch_id: 101,
-                    launch_number: 1,
-                    winch_id: 1,
-                    squadron_id: squadronId,
-                    drum: 'left',
-                    timestamp: '2026-09-19T09:00:00Z',
-                    operator_sn: 'OP1',
-                },
-            ],
+        vi.mocked(getWinchDayStatus).mockResolvedValueOnce({
+            winch_id: 1,
+            has_finish_day: false,
+            has_launches: true,
         });
 
         const { rerender } = render(<LogsheetExportPanel squadronId={squadronId} winches={mockWinches} />);
 
         expect(await screen.findByText('Winch 1 has launches but day not finished')).toBeInTheDocument();
 
-        vi.mocked(getWinchDayData).mockResolvedValue({
-            logs: [],
-            launches: [],
+        vi.mocked(getWinchDayStatus).mockResolvedValue({
+            winch_id: 1,
+            has_finish_day: false,
+            has_launches: false,
         });
 
         rerender(<LogsheetExportPanel squadronId="622 VGS" winches={mockWinches} />);

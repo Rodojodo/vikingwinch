@@ -1,5 +1,12 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {getBroughtForward, getExportData, getWinch, getWinchesForSquadron, getWinchDayData} from './winchClient';
+import {
+    getBroughtForward,
+    getExportData,
+    getWinch,
+    getWinchDayData,
+    getWinchDayStatus,
+    getWinchesForSquadron,
+} from './winchClient';
 import {apiFetch} from '../../../core/http/fetchClient';
 import type {ExportDataResponse, WinchDayDataResponse, WinchRead} from '../types';
 
@@ -80,6 +87,67 @@ describe('winchClient', () => {
             signal: controller.signal,
         });
         expect(result).toEqual(mockDayData);
+    });
+
+    it('getWinchDayStatus computes status flags from day data', async () => {
+        const mockDayData: WinchDayDataResponse = {
+            logs: [
+                {
+                    id: 1,
+                    squadron_id: '621 VGS',
+                    winch_id: 1,
+                    type: 'finish_day',
+                    timestamp: '2026-09-19T18:00:00Z',
+                    operator_sn: 'OP-1',
+                },
+            ],
+            launches: [
+                {
+                    launch_id: 101,
+                    launch_number: 1,
+                    squadron_id: '621 VGS',
+                    winch_id: 1,
+                    drum: 'left',
+                    timestamp: '2026-09-19T09:00:00Z',
+                    operator_sn: 'OP-1',
+                },
+            ],
+        };
+        vi.mocked(apiFetch).mockResolvedValue(mockDayData);
+
+        const result = await getWinchDayStatus(1, '2026-09-19');
+
+        expect(result).toEqual({
+            winch_id: 1,
+            has_finish_day: true,
+            has_launches: true,
+        });
+    });
+
+    it('getWinchDayStatus handles empty launches and unfinished days', async () => {
+        const mockDayData: WinchDayDataResponse = {
+            logs: [],
+            launches: [
+                {
+                    launch_id: 102,
+                    launch_number: 1,
+                    squadron_id: '621 VGS',
+                    winch_id: 2,
+                    drum: 'right',
+                    timestamp: '2026-09-19T10:00:00Z',
+                    operator_sn: 'OP-2',
+                },
+            ],
+        };
+        vi.mocked(apiFetch).mockResolvedValue(mockDayData);
+
+        const result = await getWinchDayStatus(2, '2026-09-19');
+
+        expect(result).toEqual({
+            winch_id: 2,
+            has_finish_day: false,
+            has_launches: true,
+        });
     });
 
     it('getExportData calls /winch/:id/export_data?squadron_id=:sqn&day=:day with encoded squadronId', async () => {

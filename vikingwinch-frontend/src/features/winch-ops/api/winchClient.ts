@@ -1,6 +1,6 @@
 import type {WinchRead} from '../types';
 import {apiFetch} from '../../../core/http/fetchClient.ts';
-import type {ExportDataResponse, WinchDayDataResponse} from '../types/api.ts';
+import type {ExportDataResponse, WinchDayDataResponse, WinchDayStatusResponse} from '../types/api.ts';
 
 export const getWinchesForSquadron = async (squadronId: string, signal?: AbortSignal): Promise<WinchRead[]> => {
     return apiFetch<WinchRead[]>(`/squadrons/${squadronId}/winches`, {
@@ -24,6 +24,21 @@ export const getWinchDayData = async (
     return apiFetch<WinchDayDataResponse>(`/winch/${winchId}/day_data?day=${encodeURIComponent(day)}`, {
         signal,
     });
+};
+
+export const getWinchDayStatus = async (
+    winchId: number,
+    day: string,
+    signal?: AbortSignal
+): Promise<WinchDayStatusResponse> => {
+    const data = await getWinchDayData(winchId, day, signal);
+    const launchCount = data.launches ? data.launches.length : 0;
+    const hasFinishDay = (data.logs || []).some(log => log.type === 'finish_day');
+    return {
+        winch_id: winchId,
+        has_finish_day: hasFinishDay,
+        has_launches: launchCount > 0,
+    };
 };
 
 export const getExportData = async (

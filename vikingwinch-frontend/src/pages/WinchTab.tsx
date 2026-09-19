@@ -24,7 +24,8 @@ import {toDayLogRecord} from '../features/day-ops/api/dayOpsMapper.ts';
 import {getLaunches, postLaunchCorrections} from '../features/launch-ops/api/launchClient.ts';
 import {postRemarkToDb} from '../features/remarks-repairs/api/remarksClient.ts';
 import {getOperatorsForSquadron} from '../core/http/operatorsClient.ts';
-import {exportLog, exportWinchLogsheet} from '../app/utils/exportLog.ts';
+import {getExportData} from '../features/winch-ops/api/winchClient.ts';
+import {exportLog, getTodayDateString} from '../app/utils/exportLog.ts';
 import type {SessionStatus} from '../app/types/session.ts';
 import type {TabView} from '../features/winch-ops/types';
 import type {OperatorRead} from '../core/types';
@@ -52,8 +53,8 @@ const WinchTabContent = ({
                              onWinchSelect,
                              onSessionStatusResolved,
                          }: WinchTabContentProps) => {
-    const {squadronId, winchId, operatorSn, status} = useSessionIdentity();
-    const {hydrateHistory, derived, addRemarkToState, leftHistory, rightHistory} = useLaunchOps();
+    const {squadronId, winchId, operatorSn} = useSessionIdentity();
+    const {hydrateHistory, derived, addRemarkToState} = useLaunchOps();
     const {traineeSn, activeLauncherSn, setActiveLauncher, setTrainee} = useTraineeOps();
     const {recordDI, recordSignOn} = useDayOps();
     const [view, setView] = useState<TabView>(() => (winchId ? 'loading' : 'select_winch'));
@@ -140,7 +141,6 @@ const WinchTabContent = ({
                 } else {
                     setView('launch');
                 }
-
             } catch (err) {
                 if (isMounted) {
                     console.error('Failed to fetch day logs', err);
@@ -166,16 +166,10 @@ const WinchTabContent = ({
     };
 
     const handleExportLog = async () => {
-        await exportLog({
-            squadron: squadronId ?? '',
-            winchId,
-            operatorSn: operatorSn ?? '',
-            traineeSn,
-            leftHistory,
-            rightHistory,
-            dayFinished: status.status === 'closed',
-            activeLauncherSn: activeLauncherSn || (operatorSn ?? ''),
-        });
+        if (!winchId || !squadronId) return;
+        const todayStr = getTodayDateString();
+        const data = await getExportData(winchId, squadronId, todayStr);
+        await exportLog(data, todayStr);
     };
 
     const operatorName = operators.find(o => o.service_no === operatorSn)?.name ?? 'Instructor';
@@ -205,7 +199,11 @@ const WinchTabContent = ({
                         />
                         <LogsheetExportPanel
                             squadronId={squadronId}
-                            onExport={(winchIdToExport) => exportWinchLogsheet(winchIdToExport, squadronId)}
+                            onExport={async (winchIdToExport) => {
+                                const todayStr = getTodayDateString();
+                                const data = await getExportData(winchIdToExport, squadronId, todayStr);
+                                await exportLog(data, todayStr);
+                            }}
                         />
                     </Box>
                 );
@@ -286,7 +284,7 @@ const WinchTabContent = ({
                     <SkylogValues
                         onBack={() => setView('launch')}
                         winchId={winchId}
-                        squadron={squadronId}
+                        squadron={squadronId ?? ''}
                         leftLaunches={derived.leftLaunches}
                         rightLaunches={derived.rightLaunches}
                     />

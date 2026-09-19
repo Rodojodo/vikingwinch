@@ -60,3 +60,9 @@ export interface ExportDataResponse {
         right: number | null;
     };
 }
+
+export interface WinchDayStatusResponse {
+    winch_id: number;
+    has_finish_day: boolean;
+    has_launches: boolean;
+}

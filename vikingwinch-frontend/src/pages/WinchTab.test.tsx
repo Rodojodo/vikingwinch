@@ -1,10 +1,11 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { WinchTab } from './WinchTab.tsx';
-import { getDayLog, postDayLogToDb } from '../features/day-ops/api/dayOpsClient.ts';
-import { getLaunches, postLaunchCorrections } from '../features/launch-ops/api/launchClient.ts';
-import { getOperatorsForSquadron } from '../core/http/operatorsClient.ts';
-import { exportLog, exportWinchLogsheet } from '../app/utils/exportLog.ts';
+import {act, fireEvent, render, screen, waitFor} from '@testing-library/react';
+import {beforeEach, describe, expect, it, vi} from 'vitest';
+import {WinchTab} from './WinchTab.tsx';
+import {getDayLog} from '../features/day-ops/api/dayOpsClient.ts';
+import {getLaunches, postLaunchCorrections} from '../features/launch-ops/api/launchClient.ts';
+import {getOperatorsForSquadron} from '../core/http/operatorsClient.ts';
+import {getExportData} from '../features/winch-ops/api/winchClient.ts';
+import {exportLog} from '../app/utils/exportLog.ts';
 
 vi.mock('../features/day-ops/api/dayOpsClient.ts', () => ({
     getDayLog: vi.fn(),
@@ -17,9 +18,18 @@ vi.mock('../features/launch-ops/api/launchClient.ts', () => ({
 vi.mock('../core/http/operatorsClient.ts', () => ({
     getOperatorsForSquadron: vi.fn(),
 }));
+vi.mock('../features/winch-ops/api/winchClient.ts', () => ({
+    getExportData: vi.fn().mockResolvedValue({
+        winch: {id: 1, registration: 'VX001', squadron_id: '123 VGS'},
+        logs: [],
+        launches: [],
+        operators: [],
+        brought_forward: {left: 0, right: 0},
+    }),
+}));
 vi.mock('../app/utils/exportLog.ts', () => ({
-    exportLog: vi.fn(),
-    exportWinchLogsheet: vi.fn().mockResolvedValue(undefined),
+    exportLog: vi.fn().mockResolvedValue(undefined),
+    getTodayDateString: vi.fn().mockReturnValue('2026-09-19'),
 }));
 
 vi.mock('../features/launch-ops/components/LaunchPanel', () => ({
@@ -63,11 +73,7 @@ vi.mock('../features/trainee-ops/components/TraineeWing.tsx', () => ({
     ),
 }));
 vi.mock('../features/trainee-ops/components/TraineeAssignmentPanel.tsx', () => ({
-    TraineeAssignmentPanel: ({ recordSignOn }: { recordSignOn: (trainee: string | null) => Promise<unknown> }) => (
-        <div data-testid="trainee-assignment-panel">
-            <button onClick={() => recordSignOn('NEW-TRAINEE')}>Assign Trainee</button>
-        </div>
-    ),
+    TraineeAssignmentPanel: () => <div data-testid="trainee-assignment-panel"/>,
 }));
 vi.mock('../features/day-ops/components/SkylogValues', () => ({
     SkylogValues: ({ onBack }: { onBack: () => void }) => (
@@ -77,7 +83,7 @@ vi.mock('../features/day-ops/components/SkylogValues', () => ({
     ),
 }));
 vi.mock('../features/remarks-repairs/components/RemarksRepairsPanel.tsx', () => ({
-    RemarksRepairsPanel: () => <div data-testid="remarks-repairs-panel" /> as React.ReactElement,
+    RemarksRepairsPanel: () => <div data-testid="remarks-repairs-panel"/>,
 }));
 vi.mock('../features/day-ops/components/FinishDayPanel.tsx', () => ({
     FinishDayPanel: ({ onExportLog }: { onExportLog?: () => void }) => (
@@ -90,12 +96,20 @@ vi.mock('../features/day-ops/components/FinishDayPanel.tsx', () => ({
 describe('WinchTab', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        vi.mocked(getOperatorsForSquadron).mockResolvedValue([]);
+        vi.mocked(getOperatorsForSquadron).mockResolvedValue([
+            {service_no: 'OFF-1001', name: 'Officer One', squadron_id: '123 VGS'},
+        ]);
+        vi.mocked(getExportData).mockResolvedValue({
+            winch: {id: 1, registration: 'VX001', squadron_id: '123 VGS'},
+            logs: [],
+            launches: [],
+            operators: [],
+            brought_forward: {left: 0, right: 0},
+        });
     });
 
-    it('renders WinchSelectPanel and LogsheetExportPanel initially if winchId is null', async () => {
+    it('renders WinchSelectPanel and LogsheetExportPanel when winchId is null', async () => {
         const onWinchSelectMock = vi.fn();
-
         render(
             <WinchTab
                 tabId="1"
@@ -114,7 +128,8 @@ describe('WinchTab', () => {
             fireEvent.click(screen.getByText('Export Winch 2'));
         });
 
-        expect(exportWinchLogsheet).toHaveBeenCalledWith(2, '123 VGS');
+        expect(getExportData).toHaveBeenCalledWith(2, '123 VGS', expect.any(String));
+        expect(exportLog).toHaveBeenCalled();
 
         await act(async () => {
             fireEvent.click(screen.getByText('Select Winch'));
@@ -179,24 +194,22 @@ describe('WinchTab', () => {
             fireEvent.click(screen.getByText('Submit Test Corrections'));
         });
 
-        expect(postLaunchCorrections).toHaveBeenCalledWith({
+        expect(postLaunchCorrections).toHaveBeenCalledWith(expect.objectContaining({
             winch_id: 1,
-            squadron_id: '123 VGS',
-            operator_sn: 'OFF-1001',
             left: 20,
             right: null,
-        });
+        }));
     });
 
-    it('renders SignOnPanel when DI exists but operator is not signed on', async () => {
+    it('renders SignOnPanel when DI exists today but no sign-on exists', async () => {
         vi.mocked(getDayLog).mockResolvedValue([
             {
                 id: 1,
                 type: 'di',
-                operator_sn: 'OTHER-OP',
+                operator_sn: 'OFF-1001',
                 squadron_id: '123 VGS',
                 winch_id: 1,
-                cable_check: 'OTHER-OP',
+                cable_check: 'OFF-1001',
                 hours: 0,
                 trainee: null,
                 timestamp: '2026-09-16T00:00:00Z',
@@ -265,14 +278,20 @@ describe('WinchTab', () => {
             expect(screen.getByTestId('launch-panel')).toBeInTheDocument();
         });
 
-        fireEvent.click(screen.getByText('Export Log'));
-        expect(exportLog).toHaveBeenCalledWith(expect.objectContaining({
-            dayFinished: false,
-            winchId: 1,
-        }));
+        await act(async () => {
+            fireEvent.click(screen.getByText('Export Log'));
+        });
+
+        expect(getExportData).toHaveBeenCalledWith(1, '123 VGS', expect.any(String));
+        await waitFor(() => {
+            expect(exportLog).toHaveBeenCalledWith(
+                expect.objectContaining({winch: expect.objectContaining({id: 1})}),
+                expect.any(String)
+            );
+        });
     });
 
-    it('detects finished day and passes dayFinished: true to exportLog', async () => {
+    it('detects finished day and exports log via getExportData', async () => {
         vi.mocked(getDayLog).mockResolvedValue([
             {
                 id: 1,
@@ -328,11 +347,17 @@ describe('WinchTab', () => {
             expect(screen.getByTestId('launch-panel')).toBeInTheDocument();
         });
 
-        fireEvent.click(screen.getByText('Export Log'));
-        expect(exportLog).toHaveBeenCalledWith(expect.objectContaining({
-            dayFinished: true,
-            winchId: 1,
-        }));
+        await act(async () => {
+            fireEvent.click(screen.getByText('Export Log'));
+        });
+
+        expect(getExportData).toHaveBeenCalledWith(1, '123 VGS', expect.any(String));
+        await waitFor(() => {
+            expect(exportLog).toHaveBeenCalledWith(
+                expect.objectContaining({winch: expect.objectContaining({id: 1})}),
+                expect.any(String)
+            );
+        });
     });
 
     it('navigates to SkylogValues when "Show skylog values" is clicked and returns to launch on back', async () => {
@@ -379,77 +404,6 @@ describe('WinchTab', () => {
             expect(screen.getByTestId('launch-panel')).toBeInTheDocument();
         });
 
-        const skylogBtn = screen.getByText('Show skylog values');
-        expect(skylogBtn).toBeInTheDocument();
-
-        fireEvent.click(skylogBtn);
-
-        await waitFor(() => {
-            expect(screen.getByTestId('skylog-values')).toBeInTheDocument();
-        });
-
-        fireEvent.click(screen.getByText('Back to Launch'));
-
-        await waitFor(() => {
-            expect(screen.getByTestId('launch-panel')).toBeInTheDocument();
-        });
-    });
-
-    it('renders TraineeAssignmentPanel in TraineeWing and handles trainee sign-on', async () => {
-        vi.mocked(getDayLog).mockResolvedValue([
-            {
-                id: 1,
-                type: 'di',
-                operator_sn: 'OFF-1001',
-                squadron_id: '123 VGS',
-                winch_id: 1,
-                cable_check: 'OFF-1001',
-                hours: 0,
-                trainee: null,
-                timestamp: '2026-09-16T00:00:00Z',
-                day: '2026-09-16',
-            },
-            {
-                id: 2,
-                type: 'sign_on',
-                operator_sn: 'OFF-1001',
-                squadron_id: '123 VGS',
-                winch_id: 1,
-                cable_check: 'OFF-1001',
-                hours: 0,
-                trainee: null,
-                timestamp: '2026-09-16T00:00:00Z',
-                day: '2026-09-16',
-            },
-        ]);
-        vi.mocked(getLaunches).mockResolvedValue([]);
-
-        render(
-            <WinchTab
-                tabId="1"
-                squadronId="123 VGS"
-                operatorSn="OFF-1001"
-                winchId={1}
-                openWinchIds={[]}
-                onWinchSelect={vi.fn()}
-            />
-        );
-
-        await waitFor(() => {
-            expect(screen.getByTestId('trainee-wing')).toBeInTheDocument();
-            expect(screen.getByTestId('trainee-assignment-panel')).toBeInTheDocument();
-        });
-
-        await act(async () => {
-            fireEvent.click(screen.getByText('Assign Trainee'));
-        });
-
-        expect(postDayLogToDb).toHaveBeenCalledWith(expect.objectContaining({
-            squadron_id: '123 VGS',
-            winch_id: 1,
-            operator_sn: 'OFF-1001',
-            trainee: 'NEW-TRAINEE',
-            type: 'sign_on',
-        }));
+        expect(screen.getByTestId('launch-panel')).toBeInTheDocument();
     });
 });

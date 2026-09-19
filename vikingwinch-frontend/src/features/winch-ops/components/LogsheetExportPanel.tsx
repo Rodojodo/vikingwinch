@@ -2,8 +2,8 @@ import React, {useEffect, useState} from 'react';
 import {Box, Button, CircularProgress, Typography} from '@mui/material';
 import type {SxProps, Theme} from '@mui/material/styles';
 import type {Winch, WinchRead} from '../types';
-import {getWinchesForSquadron} from '../api/winchClient';
-import {exportWinchLogsheet, getTodayDateString, getWinchDayStatus} from '../../../app/utils/exportLog';
+import {getExportData, getWinchDayStatus, getWinchesForSquadron} from '../api/winchClient';
+import {exportLog, getTodayDateString} from '../../../app/utils/exportLog';
 import {errorBannerSx, glassPanelSx, warningBannerSx} from '../../../themes/styles';
 
 export interface LogsheetExportPanelProps {
@@ -88,13 +88,12 @@ export const LogsheetExportPanel: React.FC<LogsheetExportPanelProps> = ({
             const finished: number[] = [];
             const unfinished: number[] = [];
 
-            results.forEach((res, idx) => {
+            results.forEach((res) => {
                 if (res.status === 'fulfilled') {
-                    if (res.value.hasFinishDay) {
-                        finished.push(winches[idx].id);
-                    }
-                    if (res.value.hasUnfinishedDay) {
-                        unfinished.push(winches[idx].id);
+                    if (res.value.has_finish_day) {
+                        finished.push(res.value.winch_id);
+                    } else if (res.value.has_launches) {
+                        unfinished.push(res.value.winch_id);
                     }
                 }
             });
@@ -115,7 +114,9 @@ export const LogsheetExportPanel: React.FC<LogsheetExportPanelProps> = ({
             if (onExport) {
                 await onExport(winchId);
             } else {
-                await exportWinchLogsheet(winchId, squadronId);
+                const todayStr = getTodayDateString();
+                const data = await getExportData(winchId, squadronId, todayStr);
+                await exportLog(data, todayStr);
             }
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Log export failed. Please check your connection and try again.';
@@ -125,82 +126,76 @@ export const LogsheetExportPanel: React.FC<LogsheetExportPanelProps> = ({
         }
     };
 
-    const activeWinchIds = new Set(winches.map(w => w.id));
-    const displayedFinished = winches.filter(w => finishedWinchIds.includes(w.id));
-    const displayedUnfinished = unfinishedWinchIds.filter(id => activeWinchIds.has(id));
+    const hasNoWinches = !loadingWinches && winches.length === 0;
+    const hasItemsToDisplay = finishedWinchIds.length > 0 || unfinishedWinchIds.length > 0;
+    const isExportingAny = exportingWinchId !== null;
+
+    const panelSx: SxProps<Theme> = {
+        ...glassPanelSx,
+        width: '100%',
+        maxWidth: 540,
+        display: 'flex',
+        flexDirection: 'column',
+        boxSizing: 'border-box',
+    };
 
     return (
-        <Box
-            data-testid="logsheet-export-panel"
-            sx={([
-                glassPanelSx,
-                {
-                    width: '100%',
-                    maxWidth: 540,
-                    boxSizing: 'border-box',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: 2,
-                    p: 3,
-                },
-            ] as SxProps<Theme>)}
-        >
+        <Box sx={panelSx}>
             <Typography variant="h2" sx={{mb: 1}}>
                 Export Logsheets
             </Typography>
 
             {exportError && (
-                <Typography variant="body2" sx={errorBannerSx} role="alert">
-                    {exportError}
-                </Typography>
+                <Box sx={{...errorBannerSx, mb: 2}}>
+                    <Typography variant="body2">{exportError}</Typography>
+                </Box>
             )}
 
             {loadingWinches || loadingStatus ? (
-                <CircularProgress size={28} color="inherit" />
-            ) : winches.length === 0 ? (
-                <Typography color="text.secondary">No winches available for export.</Typography>
-            ) : displayedFinished.length === 0 && displayedUnfinished.length === 0 ? (
-                <Typography color="text.secondary">No logsheets ready for export.</Typography>
+                <Box sx={{display: 'flex', justifyContent: 'center', py: 3}}>
+                    <CircularProgress size={28}/>
+                </Box>
+            ) : hasNoWinches ? (
+                <Typography variant="body1" color="text.secondary" sx={{py: 1}}>
+                    No winches available for export.
+                </Typography>
             ) : (
-                <>
-                    {displayedFinished.length > 0 && (
-                        <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 2, width: '100%'}}>
-                            {displayedFinished.map(winch => {
-                                const isExporting = exportingWinchId === winch.id;
-                                return (
-                                    <Button
-                                        key={winch.id}
-                                        fullWidth={displayedFinished.length === 1}
-                                        variant="contained"
-                                        color="primary"
-                                        aria-label={isExporting ? `Exporting logsheet ${winch.id}` : undefined}
-                                        disabled={exportingWinchId !== null}
-                                        onClick={() => handleExport(winch.id)}
-                                        sx={{
-                                            borderRadius: 2,
-                                            py: 1.5,
-                                            flexGrow: 1,
-                                            flexBasis: displayedFinished.length > 1 ? 'calc(50% - 8px)' : '100%',
-                                        }}
-                                    >
-                                        {isExporting ? (
-                                            <CircularProgress size={24} color="inherit" />
-                                        ) : (
-                                            `Export Winch ${winch.id}`
-                                        )}
-                                    </Button>
-                                );
-                            })}
+                <Box sx={{display: 'flex', flexDirection: 'column', gap: 1.5, mt: 1}}>
+                    {unfinishedWinchIds.map(wId => (
+                        <Box key={`unfinished-${wId}`} sx={warningBannerSx}>
+                            <Typography variant="body2">
+                                Winch {wId} has launches but day not finished
+                            </Typography>
                         </Box>
-                    )}
-
-                    {displayedUnfinished.map(id => (
-                        <Typography key={id} variant="body2" sx={warningBannerSx} role="alert">
-                            Winch {id} has launches but day not finished
-                        </Typography>
                     ))}
-                </>
+
+                    {finishedWinchIds.map(wId => (
+                        <Button
+                            key={`export-${wId}`}
+                            variant="contained"
+                            color="primary"
+                            onClick={() => void handleExport(wId)}
+                            disabled={isExportingAny}
+                            aria-label={exportingWinchId === wId ? `Exporting logsheet ${wId}` : `Export Winch ${wId}`}
+                            sx={{
+                                borderRadius: 2,
+                                py: 1.5,
+                            }}
+                        >
+                            {exportingWinchId === wId ? (
+                                <CircularProgress size={24} color="inherit"/>
+                            ) : (
+                                `Export Winch ${wId}`
+                            )}
+                        </Button>
+                    ))}
+
+                    {!hasItemsToDisplay && (
+                        <Typography variant="body1" color="text.secondary" sx={{py: 1}}>
+                            No logsheets ready for export.
+                        </Typography>
+                    )}
+                </Box>
             )}
         </Box>
     );

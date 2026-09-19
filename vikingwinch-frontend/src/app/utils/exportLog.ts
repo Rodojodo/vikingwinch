@@ -3,21 +3,7 @@ import {saveAs} from 'file-saver';
 import winchLogTemplateUrl from '../../assets/winch_log.xltx?url';
 import type {LaunchRecord} from '../../features/launch-ops/types';
 import type {ExportDataResponse} from '../../features/winch-ops/types';
-import {getBroughtForward, getExportData, getWinch, getWinchDayData} from '../../features/winch-ops/api/winchClient.ts';
-import {getDayLog} from '../../features/day-ops/api/dayOpsClient.ts';
-import {getOperatorsForSquadron} from '../../core/http/operatorsClient.ts';
 import type {OperatorRead} from '../../core/types';
-
-export interface WinchLogState {
-    squadron: string;
-    winchId: number | null;
-    operatorSn: string;
-    traineeSn: string | null;
-    leftHistory: LaunchRecord[];
-    rightHistory: LaunchRecord[];
-    dayFinished: boolean;
-    activeLauncherSn: string;
-}
 
 interface BuildLogOptions {
     squadron: string;
@@ -48,19 +34,24 @@ const CELLS = {
     FINISH_HOURS: 'I7',
     BF_LEFT: 'D9',
     BF_RIGHT: 'E9',
-    LAUNCH_START_ROW: 14,
     OPERATOR_START_ROW: 31,
 };
 
 const formatUKTime = (timestampStr: string): string => {
-    const d = new Date(timestampStr.endsWith('Z') ? timestampStr : timestampStr + 'Z');
-    if (isNaN(d.getTime())) return '';
+    const d = new Date(timestampStr);
     return new Intl.DateTimeFormat('en-GB', {
         timeZone: 'Europe/London',
         hour: '2-digit',
         minute: '2-digit',
         hour12: false,
     }).format(d);
+};
+
+export const getTodayDateString = (d: Date = new Date()): string => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 };
 
 const buildWinchLogWorkbook = async (options: BuildLogOptions): Promise<void> => {
@@ -263,18 +254,17 @@ const buildWinchLogWorkbook = async (options: BuildLogOptions): Promise<void> =>
     saveAs(new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `winch_log_${todayStr}.xlsx`);
 };
 
-export const exportLogFromData = async (
+export const exportLog = async (
     data: ExportDataResponse,
     dateStr?: string
 ): Promise<void> => {
+    if (!data?.winch?.id) {
+        throw new Error('No winch selected');
+    }
+
     try {
         const today = new Date();
-        const todayStr = dateStr ?? (() => {
-            const year = today.getFullYear();
-            const month = String(today.getMonth() + 1).padStart(2, '0');
-            const day = String(today.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-        })();
+        const todayStr = dateStr ?? getTodayDateString(today);
 
         let targetDate = today;
         if (dateStr) {
@@ -315,99 +305,12 @@ export const exportLogFromData = async (
             rightHistory,
         });
     } catch (error) {
-        console.error('Failed to generate winch log spreadsheet:', error);
-        throw new Error('Log export failed. Please check your connection and try again.');
-    }
-};
-
-export async function exportLog(state: WinchLogState): Promise<void>;
-export async function exportLog(data: ExportDataResponse, dateStr?: string): Promise<void>;
-export async function exportLog(
-    input: WinchLogState | ExportDataResponse,
-    dateStr?: string
-): Promise<void> {
-    if ('winch' in input) {
-        return exportLogFromData(input, dateStr);
-    }
-
-    const state = input;
-    if (!state.winchId) throw new Error('No winch selected');
-    try {
-        const today = new Date();
-        const year = today.getFullYear();
-        const month = String(today.getMonth() + 1).padStart(2, '0');
-        const day = String(today.getDate()).padStart(2, '0');
-        const todayStr = `${year}-${month}-${day}`;
-
-        const [winch, dayLogs, operators, bf] = await Promise.all([
-            getWinch(state.winchId),
-            getDayLog(state.winchId, todayStr),
-            getOperatorsForSquadron(state.squadron),
-            getBroughtForward(state.winchId, todayStr),
-        ]);
-
-        await buildWinchLogWorkbook({
-            squadron: state.squadron,
-            winchId: state.winchId,
-            registration: winch.registration,
-            date: today,
-            todayStr,
-            dayLogs,
-            operators,
-            broughtForward: { left: bf.left ?? null, right: bf.right ?? null },
-            leftHistory: state.leftHistory,
-            rightHistory: state.rightHistory,
-        });
-    } catch (error) {
         if (error instanceof Error && error.message === 'No winch selected') {
             throw error;
         }
         console.error('Failed to generate winch log spreadsheet:', error);
         throw new Error('Log export failed. Please check your connection and try again.');
     }
-}
-
-
-export interface WinchDayStatus {
-    winchId: number;
-    launchCount: number;
-    hasFinishDay: boolean;
-    hasUnfinishedDay: boolean;
-}
-
-export const getTodayDateString = (d: Date = new Date()): string => {
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
 };
 
-export const getWinchDayStatus = async (
-    winchId: number,
-    day?: string,
-    signal?: AbortSignal
-): Promise<WinchDayStatus> => {
-    const todayStr = day ?? getTodayDateString();
-    const data = await getWinchDayData(winchId, todayStr, signal);
-    const launchCount = data.launches ? data.launches.length : 0;
-    const hasFinishDay = (data.logs || []).some(log => log.type === 'finish_day');
-    return {
-        winchId,
-        launchCount,
-        hasFinishDay,
-        hasUnfinishedDay: launchCount > 0 && !hasFinishDay,
-    };
-};
-
-export const exportWinchLogsheet = async (
-    winchId: number,
-    squadronId: string,
-    day?: string
-): Promise<void> => {
-    if (!winchId) {
-        throw new Error('No winch selected');
-    }
-    const todayStr = day ?? getTodayDateString();
-    const data = await getExportData(winchId, squadronId, todayStr);
-    await exportLog(data, todayStr);
-};
+export const exportLogFromData = exportLog;
