@@ -1,13 +1,13 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {exportLog, exportLogFromData, type WinchLogState} from './exportLog.ts';
+import {exportLog, exportLogFromData, exportWinchLogsheet, getWinchDayStatus, type WinchLogState} from './exportLog.ts';
 import * as fileSaver from 'file-saver';
 import {getDayLog} from '../../features/day-ops/api/dayOpsClient.ts';
-import {getBroughtForward, getWinch} from '../../features/winch-ops/api/winchClient.ts';
+import {getBroughtForward, getExportData, getWinch, getWinchDayData} from '../../features/winch-ops/api/winchClient.ts';
 import {getOperatorsForSquadron} from '../../core/http/operatorsClient.ts';
 import type {ExportDataResponse} from '../../features/winch-ops/types';
 
 vi.mock('../../features/day-ops/api/dayOpsClient.ts', () => ({getDayLog: vi.fn()}));
-vi.mock('../../features/winch-ops/api/winchClient.ts', () => ({getWinch: vi.fn(), getBroughtForward: vi.fn()}));
+vi.mock('../../features/winch-ops/api/winchClient.ts', () => ({getWinch: vi.fn(), getBroughtForward: vi.fn(), getExportData: vi.fn(), getWinchDayData: vi.fn()}));
 vi.mock('../../core/http/operatorsClient.ts', () => ({getOperatorsForSquadron: vi.fn()}));
 
 vi.mock('file-saver', () => ({
@@ -339,5 +339,58 @@ describe('exportLog', () => {
             expect.objectContaining({ type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
             'winch_log_2026-09-19.xlsx'
         );
+    });
+
+    describe('getWinchDayStatus', () => {
+        it('returns hasUnfinishedDay: true when launches exist and finish_day log is absent', async () => {
+            vi.mocked(getWinchDayData).mockResolvedValueOnce({
+                logs: [{ id: 1, squadron_id: 'sqn1', winch_id: 1, type: 'di', timestamp: '2026-09-19T08:00:00Z', operator_sn: 'OP1' }],
+                launches: [{ launch_id: 10, launch_number: 1, squadron_id: 'sqn1', winch_id: 1, drum: 'left', timestamp: '2026-09-19T09:00:00Z', operator_sn: 'OP1' }],
+            });
+
+            const status = await getWinchDayStatus(1, '2026-09-19');
+            expect(status).toEqual({
+                winchId: 1,
+                launchCount: 1,
+                hasFinishDay: false,
+                hasUnfinishedDay: true,
+            });
+        });
+
+        it('returns hasUnfinishedDay: false when launches exist but finish_day log is present', async () => {
+            vi.mocked(getWinchDayData).mockResolvedValueOnce({
+                logs: [{ id: 1, squadron_id: 'sqn1', winch_id: 2, type: 'finish_day', timestamp: '2026-09-19T17:00:00Z', operator_sn: 'OP1' }],
+                launches: [{ launch_id: 20, launch_number: 1, squadron_id: 'sqn1', winch_id: 2, drum: 'left', timestamp: '2026-09-19T10:00:00Z', operator_sn: 'OP1' }],
+            });
+
+            const status = await getWinchDayStatus(2, '2026-09-19');
+            expect(status).toEqual({
+                winchId: 2,
+                launchCount: 1,
+                hasFinishDay: true,
+                hasUnfinishedDay: false,
+            });
+        });
+    });
+
+    describe('exportWinchLogsheet', () => {
+        it('fetches export data and calls exportLog', async () => {
+            const mockExportData = {
+                winch: { id: 1, registration: 'W1', squadron_id: 'sqn1' },
+                logs: [],
+                launches: [],
+                operators: [],
+                brought_forward: { left: 0, right: 0 },
+            };
+            vi.mocked(getExportData).mockResolvedValueOnce(mockExportData);
+
+            await exportWinchLogsheet(1, 'sqn1', '2026-09-19');
+            expect(getExportData).toHaveBeenCalledWith(1, 'sqn1', '2026-09-19');
+            expect(fileSaver.saveAs).toHaveBeenCalled();
+        });
+
+        it('throws error if winchId is 0', async () => {
+            await expect(exportWinchLogsheet(0, 'sqn1')).rejects.toThrow('No winch selected');
+        });
     });
 });

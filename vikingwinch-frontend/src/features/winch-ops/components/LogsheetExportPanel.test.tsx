@@ -3,7 +3,7 @@ import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import '@testing-library/jest-dom';
 import {LogsheetExportPanel} from './LogsheetExportPanel';
 import {getWinchesForSquadron, getWinchDayData} from '../api/winchClient';
-import {exportWinchLogsheet} from '../../../app/utils/exportWinchLog';
+import {exportWinchLogsheet} from '../../../app/utils/exportLog';
 import type {Winch} from '../types';
 
 vi.mock('../api/winchClient', () => ({
@@ -11,8 +11,8 @@ vi.mock('../api/winchClient', () => ({
     getWinchDayData: vi.fn(),
 }));
 
-vi.mock('../../../app/utils/exportWinchLog', async () => {
-    const actual = await vi.importActual<typeof import('../../../app/utils/exportWinchLog')>('../../../app/utils/exportWinchLog');
+vi.mock('../../../app/utils/exportLog', async () => {
+    const actual = await vi.importActual<typeof import('../../../app/utils/exportLog')>('../../../app/utils/exportLog');
     return {
         ...actual,
         exportWinchLogsheet: vi.fn(),

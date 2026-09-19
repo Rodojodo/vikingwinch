@@ -4,8 +4,7 @@ import { WinchTab } from './WinchTab.tsx';
 import { getDayLog, postDayLogToDb } from '../features/day-ops/api/dayOpsClient.ts';
 import { getLaunches, postLaunchCorrections } from '../features/launch-ops/api/launchClient.ts';
 import { getOperatorsForSquadron } from '../core/http/operatorsClient.ts';
-import { exportLog } from '../app/utils/exportLog.ts';
-import { exportWinchLogsheet } from '../app/utils/exportWinchLog.ts';
+import { exportLog, exportWinchLogsheet } from '../app/utils/exportLog.ts';
 
 vi.mock('../features/day-ops/api/dayOpsClient.ts', () => ({
     getDayLog: vi.fn(),
@@ -20,8 +19,6 @@ vi.mock('../core/http/operatorsClient.ts', () => ({
 }));
 vi.mock('../app/utils/exportLog.ts', () => ({
     exportLog: vi.fn(),
-}));
-vi.mock('../app/utils/exportWinchLog.ts', () => ({
     exportWinchLogsheet: vi.fn().mockResolvedValue(undefined),
 }));
 

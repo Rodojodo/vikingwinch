@@ -3,8 +3,8 @@ import {Box, Button, CircularProgress, Typography} from '@mui/material';
 import type {SxProps, Theme} from '@mui/material/styles';
 import type {Winch, WinchRead} from '../types';
 import {getWinchesForSquadron} from '../api/winchClient';
-import {exportWinchLogsheet, getTodayDateString, getWinchDayStatus} from '../../../app/utils/exportWinchLog';
-import {darkBlueButton, errorBannerSx, glassPanelSx, warningBannerSx} from '../../../themes/styles';
+import {exportWinchLogsheet, getTodayDateString, getWinchDayStatus} from '../../../app/utils/exportLog';
+import {errorBannerSx, glassPanelSx, warningBannerSx} from '../../../themes/styles';
 
 export interface LogsheetExportPanelProps {
     squadronId: string;
@@ -171,18 +171,18 @@ export const LogsheetExportPanel: React.FC<LogsheetExportPanelProps> = ({
                                 return (
                                     <Button
                                         key={winch.id}
-                                        variant="outlined"
+                                        fullWidth={displayedFinished.length === 1}
+                                        variant="contained"
+                                        color="primary"
                                         aria-label={isExporting ? `Exporting logsheet ${winch.id}` : undefined}
                                         disabled={exportingWinchId !== null}
                                         onClick={() => handleExport(winch.id)}
-                                        sx={([
-                                            darkBlueButton,
-                                            {
-                                                flexGrow: 1,
-                                                flexBasis: 'calc(50% - 8px)',
-                                                py: 2,
-                                            },
-                                        ] as SxProps<Theme>)}
+                                        sx={{
+                                            borderRadius: 2,
+                                            py: 1.5,
+                                            flexGrow: 1,
+                                            flexBasis: displayedFinished.length > 1 ? 'calc(50% - 8px)' : '100%',
+                                        }}
                                     >
                                         {isExporting ? (
                                             <CircularProgress size={24} color="inherit" />
