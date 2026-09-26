@@ -17,6 +17,7 @@ class BroughtForwardInfoResponse(BaseModel):
 class WinchDayDataResponse(BaseModel):
     logs: list[DayLogRead]
     launches: list[LaunchRead]
+    cable_check_verified: bool
 
 class BroughtForwardData(BaseModel):
     left: int | None

@@ -56,6 +56,23 @@ async def test_get_winch_day_data(setup_data):
     assert len(data["logs"]) == 1
     assert len(data["launches"]) == 1
     assert data["launches"][0]["drum"] == "left"
+    assert data["cable_check_verified"] is False
+
+
+@pytest.mark.asyncio
+async def test_get_winch_day_data_reports_cable_check(setup_data, db_session):
+    await db_session.execute(text(
+        "INSERT INTO day_log (squadron_id, winch_id, type, timestamp, operator_sn) "
+        "VALUES ('123 VGS', 1, 'cable_check', CURRENT_TIMESTAMP, '123456')"
+    ))
+    await db_session.commit()
+
+    today = date.today().isoformat()
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        response = await ac.get(f"/winch/1/day_data?day={today}")
+
+    assert response.status_code == 200
+    assert response.json()["cable_check_verified"] is True
 
 @pytest.mark.asyncio
 async def test_get_export_data(setup_data):
@@ -106,9 +123,8 @@ async def test_create_day_log_success(db_session):
     
     payload = {
         "squadron_id": "sqn10",
-        "type": "di",
+        "type": "cable_check",
         "operator_sn": "op10",
-        "hours": 200.5
     }
 
     async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as ac:
