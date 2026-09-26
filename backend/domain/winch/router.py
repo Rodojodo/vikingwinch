@@ -58,9 +58,11 @@ async def get_winch_day_data(
 ):
     day_logs = await day_log_repo.get_day_log_from_date(db, winch_id, day)
     launches = await launch_repo.get_launches_from_date(db, winch_id, day)
+    cable_check_verified = await day_log_repo.has_cable_check_for_day(db, winch_id, day)
     return WinchDayDataResponse(
         logs=day_logs,
-        launches=launches
+        launches=launches,
+        cable_check_verified=cable_check_verified,
     )
 
 @router.get("/winch/{winch_id}/export_data", response_model=ExportDataResponse)

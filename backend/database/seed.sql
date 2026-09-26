@@ -31,7 +31,10 @@ INSERT INTO launches (launch_number, winch_id, drum, `timestamp`, squadron_id, r
 
 -- 5. POPULATE DAY_LOG
 -- (The id column will auto-increment automatically)
-INSERT INTO day_log (squadron_id, winch_id, `type`, `timestamp`, operator_sn, trainee, cable_check, hours) VALUES
-('123vgs', 1, 'di', '2026-06-06 08:00:00', 'OFF-1002', NULL, 'OFF-1001', 0.0),
-('123vgs', 1, 'sign_on', '2026-06-06 08:30:00', 'SGT-2005', 'CDT-3042', 'OFF-1002', 2.5),
-('123vgs', 1, 'finish_day', '2026-06-06 16:30:00', 'OFF-1001', NULL, 'OFF-1002', 6.2);
+INSERT INTO day_log (squadron_id, winch_id, `type`, `timestamp`, operator_sn, trainee, hours) VALUES
+('123vgs', 1, 'di', '2026-06-06 08:00:00', 'OFF-1002', NULL, 0.0),
+('123vgs', 1, 'sign_on', '2026-06-06 08:30:00', 'SGT-2005', 'CDT-3042', 2.5),
+('123vgs', 1, 'finish_day', '2026-06-06 16:30:00', 'OFF-1001', NULL, 6.2);
+
+INSERT INTO day_log (squadron_id, winch_id, `type`, `timestamp`, operator_sn, hours) VALUES
+('123vgs', 1, 'cable_check', '2026-06-06 08:00:00', 'OFF-1001', NULL);
