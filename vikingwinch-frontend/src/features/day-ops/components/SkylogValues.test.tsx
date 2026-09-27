@@ -1,25 +1,25 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import {fireEvent, render, screen} from '@testing-library/react';
+import {describe, expect, it, vi} from 'vitest';
 import SkylogValues from './SkylogValues.tsx';
 
 describe('SkylogValues', () => {
-    it('renders and calls onBack correctly', () => {
-        const mockOnBack = vi.fn();
+    it('renders finish hours and downloads without back navigation', () => {
+        const onExportLog = vi.fn().mockResolvedValue(undefined);
+        render(
+            <SkylogValues
+                winchId={1}
+                squadron="sqn1"
+                leftLaunches={10}
+                rightLaunches={15}
+                finishHours={126.2}
+                onExportLog={onExportLog}
+            />,
+        );
 
-        render(<SkylogValues 
-            onBack={mockOnBack} 
-            winchId={1} 
-            squadron="sqn1" 
-            leftLaunches={10} 
-            rightLaunches={15} 
-        />);
-        
         expect(screen.getByText('Winch 1 — sqn1')).toBeInTheDocument();
-        expect(screen.getByText('10')).toBeInTheDocument(); // left launches
-        expect(screen.getByText('15')).toBeInTheDocument(); // right launches
-        expect(screen.getByText('25')).toBeInTheDocument(); // winch total
-        
-        fireEvent.click(screen.getByRole('button', { name: 'Back' }));
-        expect(mockOnBack).toHaveBeenCalledTimes(1);
+        expect(screen.getByText('126.2')).toBeInTheDocument();
+        expect(screen.queryByRole('button', {name: 'Back'})).not.toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', {name: 'Download Logs'}));
+        expect(onExportLog).toHaveBeenCalledTimes(1);
     });
 });

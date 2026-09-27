@@ -7,7 +7,7 @@ import type {SxProps, Theme} from '@mui/material/styles';
 
 interface DailyInspectionPanelProps {
     onComplete: () => void;
-    onSignDI?: (hours: number | null) => Promise<void>;
+    onSignDI?: (hours: number) => Promise<void>;
     onSubmitCorrections?: (corrections: { left: number | null; right: number | null }) => Promise<unknown>;
 }
 
@@ -138,6 +138,9 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
     const parsedLeft = leftDrum !== '' ? parseInt(leftDrum, 10) : null;
     const parsedRight = rightDrum !== '' ? parseInt(rightDrum, 10) : null;
     const parsedHours = hours !== '' ? parseFloat(hours) : null;
+    const hasRequiredValues = parsedLeft !== null && !isNaN(parsedLeft)
+        && parsedRight !== null && !isNaN(parsedRight)
+        && parsedHours !== null && !isNaN(parsedHours);
 
     const leftDiffers = cloudLeft !== null && parsedLeft !== null && !isNaN(parsedLeft) && parsedLeft !== cloudLeft;
     const rightDiffers = cloudRight !== null && parsedRight !== null && !isNaN(parsedRight) && parsedRight !== cloudRight;
@@ -145,10 +148,13 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
 
     const handleSignDI = async () => {
         if (!winchId || !squadronId || !operatorSn) return;
+        if (!diSigned && !hasRequiredValues) {
+            setError('Left drum total, right drum total, and hours are required to sign the Daily Inspection.');
+            return;
+        }
         setIsSubmitting(true);
         setError(null);
 
-        const validHours = parsedHours !== null && !isNaN(parsedHours) ? parsedHours : null;
         const leftChanged = parsedLeft !== null && !isNaN(parsedLeft) && (cloudLeft === null || parsedLeft !== cloudLeft);
         const rightChanged = parsedRight !== null && !isNaN(parsedRight) && (cloudRight === null || parsedRight !== cloudRight);
         const drumsChanged = leftChanged || rightChanged;
@@ -157,7 +163,12 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
         if (!signed) {
             try {
                 if (onSignDI) {
-                    await onSignDI(validHours);
+                    if (parsedHours === null) {
+                        setError('Hours are required to sign the Daily Inspection.');
+                        setIsSubmitting(false);
+                        return;
+                    }
+                    await onSignDI(parsedHours);
                 }
                 signed = true;
                 setDiSigned(true);
@@ -234,6 +245,7 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
                         value={leftDrum}
                         onChange={handleLeftDrumChange}
                         onKeyDown={handleDrumKeyDown}
+                        required
                         type="number"
                         slotProps={{ htmlInput: { min: 0, step: 1 } }}
                         sx={darkTextFieldStyles}
@@ -255,6 +267,7 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
                         value={rightDrum}
                         onChange={handleRightDrumChange}
                         onKeyDown={handleDrumKeyDown}
+                        required
                         type="number"
                         slotProps={{ htmlInput: { min: 0, step: 1 } }}
                         sx={darkTextFieldStyles}
@@ -279,6 +292,7 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
                     onChange={handleHoursChange}
                     onKeyDown={handleHoursKeyDown}
                     disabled={diSigned || isSubmitting}
+                    required
                     type="number"
                     slotProps={{ htmlInput: { min: 0, step: 'any' } }}
                     sx={darkTextFieldStyles}
@@ -293,7 +307,7 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
             <Button
                 variant="contained"
                 color="success"
-                disabled={isSubmitting || isFetching}
+                disabled={isSubmitting || isFetching || (!diSigned && !hasRequiredValues)}
                 onClick={handleSignDI}
                 sx={[
                     glowingPrimaryButtonSx,
