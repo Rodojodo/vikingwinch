@@ -79,6 +79,24 @@ async def has_cable_check_for_day(db: AsyncSession, winch_id: int, day: date) ->
     return result.scalars().first() is not None
 
 
+async def has_finish_day_for_day(db: AsyncSession, winch_id: int, day: date) -> bool:
+    start_of_day = datetime.combine(day, time.min)
+    start_of_next_day = start_of_day + timedelta(days=1)
+
+    stmt = (
+        select(Day_Log.id)
+        .where(
+            Day_Log.winch_id == winch_id,
+            Day_Log.type == "finish_day",
+            Day_Log.timestamp >= start_of_day,
+            Day_Log.timestamp < start_of_next_day,
+        )
+        .limit(1)
+    )
+    result = await db.execute(stmt)
+    return result.scalars().first() is not None
+
+
 async def get_di_for_day(db: AsyncSession, winch_id: int, day: date) -> Day_Log | None:
     start_of_day = datetime.combine(day, time.min)
     start_of_next_day = start_of_day + timedelta(days=1)
