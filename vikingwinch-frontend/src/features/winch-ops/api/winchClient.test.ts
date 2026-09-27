@@ -1,5 +1,5 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {getBroughtForward, getWinch, getWinchesForSquadron} from './winchClient';
+import {getBroughtForward, getWinch, getWinchStatusesForSquadron, getWinchesForSquadron} from './winchClient';
 import {apiFetch} from '../../../core/http/fetchClient';
 import type {WinchRead} from '../types';
 
@@ -35,6 +35,21 @@ describe('winchClient', () => {
 
         expect(apiFetch).toHaveBeenCalledWith('/winches/2');
         expect(result).toEqual(mockWinch);
+    });
+
+    it('getWinchStatusesForSquadron calls the current-day status endpoint', async () => {
+        const statuses = [
+            {id: 1, squadron_id: '621 VGS', registration: 'Winch 1', status: 'day_finished' as const},
+        ];
+        vi.mocked(apiFetch).mockResolvedValue(statuses);
+
+        const controller = new AbortController();
+        const result = await getWinchStatusesForSquadron('621 VGS', '2026-09-27', controller.signal);
+
+        expect(apiFetch).toHaveBeenCalledWith('/squadrons/621 VGS/winch_status?day=2026-09-27', {
+            signal: controller.signal,
+        });
+        expect(result).toEqual(statuses);
     });
 
     it('getBroughtForward calls /winch/:id/bf_info?day=:day', async () => {
