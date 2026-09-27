@@ -6,10 +6,11 @@ import {useDayOps} from '../hooks/useDayOps.ts';
 
 type FinishDayPanelProps = {
     isLoading: boolean;
-    onExportLog?: () => Promise<void>;
+    diHours: number | null;
+    onFinished: (hours: number) => void;
 };
 
-export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({isLoading, onExportLog}) => {
+export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({isLoading, diHours, onFinished}) => {
     const {winchId} = useSessionIdentity();
     const {finishDay} = useDayOps();
     const [isOpen, setIsOpen] = useState(false);
@@ -20,25 +21,24 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({isLoading, onExpo
         setIsOpen((prev) => !prev);
     };
 
+    const parsedDiHours = diHours === null ? NaN : Number(diHours);
+    const parsedHours = hoursStop.trim() ? Number(hoursStop) : NaN;
+    const hasDiHours = Number.isFinite(parsedDiHours);
+    const isValidHours = hasDiHours && Number.isFinite(parsedHours) && parsedHours > parsedDiHours;
+    const validationError = hoursStop.trim() && (!Number.isFinite(parsedHours) || !hasDiHours || parsedHours <= parsedDiHours)
+        ? `Must be greater than DI hours ${hasDiHours ? parsedDiHours : ''}`
+        : null;
+
     const handleSubmit = async () => {
         if (!winchId) return;
         setLocalError(null);
-        const hours = hoursStop ? parseFloat(hoursStop) : null;
         try {
-            await finishDay(hours);
+            await finishDay(parsedHours);
+            onFinished(parsedHours);
             setHoursStop('');
             setIsOpen(false);
         } catch (err) {
             setLocalError(err instanceof Error ? err.message : 'Failed to submit finish day');
-        }
-    };
-
-    const handleDownloadLog = async () => {
-        if (!onExportLog) return;
-        try {
-            await onExportLog();
-        } catch (err) {
-            setLocalError(err instanceof Error ? err.message : 'Failed to download log');
         }
     };
 
@@ -87,29 +87,23 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({isLoading, onExpo
                             sx={darkTextFieldStyles}
                             slotProps={{ htmlInput: { step: '0.1' } }}
                         />
+                        {validationError && (
+                            <Typography variant="caption" color="error">
+                                {validationError}
+                            </Typography>
+                        )}
                     </Box>
 
-                    <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                        <Button
-                            fullWidth
-                            onClick={handleSubmit}
-                            disabled={isLoading}
-                            variant="contained"
-                            color="primary"
-                            sx={{borderRadius: 2, py: 1.5}}
-                        >
-                            {isLoading ? 'Submitting...' : 'Finish Day'}
-                        </Button>
-                        <Button
-                            fullWidth
-                            onClick={handleDownloadLog}
-                            variant="contained"
-                            color="primary"
-                            sx={{borderRadius: 2, py: 1.5}}
-                        >
-                            Download Log
-                        </Button>
-                    </Stack>
+                    <Button
+                        fullWidth
+                        onClick={handleSubmit}
+                        disabled={isLoading || !isValidHours}
+                        variant="contained"
+                        color="primary"
+                        sx={{borderRadius: 2, py: 1.5}}
+                    >
+                        {isLoading ? 'Submitting...' : 'Finish Day'}
+                    </Button>
                 </Stack>
             </Box>
         </Box>

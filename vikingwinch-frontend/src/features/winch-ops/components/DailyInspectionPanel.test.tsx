@@ -37,9 +37,7 @@ describe('DailyInspectionPanel', () => {
         expect(screen.getByPlaceholderText('e.g. 123.5')).toBeInTheDocument(); // hours
         expect(screen.getByRole('button', { name: 'Retrieve data from cloud' })).toBeInTheDocument();
         expect(screen.getByRole('button', { name: 'Sign DI' })).toBeInTheDocument();
-        await waitFor(() => {
-            expect(screen.getByRole('button', {name: 'Sign DI'})).not.toBeDisabled();
-        });
+        expect(screen.getByRole('button', {name: 'Sign DI'})).toBeDisabled();
     });
 
     it('retrieves data from cloud and updates fields', async () => {
@@ -70,7 +68,7 @@ describe('DailyInspectionPanel', () => {
 
         resolveBf!({left: 10, right: 10, hours: 100});
         await waitFor(() => {
-            expect(signBtn).not.toBeDisabled();
+            expect(signBtn).toBeDisabled();
             expect(retrieveBtn).not.toBeDisabled();
         });
     });
@@ -149,7 +147,7 @@ describe('DailyInspectionPanel', () => {
         expect(mockOnComplete).toHaveBeenCalled();
     });
 
-    it('allows submitting with no hours', async () => {
+    it('requires all DI fields before signing', async () => {
         const user = userEvent.setup();
         mockOnSignDI.mockResolvedValue(undefined);
 
@@ -159,9 +157,33 @@ describe('DailyInspectionPanel', () => {
         await user.type(screen.getByPlaceholderText('e.g. 5'), '10');
 
         const signBtn = screen.getByRole('button', { name: 'Sign DI' });
+        expect(signBtn).toBeDisabled();
+
+        expect(mockOnSignDI).not.toHaveBeenCalled();
+        expect(mockOnComplete).not.toHaveBeenCalled();
+    });
+
+    it('requires both drum totals and hours before signing', async () => {
+        const user = userEvent.setup();
+        mockOnSignDI.mockResolvedValue(undefined);
+
+        render(<DailyInspectionPanel onComplete={mockOnComplete} onSignDI={mockOnSignDI}/>);
+
+        const leftInput = screen.getByPlaceholderText('e.g. 12');
+        const rightInput = screen.getByPlaceholderText('e.g. 5');
+        const hoursInput = screen.getByPlaceholderText('e.g. 123.5');
+        const signBtn = screen.getByRole('button', { name: 'Sign DI' });
+
+        await user.type(leftInput, '20');
+        expect(signBtn).toBeDisabled();
+        await user.type(rightInput, '10');
+        expect(signBtn).toBeDisabled();
+        await user.type(hoursInput, '200.5');
+
+        expect(signBtn).toBeEnabled();
         await user.click(signBtn);
 
-        expect(mockOnSignDI).toHaveBeenCalledWith(null);
+        expect(mockOnSignDI).toHaveBeenCalledWith(200.5);
         expect(mockOnComplete).toHaveBeenCalled();
     });
 
@@ -172,6 +194,9 @@ describe('DailyInspectionPanel', () => {
 
         render(<DailyInspectionPanel onComplete={mockOnComplete} onSignDI={mockOnSignDI}/>);
 
+        await user.type(screen.getByPlaceholderText('e.g. 12'), '20');
+        await user.type(screen.getByPlaceholderText('e.g. 5'), '10');
+        await user.type(screen.getByPlaceholderText('e.g. 123.5'), '200.5');
         const signBtn = screen.getByRole('button', { name: 'Sign DI' });
         await user.click(signBtn);
 
@@ -191,11 +216,10 @@ describe('DailyInspectionPanel', () => {
             status: { status: 'unselected' },
         });
 
-        const user = userEvent.setup();
         render(<DailyInspectionPanel onComplete={mockOnComplete} onSignDI={mockOnSignDI}/>);
 
         const signBtn = screen.getByRole('button', { name: 'Sign DI' });
-        await user.click(signBtn);
+        expect(signBtn).toBeDisabled();
 
         expect(mockOnSignDI).not.toHaveBeenCalled();
     });
@@ -567,7 +591,7 @@ describe('DailyInspectionPanel', () => {
         );
 
         await waitFor(() => {
-            expect(screen.getByRole('button', {name: 'Sign DI'})).not.toBeDisabled();
+            expect(screen.getByRole('button', {name: 'Sign DI'})).toBeDisabled();
         });
 
         const leftInput = screen.getByPlaceholderText('e.g. 12');
