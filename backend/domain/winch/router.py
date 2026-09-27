@@ -9,6 +9,7 @@ from domain.launch import repository as launch_repo
 from domain.operator import repository as operator_repo
 from domain.winch.schema import (
     WinchRead,
+    WinchStatusRead,
     BroughtForwardInfoResponse,
     WinchDayDataResponse,
     ExportDataResponse,
@@ -33,6 +34,17 @@ async def get_winches_for_squadron(
 ):
     try:
         return await winch_repo.get_winches_from_sqn(db, squadron_id)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+@router.get("/squadrons/{squadron_id}/winch_status", response_model=list[WinchStatusRead])
+async def get_winch_statuses_for_squadron(
+    squadron_id: str,
+    day: date,
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        return await winch_repo.get_winch_statuses_from_sqn(db, squadron_id, day)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 

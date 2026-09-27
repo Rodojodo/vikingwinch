@@ -3,11 +3,15 @@ from pydantic import BaseModel
 from domain.day_log.schema import DayLogRead
 from domain.launch.schema import LaunchRead
 from domain.operator.schema import OperatorRead
+from typing import Literal
 
 class WinchRead(ORMModel):
     id: int
     registration: str
     squadron_id: str
+
+class WinchStatusRead(WinchRead):
+    status: Literal["default", "di_complete", "in_use", "day_finished"]
 
 class BroughtForwardInfoResponse(BaseModel):
     left: int | None
