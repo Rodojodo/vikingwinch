@@ -10,6 +10,7 @@ async def test_create_launch_rollback(db_session):
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn3')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (888, 'Winch 888', 'sqn3')"))
     await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('12345', 'oid', 'Op', 'sqn3', 'operator')"))
+    await db_session.execute(text("INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (600, 'sqn3', 888, 'cable_check', CURRENT_TIMESTAMP, '12345')"))
     await db_session.commit()
 
     payload = {
@@ -34,6 +35,7 @@ async def test_create_launch_success(db_session):
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn4')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (889, 'Winch 889', 'sqn4')"))
     await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('123456', 'oid2', 'Op2', 'sqn4', 'operator')"))
+    await db_session.execute(text("INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (601, 'sqn4', 889, 'cable_check', CURRENT_TIMESTAMP, '123456')"))
     await db_session.commit()
 
     payload = {
@@ -50,6 +52,32 @@ async def test_create_launch_success(db_session):
     
     result = await db_session.execute(text("SELECT COUNT(*) FROM launches WHERE winch_id = 889"))
     assert result.scalar() == 1
+
+
+@pytest.mark.asyncio
+async def test_create_launch_requires_cable_check(db_session):
+    await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn4_no_check')"))
+    await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (893, 'Winch 893', 'sqn4_no_check')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('123457', 'oid_no_check', 'Op No Check', 'sqn4_no_check', 'operator')"))
+    await db_session.commit()
+
+    payload = {
+        "squadron_id": "sqn4_no_check",
+        "winch_id": 893,
+        "operator_sn": "123457",
+        "drum": "left",
+        "is_burn": False
+    }
+
+    async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as ac:
+        response = await ac.post("/launches", json=payload)
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "A cable check must be signed before launches can be recorded."
+
+    result = await db_session.execute(text("SELECT COUNT(*) FROM launches WHERE winch_id = 893"))
+    assert result.scalar() == 0
+
 
 @pytest.mark.asyncio
 async def test_delete_launch_success(db_session):
