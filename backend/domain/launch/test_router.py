@@ -360,6 +360,7 @@ async def test_create_launch_correction_same_day_bf_and_zero_day_launches(db_ses
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (899, 'Winch 899', 'sqn13')"))
     await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op13', 'oid13', 'Op13', 'sqn13', 'operator')"))
     await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (506, 'sqn13', 899, 'di', '{now}', 'op13')"))
+    await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (507, 'sqn13', 899, 'cable_check', '{now}', 'op13')"))
     await db_session.commit()
 
     payload = {
