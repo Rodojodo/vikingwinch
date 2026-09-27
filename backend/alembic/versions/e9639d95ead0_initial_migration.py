@@ -45,13 +45,10 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('squadron_id', sa.String(length=50), nullable=False),
     sa.Column('winch_id', sa.Integer(), nullable=False),
-    sa.Column('type', sa.Enum('finish_day', 'di', 'sign_on'), nullable=False),
+    sa.Column('type', sa.Enum('finish_day', 'di', 'sign_on', 'cable_check'), nullable=False),
     sa.Column('timestamp', sa.TIMESTAMP(), nullable=True),
-    sa.Column('left_drum', sa.Integer(), nullable=True),
-    sa.Column('right_drum', sa.Integer(), nullable=True),
     sa.Column('operator_sn', sa.String(length=20), nullable=False),
     sa.Column('trainee', sa.String(length=20), nullable=True),
-    sa.Column('cable_check', sa.String(length=20), nullable=True),
     sa.Column('hours', sa.Float(), nullable=True),
     sa.ForeignKeyConstraint(['operator_sn'], ['operators.service_no'], ),
     sa.ForeignKeyConstraint(['squadron_id'], ['squadrons.id'], ),
@@ -71,7 +68,7 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['squadron_id'], ['squadrons.id'], ),
     sa.ForeignKeyConstraint(['winch_id'], ['winches.id'], ),
     sa.PrimaryKeyConstraint('launch_id'),
-    sa.UniqueConstraint('winch_id', 'drum', 'launch_number', name='uix_winch_drum_launch_number')
+    sa.Index('ix_launches_winch_drum_launch_id', 'winch_id', 'drum', 'launch_id'),
     )
     # ### end Alembic commands ###
 

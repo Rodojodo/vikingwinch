@@ -75,6 +75,7 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
 
         const diLog = dayLogs.find(log => log.type === 'di');
         const finishLog = dayLogs.find(log => log.type === 'finish_day');
+        const cableCheckLog = dayLogs.find(log => log.type === 'cable_check');
 
         sheet.getCell(CELLS.DI_HOURS).value = diLog?.hours ?? '';
         sheet.getCell(CELLS.FINISH_HOURS).value = finishLog?.hours ?? '';
@@ -84,9 +85,10 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
             sheet.getCell('F12').value = getName(diLog.operator_sn);
         }
 
-        if (finishLog) {
-            sheet.getCell('H12').value = getName(finishLog.cable_check);
-            sheet.getCell('J12').value = getName(finishLog.operator_sn);
+        if (cableCheckLog) {
+            const cableCheckOperatorName = getName(cableCheckLog.operator_sn);
+            sheet.getCell('H12').value = cableCheckOperatorName;
+            sheet.getCell('J12').value = cableCheckOperatorName;
         }
 
         const leftHistory = state.leftHistory;

@@ -24,7 +24,16 @@ async def create_launch(
     payload: LaunchCreate,
     db: AsyncSession = Depends(get_db),
 ):
+    today = datetime.now(timezone.utc).date()
     async with db.begin():
+        await db.execute(select(Winch.id).where(Winch.id == payload.winch_id).with_for_update())
+
+        if not await day_log_repo.has_cable_check_for_day(db, payload.winch_id, today):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="A cable check must be signed before launches can be recorded.",
+            )
+
         launch = await launch_repo.add_launch(
             db,
             squadron_id=payload.squadron_id,

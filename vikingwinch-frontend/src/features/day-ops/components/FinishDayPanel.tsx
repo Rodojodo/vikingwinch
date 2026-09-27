@@ -1,8 +1,6 @@
-import React, {useEffect, useState} from 'react';
-import {Alert, Box, Button, FormControl, MenuItem, Select, Stack, TextField, Typography} from '@mui/material';
-import {darkMenuStyles, darkSelectStyles, darkTextFieldStyles, getTabButtonStyles} from '../../../themes/styles.ts';
-import {getOperatorsForSquadron} from '../../../core/http/operatorsClient.ts';
-import type {OperatorRead} from '../../../core/types';
+import React, {useState} from 'react';
+import {Alert, Box, Button, Stack, TextField, Typography} from '@mui/material';
+import {darkTextFieldStyles, getTabButtonStyles} from '../../../themes/styles.ts';
 import {useSessionIdentity} from '../../../app/hooks/useSessionIdentity.ts';
 import {useDayOps} from '../hooks/useDayOps.ts';
 
@@ -12,48 +10,11 @@ type FinishDayPanelProps = {
 };
 
 export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({isLoading, onExportLog}) => {
-    const {squadronId, winchId} = useSessionIdentity();
+    const {winchId} = useSessionIdentity();
     const {finishDay} = useDayOps();
     const [isOpen, setIsOpen] = useState(false);
     const [hoursStop, setHoursStop] = useState<string>('');
-    const [cableCheckBy, setCableCheckBy] = useState<string>('');
-    const [operators, setOperators] = useState<OperatorRead[]>([]);
     const [localError, setLocalError] = useState<string | null>(null);
-    const [isFetchingOperators, setIsFetchingOperators] = useState(false);
-
-    const [prevFetchKey, setPrevFetchKey] = useState({ squadronId, isOpen });
-    if (squadronId !== prevFetchKey.squadronId || isOpen !== prevFetchKey.isOpen) {
-        setPrevFetchKey({ squadronId, isOpen });
-        if (squadronId && isOpen) {
-            setIsFetchingOperators(true);
-            setLocalError(null);
-        }
-    }
-
-    useEffect(() => {
-        if (!squadronId || !isOpen) return;
-
-        const controller = new AbortController();
-
-        getOperatorsForSquadron(squadronId, controller.signal)
-            .then((data) => {
-                if (!controller.signal.aborted) {
-                    setOperators(data);
-                }
-            })
-            .catch(() => {
-                if (!controller.signal.aborted) {
-                    setLocalError('Failed to load operators');
-                }
-            })
-            .finally(() => {
-                if (!controller.signal.aborted) {
-                    setIsFetchingOperators(false);
-                }
-            });
-
-        return () => controller.abort();
-    }, [squadronId, isOpen]);
 
     const handleToggle = () => {
         setIsOpen((prev) => !prev);
@@ -64,9 +25,8 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({isLoading, onExpo
         setLocalError(null);
         const hours = hoursStop ? parseFloat(hoursStop) : null;
         try {
-            await finishDay(cableCheckBy || null, hours);
+            await finishDay(hours);
             setHoursStop('');
-            setCableCheckBy('');
             setIsOpen(false);
         } catch (err) {
             setLocalError(err instanceof Error ? err.message : 'Failed to submit finish day');
@@ -127,31 +87,6 @@ export const FinishDayPanel: React.FC<FinishDayPanelProps> = ({isLoading, onExpo
                             sx={darkTextFieldStyles}
                             slotProps={{ htmlInput: { step: '0.1' } }}
                         />
-                    </Box>
-
-                    <Box>
-                        <Typography variant="subtitle2" sx={{color: 'text.secondary', mb: 1, textAlign: 'center'}}>
-                            Cable Check By
-                        </Typography>
-                        <FormControl fullWidth size="small">
-                            <Select
-                                displayEmpty
-                                value={cableCheckBy}
-                                onChange={(e) => setCableCheckBy(e.target.value)}
-                                sx={darkSelectStyles}
-                                MenuProps={darkMenuStyles}
-                                disabled={isFetchingOperators}
-                            >
-                                <MenuItem value="">
-                                    {isFetchingOperators ? 'Loading...' : 'Select...'}
-                                </MenuItem>
-                                {operators.map(op => (
-                                    <MenuItem key={op.service_no} value={op.service_no}>
-                                        {op.name}
-                                    </MenuItem>
-                                ))}
-                            </Select>
-                        </FormControl>
                     </Box>
 
                     <Stack direction="row" spacing={2} sx={{ mt: 2 }}>

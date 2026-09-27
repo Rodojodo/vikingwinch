@@ -13,7 +13,7 @@ export const DayOpsProvider: React.FC<DayOpsProviderProps> = ({ onDayFinished, c
     const [state, dispatch] = useReducer(dayReducer, initialDayOpsState);
     const { winchId, squadronId, operatorSn } = useSessionIdentity();
 
-    const finishDay = useCallback(async (cableCheck: string | null = null, hours: number | null = null) => {
+    const finishDay = useCallback(async (hours: number | null = null) => {
         if (!winchId || !squadronId || !operatorSn) {
             throw new Error('Incomplete session identity for finishDay');
         }
@@ -23,7 +23,6 @@ export const DayOpsProvider: React.FC<DayOpsProviderProps> = ({ onDayFinished, c
             operator_sn: operatorSn,
             trainee: null,
             type: 'finish_day',
-            cable_check: cableCheck,
             hours,
         });
         dispatch({ type: 'FINISH_DAY' });
@@ -40,13 +39,12 @@ export const DayOpsProvider: React.FC<DayOpsProviderProps> = ({ onDayFinished, c
             operator_sn: operatorSn,
             trainee: traineeSn,
             type: 'sign_on',
-            cable_check: null,
             hours: null,
         });
         dispatch({ type: 'RECORD_SIGN_ON', payload: { operatorSn, traineeSn } });
     }, [winchId, squadronId, operatorSn]);
 
-    const recordDI = useCallback(async (cableCheck: string | null = null, hours: number | null = null) => {
+    const recordDI = useCallback(async (hours: number | null = null) => {
         if (!winchId || !squadronId || !operatorSn) {
             throw new Error('Incomplete session identity for DI');
         }
@@ -56,10 +54,23 @@ export const DayOpsProvider: React.FC<DayOpsProviderProps> = ({ onDayFinished, c
             operator_sn: operatorSn,
             trainee: null,
             type: 'di',
-            cable_check: cableCheck,
             hours,
         });
         dispatch({ type: 'RECORD_DI' });
+    }, [winchId, squadronId, operatorSn]);
+
+    const recordCableCheck = useCallback(async () => {
+        if (!winchId || !squadronId || !operatorSn) {
+            throw new Error('Incomplete session identity for cable check');
+        }
+        await postDayLogToDb({
+            squadron_id: squadronId,
+            winch_id: winchId,
+            operator_sn: operatorSn,
+            trainee: null,
+            type: 'cable_check',
+            hours: null,
+        }, winchId);
     }, [winchId, squadronId, operatorSn]);
 
     const resetDay = useCallback(() => {
@@ -75,6 +86,7 @@ export const DayOpsProvider: React.FC<DayOpsProviderProps> = ({ onDayFinished, c
         finishDay,
         recordSignOn,
         recordDI,
+        recordCableCheck,
         resetDay,
     }), [
         state.dayFinished,
@@ -85,6 +97,7 @@ export const DayOpsProvider: React.FC<DayOpsProviderProps> = ({ onDayFinished, c
         finishDay,
         recordSignOn,
         recordDI,
+        recordCableCheck,
         resetDay,
     ]);
 
