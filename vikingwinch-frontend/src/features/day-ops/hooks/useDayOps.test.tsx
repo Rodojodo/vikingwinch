@@ -75,7 +75,6 @@ describe('useDayOps', () => {
             operator_sn: 'OP-1234',
             trainee: null,
             type: 'finish_day',
-            cable_check: 'OK',
             hours: null,
             timestamp: '2026-09-16T10:00:00Z',
         });
@@ -83,7 +82,7 @@ describe('useDayOps', () => {
         renderWithProviders(1, 'OP-1234', onDayFinished);
 
         await act(async () => {
-            await getDayContext().finishDay('OK');
+            await getDayContext().finishDay();
         });
 
         expect(postDayLogToDb).toHaveBeenCalled();
@@ -99,7 +98,6 @@ describe('useDayOps', () => {
             operator_sn: 'OP-1234',
             trainee: 'TR-1',
             type: 'sign_on',
-            cable_check: null,
             hours: null,
             timestamp: '2026-09-16T10:00:00Z',
         });
@@ -122,7 +120,6 @@ describe('useDayOps', () => {
             operator_sn: 'OP-1234',
             trainee: null,
             type: 'di',
-            cable_check: 'Pass',
             hours: 120,
             timestamp: '2026-09-16T10:00:00Z',
         });
@@ -130,7 +127,7 @@ describe('useDayOps', () => {
         renderWithProviders();
 
         await act(async () => {
-            await getDayContext().recordDI('Pass', 120);
+            await getDayContext().recordDI(120);
         });
 
         expect(postDayLogToDb).toHaveBeenCalled();

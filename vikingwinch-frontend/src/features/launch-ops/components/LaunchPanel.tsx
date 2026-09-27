@@ -1,4 +1,4 @@
-import {Box, Stack, Typography} from '@mui/material';
+import {Alert, Box, Button, Stack, Typography} from '@mui/material';
 import {useEffect, useRef, useState} from 'react';
 
 
@@ -7,7 +7,7 @@ import {useLaunchOps} from '../hooks/useLaunchOps.ts';
 import {useSessionIdentity} from '../../../app/hooks/useSessionIdentity.ts';
 import './LaunchPanel.css';
 import {DrumControl} from "./DrumControl.tsx";
-import {glassPanelSx} from "../../../themes/styles.ts";
+import {glassPanelSx, glowingPrimaryButtonSx} from "../../../themes/styles.ts";
 import type {SxProps, Theme} from "@mui/material/styles";
 
 const ANIMATIONS = [
@@ -29,10 +29,15 @@ const POST_LAUNCH_COOLDOWN_THRESHOLD_MS = 2.5 * 60 * 1000; // 2.5 minutes
 
 interface LaunchPanelProps {
     children?: React.ReactNode;
-    
+    cableCheckCompleted?: boolean;
+    onSignCableCheck?: () => Promise<void>;
 }
 
-export const LaunchPanel = ({children }: LaunchPanelProps) => {
+export const LaunchPanel = ({
+    children,
+    cableCheckCompleted = true,
+    onSignCableCheck = async () => undefined,
+}: LaunchPanelProps) => {
     const {derived, executeLaunch, undoLaunch} = useLaunchOps();
     const {squadronId, winchId} = useSessionIdentity();
     const isLoading = false;
@@ -63,6 +68,8 @@ export const LaunchPanel = ({children }: LaunchPanelProps) => {
 
     const [isResetting, setIsResetting] = useState(false);
     const [currentAnim, setCurrentAnim] = useState('none');
+    const [isSigningCableCheck, setIsSigningCableCheck] = useState(false);
+    const [cableCheckError, setCableCheckError] = useState<string | null>(null);
     
     const prevLaunchesRef = useRef({ left: leftTotal, right: rightTotal });
     const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -114,6 +121,18 @@ export const LaunchPanel = ({children }: LaunchPanelProps) => {
     const handleBurnLeft = () => executeLaunch('left', true).catch(console.error);
     const handleBurnRight = () => executeLaunch('right', true).catch(console.error);
 
+    const handleSignCableCheck = async () => {
+        setIsSigningCableCheck(true);
+        setCableCheckError(null);
+        try {
+            await onSignCableCheck();
+        } catch (err) {
+            setCableCheckError(err instanceof Error ? err.message : 'Failed to sign cable check');
+        } finally {
+            setIsSigningCableCheck(false);
+        }
+    };
+
     return (
         <Box sx={[glassPanelSx, {maxWidth: 540, gap: 3}] as SxProps<Theme>}>
             <Box sx={{ textAlign: 'center', width: '100%' }}>
@@ -134,33 +153,60 @@ export const LaunchPanel = ({children }: LaunchPanelProps) => {
                 </Typography>
             )}
             
-            <Stack direction="row" spacing={3} sx={{ width: '100%', justifyContent: 'center' }}>
-                <DrumControl
-                    drumType="left"
-                    launches={leftLaunches}
-                    lastLaunch={leftLast}
-                    isLoading={isLoading}
-                    isUsed={leftUsed}
-                    isResetting={isResetting}
-                    currentAnim={currentAnim}
-                    onLaunch={handleLaunchLeft}
-                    onBurn={handleBurnLeft}
-                    onUndo={handleUndoLeft}
-                />
-
-                <DrumControl
-                    drumType="right"
-                    launches={rightLaunches}
-                    lastLaunch={rightLast}
-                    isLoading={isLoading}
-                    isUsed={rightUsed}
-                    isResetting={isResetting}
-                    currentAnim={currentAnim}
-                    onLaunch={handleLaunchRight}
-                    onBurn={handleBurnRight}
-                    onUndo={handleUndoRight}
-                />
-            </Stack>
+            {!cableCheckCompleted ? (
+                <Stack spacing={2} sx={{width: '100%'}}>
+                    <Box
+                        sx={{
+                            p: 2,
+                            textAlign: 'center',
+                            backgroundColor: 'surface.card',
+                            border: 1,
+                            borderColor: 'surface.border',
+                            borderRadius: 2,
+                        }}
+                    >
+                        <Typography variant="body2" color="text.secondary">
+                        A cable check must be signed before launches can be recorded.
+                        </Typography>
+                    </Box>
+                    {cableCheckError && <Alert severity="error">{cableCheckError}</Alert>}
+                    <Button
+                        fullWidth
+                        onClick={handleSignCableCheck}
+                        disabled={isSigningCableCheck}
+                        sx={glowingPrimaryButtonSx}
+                    >
+                        {isSigningCableCheck ? 'Signing...' : 'Sign Cable Check'}
+                    </Button>
+                </Stack>
+            ) : (
+                <Stack direction="row" spacing={3} sx={{ width: '100%', justifyContent: 'center' }}>
+                    <DrumControl
+                        drumType="left"
+                        launches={leftLaunches}
+                        lastLaunch={leftLast}
+                        isLoading={isLoading}
+                        isUsed={leftUsed}
+                        isResetting={isResetting}
+                        currentAnim={currentAnim}
+                        onLaunch={handleLaunchLeft}
+                        onBurn={handleBurnLeft}
+                        onUndo={handleUndoLeft}
+                    />
+                    <DrumControl
+                        drumType="right"
+                        launches={rightLaunches}
+                        lastLaunch={rightLast}
+                        isLoading={isLoading}
+                        isUsed={rightUsed}
+                        isResetting={isResetting}
+                        currentAnim={currentAnim}
+                        onLaunch={handleLaunchRight}
+                        onBurn={handleBurnRight}
+                        onUndo={handleUndoRight}
+                    />
+                </Stack>
+            )}
 
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
                 {children}

@@ -6,9 +6,10 @@ export interface DayOpsContextType {
     diCompleted: boolean;
     lastOperatorSn: string | null;
     lastTraineeSn: string | null;
-    finishDay: (cableCheck?: string | null, hours?: number | null) => Promise<void>;
+    finishDay: (hours?: number | null) => Promise<void>;
     recordSignOn: (traineeSn: string | null) => Promise<void>;
-    recordDI: (cableCheck?: string | null, hours?: number | null) => Promise<void>;
+    recordDI: (hours?: number | null) => Promise<void>;
+    recordCableCheck: () => Promise<void>;
     resetDay: () => void;
 }
 

@@ -54,12 +54,14 @@ const WinchTabContent = ({
     const {squadronId, winchId, operatorSn, status} = useSessionIdentity();
     const {hydrateHistory, derived, addRemarkToState, leftHistory, rightHistory} = useLaunchOps();
     const {traineeSn, activeLauncherSn, setActiveLauncher, setTrainee} = useTraineeOps();
-    const {recordDI, recordSignOn} = useDayOps();
+    const {recordDI, recordSignOn, recordCableCheck} = useDayOps();
     const [view, setView] = useState<TabView>(() => (winchId ? 'loading' : 'select_winch'));
     const [prevWinchId, setPrevWinchId] = useState(winchId);
+    const [cableCheckCompleted, setCableCheckCompleted] = useState(false);
     if (winchId !== prevWinchId) {
         setPrevWinchId(winchId);
         setView(winchId ? 'loading' : 'select_winch');
+        setCableCheckCompleted(false);
     }
 
     const [lastOperatorSn, setLastOperatorSn] = useState<string | null>(null);
@@ -117,8 +119,10 @@ const WinchTabContent = ({
                 setTrainee(lastTrainee);
                 const signOnLogs = logs.filter(l => l.type === 'sign_on');
                 const diLogs = logs.filter(l => l.type === 'di');
+                const cableCheckLogs = logs.filter(l => l.type === 'cable_check');
 
                 const hasDiToday = diLogs.length > 0;
+                setCableCheckCompleted(cableCheckLogs.length > 0);
                 const isDayFinished = logs.some(l => l.type === 'finish_day');
 
                 onSessionStatusResolved(isDayFinished ? 'closed' : 'open');
@@ -199,7 +203,7 @@ const WinchTabContent = ({
                     <DailyInspectionPanel
                         onComplete={() => setView('sign_on')}
                         onSignDI={async (hours) => {
-                            await recordDI(null, hours);
+                            await recordDI(hours);
                         }}
                         onSubmitCorrections={async (corrections) => {
                             if (!winchId) {
@@ -227,7 +231,13 @@ const WinchTabContent = ({
             case 'launch':
                 return (
                     <Box sx={{position: 'relative', width: '100%', maxWidth: 540}}>
-                        <LaunchPanel>
+                        <LaunchPanel
+                            cableCheckCompleted={cableCheckCompleted}
+                            onSignCableCheck={async () => {
+                                await recordCableCheck();
+                                setCableCheckCompleted(true);
+                            }}
+                        >
                             <RemarksRepairsPanel addRemark={addRemark} squadronId={squadronId} isLoading={false} derived={derived} />
                             <ButtonBase
                                 onClick={() => setView('skylog')}

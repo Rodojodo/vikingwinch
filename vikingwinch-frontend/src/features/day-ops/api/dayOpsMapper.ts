@@ -8,7 +8,6 @@ export const toDayLogRecord = (dto: DayLogResponse): DayLogRecord => ({
     operatorSn: dto.operator_sn,
     traineeSn: dto.trainee,
     type: dto.type,
-    cableCheck: dto.cable_check,
     hours: dto.hours,
     timestamp: dto.timestamp,
 });

@@ -7,7 +7,6 @@ export interface DayLogRecord {
     operatorSn: string;
     traineeSn: string | null;
     type: DayLogType;
-    cableCheck: string | null;
     hours: number | null;
     timestamp: string | null;
 }

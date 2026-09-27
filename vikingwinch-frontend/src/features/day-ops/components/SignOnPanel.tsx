@@ -71,7 +71,6 @@ export const SignOnPanel: React.FC<SignOnPanelProps> = ({
                 operator_sn: operatorSn,
                 trainee: selectedTraineeSn || null,
                 type: 'sign_on',
-                cable_check: null,
                 hours: null,
             }, winchId);
             if (onSetTrainee) {
