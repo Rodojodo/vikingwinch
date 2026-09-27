@@ -17,6 +17,7 @@ from domain.launch.schema import (
 )
 
 router = APIRouter(prefix="/launches", tags=["launches"])
+FINISHED_DAY_ERROR = "The day has already been finished; no further launches can be recorded."
 
 
 @router.post("", response_model=LaunchRead, status_code=status.HTTP_201_CREATED)
@@ -27,6 +28,12 @@ async def create_launch(
     today = datetime.now(timezone.utc).date()
     async with db.begin():
         await db.execute(select(Winch.id).where(Winch.id == payload.winch_id).with_for_update())
+
+        if await day_log_repo.has_finish_day_for_day(db, payload.winch_id, today):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=FINISHED_DAY_ERROR,
+            )
 
         if not await day_log_repo.has_cable_check_for_day(db, payload.winch_id, today):
             raise HTTPException(
@@ -53,6 +60,12 @@ async def create_launch_correction(
     today = datetime.now(timezone.utc).date()
     async with db.begin():
         await db.execute(select(Winch.id).where(Winch.id == payload.winch_id).with_for_update())
+
+        if await day_log_repo.has_finish_day_for_day(db, payload.winch_id, today):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=FINISHED_DAY_ERROR,
+            )
 
         di = await day_log_repo.get_di_for_day(db, payload.winch_id, today)
         if not di:

@@ -6,6 +6,7 @@ from domain.day_log.repository import (
     get_day_log_from_date,
     has_di_for_day,
     has_cable_check_for_day,
+    has_finish_day_for_day,
     get_di_for_day,
 )
 
@@ -166,6 +167,20 @@ async def test_has_cable_check_for_day(db_session):
     assert await has_cable_check_for_day(db_session, 1, target_date) is True
     assert await has_cable_check_for_day(db_session, 2, target_date) is False
     assert await has_cable_check_for_day(db_session, 1, date(2026, 6, 7)) is False
+
+
+@pytest.mark.asyncio
+async def test_has_finish_day_for_day(db_session):
+    target_date = date(2026, 6, 6)
+    db_session.add_all([
+        make_day_log(winch_id=1, type="finish_day", timestamp=datetime(2026, 6, 6, 17, 0, 0)),
+        make_day_log(winch_id=2, type="finish_day", timestamp=datetime(2026, 6, 5, 17, 0, 0)),
+    ])
+    await db_session.commit()
+
+    assert await has_finish_day_for_day(db_session, 1, target_date) is True
+    assert await has_finish_day_for_day(db_session, 2, target_date) is False
+    assert await has_finish_day_for_day(db_session, 1, date(2026, 6, 7)) is False
 
 
 @pytest.mark.asyncio
