@@ -7,13 +7,10 @@ export interface DayLogPayload {
     trainee: string | null;
     type: DayLogType;
     hours: number | null;
-    /** Accepted for legacy fixtures; the backend no longer persists this field. */
-    cable_check?: string | null;
 }
 
 export interface DayLogResponse extends DayLogPayload {
     id: number;
-    winch_id: number;
     timestamp: string | null;
     day?: string;
 }

@@ -7,7 +7,7 @@ import {useLaunchOps} from '../hooks/useLaunchOps.ts';
 import {useSessionIdentity} from '../../../app/hooks/useSessionIdentity.ts';
 import './LaunchPanel.css';
 import {DrumControl} from "./DrumControl.tsx";
-import {glassPanelSx, glowingPrimaryButtonSx} from "../../../themes/styles.ts";
+import {cardSurfaceSx, glassPanelSx, glowingPrimaryButtonSx} from "../../../themes/styles.ts";
 import type {SxProps, Theme} from "@mui/material/styles";
 
 const ANIMATIONS = [
@@ -156,17 +156,10 @@ export const LaunchPanel = ({
             {!cableCheckCompleted ? (
                 <Stack spacing={2} sx={{width: '100%'}}>
                     <Box
-                        sx={{
-                            p: 2,
-                            textAlign: 'center',
-                            backgroundColor: 'surface.card',
-                            border: 1,
-                            borderColor: 'surface.border',
-                            borderRadius: 2,
-                        }}
+                        sx={[cardSurfaceSx, {p: 2, textAlign: 'center'}] as SxProps<Theme>}
                     >
-                        <Typography variant="body2" color="text.secondary">
-                        A cable check must be signed before launches can be recorded.
+                        <Typography variant="subtitle1">
+                            A cable check must be signed before launches can be recorded.
                         </Typography>
                     </Box>
                     {cableCheckError && <Alert severity="error">{cableCheckError}</Alert>}

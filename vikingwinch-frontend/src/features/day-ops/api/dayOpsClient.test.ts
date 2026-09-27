@@ -19,7 +19,6 @@ describe('dayOpsClient', () => {
             operator_sn: 'OP-1234',
             trainee: 'TR-5678',
             type: 'sign_on',
-            cable_check: null,
             hours: null,
         };
 

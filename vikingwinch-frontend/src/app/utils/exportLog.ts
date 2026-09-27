@@ -85,9 +85,10 @@ export const exportLog = async (state: WinchLogState): Promise<void> => {
             sheet.getCell('F12').value = getName(diLog.operator_sn);
         }
 
-        if (finishLog) {
-            sheet.getCell('H12').value = getName(cableCheckLog?.operator_sn ?? null);
-            sheet.getCell('J12').value = getName(finishLog.operator_sn);
+        if (cableCheckLog) {
+            const cableCheckOperatorName = getName(cableCheckLog.operator_sn);
+            sheet.getCell('H12').value = cableCheckOperatorName;
+            sheet.getCell('J12').value = cableCheckOperatorName;
         }
 
         const leftHistory = state.leftHistory;

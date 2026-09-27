@@ -188,7 +188,6 @@ describe('SignOnPanel', () => {
             operator_sn: 'OP1',
             trainee: null,
             type: 'sign_on',
-            cable_check: null,
             hours: null,
             timestamp: '2026-09-16T08:00:00Z',
         });
