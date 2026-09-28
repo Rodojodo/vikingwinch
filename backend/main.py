@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI, Request, status, Depends
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
@@ -19,7 +21,13 @@ async def db_unavailable_handler(request: Request, exc: Exception):
         content={"detail": "Database temporarily unavailable; retry shortly."},
         headers={"Retry-After": "5"},
     )
-app = FastAPI(title="Winch Log API")
+is_production = os.getenv("ENVIRONMENT", "local") == "production"
+app = FastAPI(
+    title="Winch Log API",
+    docs_url=None if is_production else "/docs",
+    redoc_url=None if is_production else "/redoc",
+    openapi_url=None if is_production else "/openapi.json",
+)
 
 origins = [
     "http://localhost:5173",
@@ -29,14 +37,17 @@ origins = [
     "http://localhost:3000",
     "https://vikingwinch.vercel.app",
 ]
+configured_origins = os.getenv("CORS_ALLOWED_ORIGINS")
+if configured_origins:
+    origins = [origin.strip() for origin in configured_origins.split(",") if origin.strip()]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$|^https://.*\.vercel\.app$|^https://.*\.up\.railway\.app$",
+    allow_origin_regex=None if is_production else r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "Accept"],
 )
 
 
