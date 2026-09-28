@@ -32,10 +32,6 @@ app = FastAPI(
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
-    "http://localhost:5174",
-    "http://127.0.0.1:5174",
-    "http://localhost:3000",
-    "https://vikingwinch.vercel.app",
 ]
 configured_origins = os.getenv("CORS_ALLOWED_ORIGINS")
 if configured_origins:
@@ -44,7 +40,7 @@ if configured_origins:
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_origin_regex=None if is_production else r"^https?://(localhost|127\.0\.0\.1)(:\d+)?$",
+    allow_origin_regex=None,
     allow_credentials=True,
     allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "Accept"],
