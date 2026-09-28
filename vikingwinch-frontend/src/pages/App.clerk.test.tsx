@@ -3,9 +3,11 @@ import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {getOperatorsForSquadron} from '../core/http/operatorsClient.ts';
 
 const mockUseUser = vi.fn();
+const mockGetToken = vi.fn().mockResolvedValue(null);
 
 vi.mock('@clerk/react', () => ({
     useUser: () => mockUseUser(),
+    useAuth: () => ({getToken: mockGetToken}),
     Show: ({when, children}: { when: 'signed-in' | 'signed-out'; children: React.ReactNode }) => {
         const {isLoaded, isSignedIn} = mockUseUser();
         if (!isLoaded) return null;

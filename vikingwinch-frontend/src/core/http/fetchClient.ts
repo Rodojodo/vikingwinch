@@ -1,6 +1,13 @@
 const rawApiUrl = import.meta.env.VITE_API_URL ?? (import.meta.env.PROD ? '/api' : 'http://127.0.0.1:8000');
 export const API_BASE_URL = rawApiUrl.endsWith('/') ? rawApiUrl.slice(0, -1) : rawApiUrl;
 
+type ApiTokenProvider = () => Promise<string | null>;
+let apiTokenProvider: ApiTokenProvider | null = null;
+
+export function setApiTokenProvider(provider: ApiTokenProvider | null): void {
+    apiTokenProvider = provider;
+}
+
 export async function handleApiError(response: Response): Promise<void> {
     if (!response.ok) {
         const contentType = response.headers.get("content-type");
@@ -24,6 +31,10 @@ export async function handleApiError(response: Response): Promise<void> {
 
 export async function apiFetch<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const headers = new Headers(options?.headers);
+    const token = apiTokenProvider ? await apiTokenProvider() : null;
+    if (token && !headers.has('Authorization')) {
+        headers.set('Authorization', `Bearer ${token}`);
+    }
     if (!headers.has('Accept')) {
         headers.set('Accept', 'application/json');
     }
