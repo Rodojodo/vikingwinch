@@ -1,8 +1,18 @@
-import type {WinchRead} from '../types';
+import type {WinchRead, WinchStatusRead} from '../types';
 import {apiFetch} from '../../../core/http/fetchClient';
 
 export const getWinchesForSquadron = async (squadronId: string, signal?: AbortSignal): Promise<WinchRead[]> => {
     return apiFetch<WinchRead[]>(`/squadrons/${squadronId}/winches`, {
+        signal,
+    });
+};
+
+export const getWinchStatusesForSquadron = async (
+    squadronId: string,
+    day: string,
+    signal?: AbortSignal,
+): Promise<WinchStatusRead[]> => {
+    return apiFetch<WinchStatusRead[]>(`/squadrons/${squadronId}/winch_status?day=${day}`, {
         signal,
     });
 };

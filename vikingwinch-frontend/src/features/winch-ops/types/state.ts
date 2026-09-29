@@ -9,7 +9,6 @@ export interface WinchSelectState {
 
 export interface DailyInspectionFormState {
     hours: number | '';
-    cableCheck: string;
     isSubmitting: boolean;
     error: string | null;
 }

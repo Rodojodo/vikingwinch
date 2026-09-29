@@ -36,7 +36,6 @@ describe('SignOnPanel', () => {
             operator_sn: 'OP1',
             trainee: null,
             type: 'sign_on',
-            cable_check: null,
             hours: null,
             timestamp: '2026-09-16T08:00:00Z',
         });
@@ -113,7 +112,6 @@ describe('SignOnPanel', () => {
             operator_sn: 'OP1',
             trainee: 'OP2',
             type: 'sign_on',
-            cable_check: null,
             hours: null,
         }, 42);
         expect(mockSetTrainee).toHaveBeenCalledWith('OP2');
@@ -147,7 +145,6 @@ describe('SignOnPanel', () => {
             operator_sn: 'OP1',
             trainee: null,
             type: 'sign_on',
-            cable_check: null,
             hours: null,
         }, 42);
         expect(mockOnComplete).not.toHaveBeenCalled();
@@ -191,7 +188,6 @@ describe('SignOnPanel', () => {
             operator_sn: 'OP1',
             trainee: null,
             type: 'sign_on',
-            cable_check: null,
             hours: null,
             timestamp: '2026-09-16T08:00:00Z',
         });

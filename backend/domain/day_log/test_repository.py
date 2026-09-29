@@ -5,6 +5,8 @@ from domain.day_log.model import Day_Log
 from domain.day_log.repository import (
     get_day_log_from_date,
     has_di_for_day,
+    has_cable_check_for_day,
+    has_finish_day_for_day,
     get_di_for_day,
 )
 
@@ -17,7 +19,6 @@ def make_day_log(**overrides) -> Day_Log:
         timestamp=datetime.now(timezone.utc),
         operator_sn="12345678",
         trainee=None,
-        cable_check="12345678",
         hours=100.5
     )
     return Day_Log(**{**defaults, **overrides})
@@ -115,16 +116,15 @@ async def test_add_day_log_success(db_session):
 
     payload = DayLogCreate(
         squadron_id="123 VGS",
-        type="sign_on",
+        type="cable_check",
         operator_sn="OFF-1002",
-        cable_check="SGT-2005",
-        hours=10.5
     )
 
     log = await add_day_log(db_session, 1, payload)
     assert log.id is not None
     assert log.winch_id == 1
-    assert log.hours == 10.5
+    assert log.type == "cable_check"
+    assert log.operator_sn == "OFF-1002"
 
 
 @pytest.mark.asyncio
@@ -153,6 +153,34 @@ async def test_has_di_for_day_no_di_entry(db_session):
     await db_session.commit()
 
     assert await has_di_for_day(db_session, 1, target_date) is False
+
+
+@pytest.mark.asyncio
+async def test_has_cable_check_for_day(db_session):
+    target_date = date(2026, 6, 6)
+    db_session.add_all([
+        make_day_log(winch_id=1, type="cable_check", timestamp=datetime(2026, 6, 6, 8, 0, 0)),
+        make_day_log(winch_id=2, type="sign_on", timestamp=datetime(2026, 6, 6, 8, 0, 0)),
+    ])
+    await db_session.commit()
+
+    assert await has_cable_check_for_day(db_session, 1, target_date) is True
+    assert await has_cable_check_for_day(db_session, 2, target_date) is False
+    assert await has_cable_check_for_day(db_session, 1, date(2026, 6, 7)) is False
+
+
+@pytest.mark.asyncio
+async def test_has_finish_day_for_day(db_session):
+    target_date = date(2026, 6, 6)
+    db_session.add_all([
+        make_day_log(winch_id=1, type="finish_day", timestamp=datetime(2026, 6, 6, 17, 0, 0)),
+        make_day_log(winch_id=2, type="finish_day", timestamp=datetime(2026, 6, 5, 17, 0, 0)),
+    ])
+    await db_session.commit()
+
+    assert await has_finish_day_for_day(db_session, 1, target_date) is True
+    assert await has_finish_day_for_day(db_session, 2, target_date) is False
+    assert await has_finish_day_for_day(db_session, 1, date(2026, 6, 7)) is False
 
 
 @pytest.mark.asyncio

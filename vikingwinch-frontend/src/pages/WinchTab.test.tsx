@@ -26,17 +26,29 @@ vi.mock('../features/launch-ops/components/LaunchPanel', () => ({
 }));
 vi.mock('../features/winch-ops/components/DailyInspectionPanel', () => ({
     DailyInspectionPanel: ({
+        onComplete,
+        onSignDI,
         onSubmitCorrections,
     }: {
+        onComplete: () => void;
+        onSignDI?: (hours: number) => Promise<void>;
         onSubmitCorrections?: (corrections: { left: number | null; right: number | null }) => Promise<unknown>;
     }) => (
         <div data-testid="daily-inspection-panel">
+            <button onClick={async () => {
+                await onSignDI?.(125.5);
+                onComplete();
+            }}>Sign Test DI</button>
             <button onClick={() => onSubmitCorrections?.({ left: 20, right: null })}>Submit Test Corrections</button>
         </div>
     ),
 }));
 vi.mock('../features/day-ops/components/SignOnPanel.tsx', () => ({
-    SignOnPanel: () => <div data-testid="sign-on-panel" />,
+    SignOnPanel: ({onComplete}: {onComplete: () => void}) => (
+        <div data-testid="sign-on-panel">
+            <button onClick={onComplete}>Sign On</button>
+        </div>
+    ),
 }));
 vi.mock('../features/winch-ops/components/WinchSelectPanel', () => ({
     WinchSelectPanel: ({ onSelectWinch }: { onSelectWinch: (winchId: number) => void }) => (
@@ -58,9 +70,10 @@ vi.mock('../features/trainee-ops/components/TraineeAssignmentPanel.tsx', () => (
     ),
 }));
 vi.mock('../features/day-ops/components/SkylogValues', () => ({
-    SkylogValues: ({ onBack }: { onBack: () => void }) => (
+    SkylogValues: ({ onExportLog, finishHours }: { onExportLog: () => void; finishHours: number | null }) => (
         <div data-testid="skylog-values">
-            <button onClick={onBack}>Back to Launch</button>
+            <span>{finishHours}</span>
+            <button onClick={onExportLog}>Download Logs</button>
         </div>
     ),
 }));
@@ -68,9 +81,13 @@ vi.mock('../features/remarks-repairs/components/RemarksRepairsPanel.tsx', () => 
     RemarksRepairsPanel: () => <div data-testid="remarks-repairs-panel" /> as React.ReactElement,
 }));
 vi.mock('../features/day-ops/components/FinishDayPanel.tsx', () => ({
-    FinishDayPanel: ({ onExportLog }: { onExportLog?: () => void }) => (
+    FinishDayPanel: ({ onFinished, diHours }: {
+        onFinished: (hours: number) => void;
+        diHours: number | null;
+    }) => (
         <div data-testid="finish-day-panel">
-            <button onClick={onExportLog}>Export Log</button>
+            <span data-testid="di-hours">{diHours}</span>
+            <button onClick={() => onFinished(10)}>Finish Day</button>
         </div>
     ),
 }));
@@ -169,6 +186,40 @@ describe('WinchTab', () => {
         });
     });
 
+    it('stores newly signed DI hours before moving to sign-on', async () => {
+        vi.mocked(getDayLog).mockResolvedValue([]);
+        vi.mocked(getLaunches).mockResolvedValue([]);
+
+        render(
+            <WinchTab
+                tabId="1"
+                squadronId="123 VGS"
+                operatorSn="OFF-1001"
+                winchId={1}
+                openWinchIds={[]}
+                onWinchSelect={vi.fn()}
+            />
+        );
+
+        await waitFor(() => {
+            expect(screen.getByTestId('daily-inspection-panel')).toBeInTheDocument();
+        });
+
+        await act(async () => {
+            fireEvent.click(screen.getByText('Sign Test DI'));
+        });
+
+        await waitFor(() => {
+            expect(screen.getByTestId('sign-on-panel')).toBeInTheDocument();
+        });
+
+        fireEvent.click(screen.getByText('Sign On'));
+        await waitFor(() => {
+            expect(screen.getByTestId('finish-day-panel')).toBeInTheDocument();
+            expect(screen.getByTestId('di-hours')).toHaveTextContent('125.5');
+        });
+    });
+
     it('renders SignOnPanel when DI exists but operator is not signed on', async () => {
         vi.mocked(getDayLog).mockResolvedValue([
             {
@@ -177,7 +228,6 @@ describe('WinchTab', () => {
                 operator_sn: 'OTHER-OP',
                 squadron_id: '123 VGS',
                 winch_id: 1,
-                cable_check: 'OTHER-OP',
                 hours: 0,
                 trainee: null,
                 timestamp: '2026-09-16T00:00:00Z',
@@ -202,7 +252,7 @@ describe('WinchTab', () => {
         });
     });
 
-    it('renders LaunchPanel when inspection and sign-on exist for today and exports log', async () => {
+    it('navigates from Finish Day to Skylog Values and exports log there', async () => {
         vi.mocked(getDayLog).mockResolvedValue([
             {
                 id: 1,
@@ -210,7 +260,6 @@ describe('WinchTab', () => {
                 operator_sn: 'OFF-1001',
                 squadron_id: '123 VGS',
                 winch_id: 1,
-                cable_check: 'OFF-1001',
                 hours: 0,
                 trainee: null,
                 timestamp: '2026-09-16T00:00:00Z',
@@ -222,7 +271,6 @@ describe('WinchTab', () => {
                 operator_sn: 'OFF-1001',
                 squadron_id: '123 VGS',
                 winch_id: 1,
-                cable_check: 'OFF-1001',
                 hours: 0,
                 trainee: null,
                 timestamp: '2026-09-16T00:00:00Z',
@@ -246,9 +294,13 @@ describe('WinchTab', () => {
             expect(screen.getByTestId('launch-panel')).toBeInTheDocument();
         });
 
-        fireEvent.click(screen.getByText('Export Log'));
+        fireEvent.click(screen.getByText('Finish Day'));
+        await waitFor(() => {
+            expect(screen.getByTestId('skylog-values')).toBeInTheDocument();
+        });
+        fireEvent.click(screen.getByText('Download Logs'));
         expect(exportLog).toHaveBeenCalledWith(expect.objectContaining({
-            dayFinished: false,
+            dayFinished: true,
             winchId: 1,
         }));
     });
@@ -261,7 +313,6 @@ describe('WinchTab', () => {
                 operator_sn: 'OFF-1001',
                 squadron_id: '123 VGS',
                 winch_id: 1,
-                cable_check: 'OFF-1001',
                 hours: 0,
                 trainee: null,
                 timestamp: '2026-09-16T00:00:00Z',
@@ -273,7 +324,6 @@ describe('WinchTab', () => {
                 operator_sn: 'OFF-1001',
                 squadron_id: '123 VGS',
                 winch_id: 1,
-                cable_check: 'OFF-1001',
                 hours: 0,
                 trainee: null,
                 timestamp: '2026-09-16T00:00:00Z',
@@ -285,7 +335,6 @@ describe('WinchTab', () => {
                 operator_sn: 'OFF-1001',
                 squadron_id: '123 VGS',
                 winch_id: 1,
-                cable_check: 'OFF-1001',
                 hours: 10,
                 trainee: null,
                 timestamp: '2026-09-16T18:00:00Z',
@@ -306,74 +355,14 @@ describe('WinchTab', () => {
         );
 
         await waitFor(() => {
-            expect(screen.getByTestId('launch-panel')).toBeInTheDocument();
+            expect(screen.getByTestId('skylog-values')).toBeInTheDocument();
         });
 
-        fireEvent.click(screen.getByText('Export Log'));
+        fireEvent.click(screen.getByText('Download Logs'));
         expect(exportLog).toHaveBeenCalledWith(expect.objectContaining({
             dayFinished: true,
             winchId: 1,
         }));
-    });
-
-    it('navigates to SkylogValues when "Show skylog values" is clicked and returns to launch on back', async () => {
-        vi.mocked(getDayLog).mockResolvedValue([
-            {
-                id: 1,
-                type: 'di',
-                operator_sn: 'OFF-1001',
-                squadron_id: '123 VGS',
-                winch_id: 1,
-                cable_check: 'OFF-1001',
-                hours: 0,
-                trainee: null,
-                timestamp: '2026-09-16T00:00:00Z',
-                day: '2026-09-16',
-            },
-            {
-                id: 2,
-                type: 'sign_on',
-                operator_sn: 'OFF-1001',
-                squadron_id: '123 VGS',
-                winch_id: 1,
-                cable_check: 'OFF-1001',
-                hours: 0,
-                trainee: null,
-                timestamp: '2026-09-16T00:00:00Z',
-                day: '2026-09-16',
-            },
-        ]);
-        vi.mocked(getLaunches).mockResolvedValue([]);
-
-        render(
-            <WinchTab
-                tabId="1"
-                squadronId="123 VGS"
-                operatorSn="OFF-1001"
-                winchId={1}
-                openWinchIds={[]}
-                onWinchSelect={vi.fn()}
-            />
-        );
-
-        await waitFor(() => {
-            expect(screen.getByTestId('launch-panel')).toBeInTheDocument();
-        });
-
-        const skylogBtn = screen.getByText('Show skylog values');
-        expect(skylogBtn).toBeInTheDocument();
-
-        fireEvent.click(skylogBtn);
-
-        await waitFor(() => {
-            expect(screen.getByTestId('skylog-values')).toBeInTheDocument();
-        });
-
-        fireEvent.click(screen.getByText('Back to Launch'));
-
-        await waitFor(() => {
-            expect(screen.getByTestId('launch-panel')).toBeInTheDocument();
-        });
     });
 
     it('renders TraineeAssignmentPanel in TraineeWing and handles trainee sign-on', async () => {
@@ -384,7 +373,6 @@ describe('WinchTab', () => {
                 operator_sn: 'OFF-1001',
                 squadron_id: '123 VGS',
                 winch_id: 1,
-                cable_check: 'OFF-1001',
                 hours: 0,
                 trainee: null,
                 timestamp: '2026-09-16T00:00:00Z',
@@ -396,7 +384,6 @@ describe('WinchTab', () => {
                 operator_sn: 'OFF-1001',
                 squadron_id: '123 VGS',
                 winch_id: 1,
-                cable_check: 'OFF-1001',
                 hours: 0,
                 trainee: null,
                 timestamp: '2026-09-16T00:00:00Z',

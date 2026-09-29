@@ -56,6 +56,66 @@ async def test_get_winch_day_data(setup_data):
     assert len(data["logs"]) == 1
     assert len(data["launches"]) == 1
     assert data["launches"][0]["drum"] == "left"
+    assert data["cable_check_verified"] is False
+
+
+@pytest.mark.asyncio
+async def test_get_winch_statuses_for_squadron_uses_current_day_priority(setup_data, db_session):
+    db_session.add_all([
+        Winch(id=2, registration="VX002", squadron_id="123 VGS"),
+        Winch(id=3, registration="VX003", squadron_id="123 VGS"),
+        Winch(id=4, registration="VX004", squadron_id="123 VGS"),
+        Day_Log(
+            squadron_id="123 VGS", winch_id=1, type="di",
+            operator_sn="123456", timestamp=datetime.now(timezone.utc),
+        ),
+        Day_Log(
+            squadron_id="123 VGS", winch_id=1, type="finish_day",
+            operator_sn="123456", timestamp=datetime.now(timezone.utc),
+        ),
+        Day_Log(
+            squadron_id="123 VGS", winch_id=2, type="di",
+            operator_sn="123456", timestamp=datetime.now(timezone.utc),
+        ),
+        Day_Log(
+            squadron_id="123 VGS", winch_id=4, type="sign_on",
+            operator_sn="123456", timestamp=datetime.now(timezone.utc),
+        ),
+        Day_Log(
+            squadron_id="123 VGS", winch_id=3, type="finish_day",
+            operator_sn="123456", timestamp=datetime.now(timezone.utc) - timedelta(days=1),
+        ),
+    ])
+    await db_session.commit()
+
+    today = date.today().isoformat()
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        response = await ac.get(f"/squadrons/123%20VGS/winch_status?day={today}")
+
+    assert response.status_code == 200
+    statuses = {item["id"]: item["status"] for item in response.json()}
+    assert statuses == {
+        1: "day_finished",
+        2: "di_complete",
+        3: "default",
+        4: "in_use",
+    }
+
+
+@pytest.mark.asyncio
+async def test_get_winch_day_data_reports_cable_check(setup_data, db_session):
+    await db_session.execute(text(
+        "INSERT INTO day_log (squadron_id, winch_id, type, timestamp, operator_sn) "
+        "VALUES ('123 VGS', 1, 'cable_check', CURRENT_TIMESTAMP, '123456')"
+    ))
+    await db_session.commit()
+
+    today = date.today().isoformat()
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
+        response = await ac.get(f"/winch/1/day_data?day={today}")
+
+    assert response.status_code == 200
+    assert response.json()["cable_check_verified"] is True
 
 @pytest.mark.asyncio
 async def test_get_export_data(setup_data):
@@ -106,9 +166,8 @@ async def test_create_day_log_success(db_session):
     
     payload = {
         "squadron_id": "sqn10",
-        "type": "di",
+        "type": "cable_check",
         "operator_sn": "op10",
-        "hours": 200.5
     }
 
     async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as ac:

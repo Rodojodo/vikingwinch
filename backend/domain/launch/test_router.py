@@ -2,7 +2,7 @@ import pytest
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy import text
 from unittest.mock import patch
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from main import app
 
 @pytest.mark.asyncio
@@ -10,6 +10,7 @@ async def test_create_launch_rollback(db_session):
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn3')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (888, 'Winch 888', 'sqn3')"))
     await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('12345', 'oid', 'Op', 'sqn3', 'operator')"))
+    await db_session.execute(text("INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (600, 'sqn3', 888, 'cable_check', CURRENT_TIMESTAMP, '12345')"))
     await db_session.commit()
 
     payload = {
@@ -34,6 +35,7 @@ async def test_create_launch_success(db_session):
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn4')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (889, 'Winch 889', 'sqn4')"))
     await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('123456', 'oid2', 'Op2', 'sqn4', 'operator')"))
+    await db_session.execute(text("INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (601, 'sqn4', 889, 'cable_check', CURRENT_TIMESTAMP, '123456')"))
     await db_session.commit()
 
     payload = {
@@ -50,6 +52,85 @@ async def test_create_launch_success(db_session):
     
     result = await db_session.execute(text("SELECT COUNT(*) FROM launches WHERE winch_id = 889"))
     assert result.scalar() == 1
+
+
+@pytest.mark.asyncio
+async def test_create_launch_requires_cable_check(db_session):
+    await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn4_no_check')"))
+    await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (893, 'Winch 893', 'sqn4_no_check')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('123457', 'oid_no_check', 'Op No Check', 'sqn4_no_check', 'operator')"))
+    await db_session.commit()
+
+    payload = {
+        "squadron_id": "sqn4_no_check",
+        "winch_id": 893,
+        "operator_sn": "123457",
+        "drum": "left",
+        "is_burn": False
+    }
+
+    async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as ac:
+        response = await ac.post("/launches", json=payload)
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "A cable check must be signed before launches can be recorded."
+
+    result = await db_session.execute(text("SELECT COUNT(*) FROM launches WHERE winch_id = 893"))
+    assert result.scalar() == 0
+
+
+@pytest.mark.asyncio
+async def test_create_launch_rejected_after_finish_day(db_session):
+    now = datetime.now(timezone.utc).isoformat()
+    await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn_finish_launch')"))
+    await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (900, 'Winch 900', 'sqn_finish_launch')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op_finish_launch', 'oid_finish_launch', 'Finished launch operator', 'sqn_finish_launch', 'operator')"))
+    await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (508, 'sqn_finish_launch', 900, 'cable_check', '{now}', 'op_finish_launch')"))
+    await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (509, 'sqn_finish_launch', 900, 'finish_day', '{now}', 'op_finish_launch')"))
+    await db_session.commit()
+
+    payload = {
+        "squadron_id": "sqn_finish_launch",
+        "winch_id": 900,
+        "operator_sn": "op_finish_launch",
+        "drum": "left",
+        "is_burn": False,
+    }
+
+    async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as ac:
+        response = await ac.post("/launches", json=payload)
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "The day has already been finished; no further launches can be recorded."
+    result = await db_session.execute(text("SELECT COUNT(*) FROM launches WHERE winch_id = 900"))
+    assert result.scalar() == 0
+
+
+@pytest.mark.asyncio
+async def test_create_launch_finish_day_from_different_day_does_not_block(db_session):
+    now = datetime.now(timezone.utc)
+    yesterday = (now - timedelta(days=1)).isoformat()
+    current_day = now.isoformat()
+    await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn_old_finish_launch')"))
+    await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (901, 'Winch 901', 'sqn_old_finish_launch')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op_old_finish_launch', 'oid_old_finish_launch', 'Old finished launch operator', 'sqn_old_finish_launch', 'operator')"))
+    await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (510, 'sqn_old_finish_launch', 901, 'finish_day', '{yesterday}', 'op_old_finish_launch')"))
+    await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (511, 'sqn_old_finish_launch', 901, 'cable_check', '{current_day}', 'op_old_finish_launch')"))
+    await db_session.commit()
+
+    payload = {
+        "squadron_id": "sqn_old_finish_launch",
+        "winch_id": 901,
+        "operator_sn": "op_old_finish_launch",
+        "drum": "left",
+        "is_burn": False,
+    }
+
+    async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as ac:
+        response = await ac.post("/launches", json=payload)
+
+    assert response.status_code == 201
+
 
 @pytest.mark.asyncio
 async def test_delete_launch_success(db_session):
@@ -133,6 +214,47 @@ async def test_create_launch_correction_both_drums_success(db_session):
         assert data[1]["drum"] == "right"
         assert data[1]["launch_number"] == 80
         assert data[1]["remarks"] == "corrected brought forward"
+
+
+@pytest.mark.asyncio
+async def test_create_launch_correction_rejected_after_finish_day(db_session):
+    now = datetime.now(timezone.utc).isoformat()
+    await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn_finish_correction')"))
+    await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (902, 'Winch 902', 'sqn_finish_correction')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op_finish_correction', 'oid_finish_correction', 'Finished correction operator', 'sqn_finish_correction', 'operator')"))
+    await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (512, 'sqn_finish_correction', 902, 'di', '{now}', 'op_finish_correction')"))
+    await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (513, 'sqn_finish_correction', 902, 'finish_day', '{now}', 'op_finish_correction')"))
+    await db_session.commit()
+
+    payload = {"winch_id": 902, "left": 50, "right": 80}
+
+    async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as ac:
+        response = await ac.post("/launches/corrections", json=payload)
+
+    assert response.status_code == 400
+    assert response.json()["detail"] == "The day has already been finished; no further launches can be recorded."
+    result = await db_session.execute(text("SELECT COUNT(*) FROM launches WHERE winch_id = 902"))
+    assert result.scalar() == 0
+
+
+@pytest.mark.asyncio
+async def test_create_launch_correction_finish_day_from_different_day_does_not_block(db_session):
+    now = datetime.now(timezone.utc)
+    yesterday = (now - timedelta(days=1)).isoformat()
+    current_day = now.isoformat()
+    await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn_old_finish_correction')"))
+    await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (903, 'Winch 903', 'sqn_old_finish_correction')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op_old_finish_correction', 'oid_old_finish_correction', 'Old finished correction operator', 'sqn_old_finish_correction', 'operator')"))
+    await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (514, 'sqn_old_finish_correction', 903, 'finish_day', '{yesterday}', 'op_old_finish_correction')"))
+    await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (515, 'sqn_old_finish_correction', 903, 'di', '{current_day}', 'op_old_finish_correction')"))
+    await db_session.commit()
+
+    async with AsyncClient(transport=ASGITransport(app=app, raise_app_exceptions=False), base_url="http://test") as ac:
+        response = await ac.post("/launches/corrections", json={"winch_id": 903, "left": 50, "right": 80})
+
+    assert response.status_code == 201
+    result = await db_session.execute(text("SELECT COUNT(*) FROM launches WHERE winch_id = 903"))
+    assert result.scalar() == 2
 
 
 @pytest.mark.asyncio
@@ -332,6 +454,7 @@ async def test_create_launch_correction_same_day_bf_and_zero_day_launches(db_ses
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (899, 'Winch 899', 'sqn13')"))
     await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op13', 'oid13', 'Op13', 'sqn13', 'operator')"))
     await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (506, 'sqn13', 899, 'di', '{now}', 'op13')"))
+    await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (507, 'sqn13', 899, 'cable_check', '{now}', 'op13')"))
     await db_session.commit()
 
     payload = {

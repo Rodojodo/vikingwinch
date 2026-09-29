@@ -12,6 +12,7 @@ os.environ.setdefault("ENVIRONMENT", "test")
 
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from database.session import get_db
+from auth import Principal, get_current_principal
 from database.base import Base
 from main import app
 
@@ -41,3 +42,11 @@ async def db_session() -> AsyncSession:
 @pytest.fixture(autouse=True)
 def override_dependency(db_session):
     app.dependency_overrides[get_db] = lambda: db_session
+    app.dependency_overrides[get_current_principal] = lambda: Principal(
+        provider="test",
+        mode="shared_squadron",
+        subject="test-subject",
+        squadron_id="123 VGS",
+    )
+    yield
+    app.dependency_overrides.clear()

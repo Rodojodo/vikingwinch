@@ -1,5 +1,7 @@
 import type {OperatorRead} from '../../../core/types';
 
+import type {WinchStatus} from './domain';
+
 export interface OperatorResponse {
     operators: OperatorRead[];
 }
@@ -10,6 +12,10 @@ export interface WinchRead {
   squadron_id: string;
     name?: string;
     status?: string;
+}
+
+export interface WinchStatusRead extends WinchRead {
+    status: WinchStatus;
 }
 
 export interface BroughtForwardResponse {

@@ -72,6 +72,31 @@ describe('LaunchPanel', () => {
         expect(screen.getByTestId('remarks-panel')).toBeInTheDocument();
     });
 
+    it('blocks drum controls until the cable check is signed', async () => {
+        const onSignCableCheck = vi.fn().mockResolvedValue(undefined);
+        render(<LaunchPanel cableCheckCompleted={false} onSignCableCheck={onSignCableCheck} />);
+
+        expect(screen.queryByText('Left Drum')).not.toBeInTheDocument();
+        expect(screen.getByText('A cable check must be signed before launches can be recorded.')).toBeInTheDocument();
+
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', {name: 'Sign Cable Check'}));
+        });
+
+        expect(onSignCableCheck).toHaveBeenCalledTimes(1);
+    });
+
+    it('reports cable-check signing errors', async () => {
+        const onSignCableCheck = vi.fn().mockRejectedValue(new Error('Cable check failed'));
+        render(<LaunchPanel cableCheckCompleted={false} onSignCableCheck={onSignCableCheck} />);
+
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', {name: 'Sign Cable Check'}));
+        });
+
+        expect(screen.getByText('Cable check failed')).toBeInTheDocument();
+    });
+
     it('handles left launch click', () => {
         render(<LaunchPanel />);
         const launchBtn = screen.getByText('Left Drum').closest('button');

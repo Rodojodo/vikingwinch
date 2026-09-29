@@ -9,7 +9,7 @@ import {useDayOps} from '../features/day-ops/hooks/useDayOps.ts';
 import {RemarksRepairsPanel} from '../features/remarks-repairs/components/RemarksRepairsPanel.tsx';
 import {FinishDayPanel} from '../features/day-ops/components/FinishDayPanel.tsx';
 import {useCallback, useEffect, useState} from 'react';
-import {Box, ButtonBase} from '@mui/material';
+import {Box} from '@mui/material';
 import {LaunchPanel} from '../features/launch-ops/components/LaunchPanel';
 import {TraineeWing} from '../features/trainee-ops/components/TraineeWing.tsx';
 import {TraineeAssignmentPanel} from '../features/trainee-ops/components/TraineeAssignmentPanel.tsx';
@@ -27,7 +27,7 @@ import {exportLog} from '../app/utils/exportLog.ts';
 import type {SessionStatus} from '../app/types/session.ts';
 import type {TabView} from '../features/winch-ops/types';
 import type {OperatorRead} from '../core/types';
-import {appBackgroundSx, getTabButtonStyles} from '../themes/styles.ts';
+import {appBackgroundSx} from '../themes/styles.ts';
 
 interface WinchTabProps {
     tabId: string;
@@ -54,12 +54,16 @@ const WinchTabContent = ({
     const {squadronId, winchId, operatorSn, status} = useSessionIdentity();
     const {hydrateHistory, derived, addRemarkToState, leftHistory, rightHistory} = useLaunchOps();
     const {traineeSn, activeLauncherSn, setActiveLauncher, setTrainee} = useTraineeOps();
-    const {recordDI, recordSignOn} = useDayOps();
+    const {recordDI, recordSignOn, recordCableCheck} = useDayOps();
     const [view, setView] = useState<TabView>(() => (winchId ? 'loading' : 'select_winch'));
     const [prevWinchId, setPrevWinchId] = useState(winchId);
+    const [cableCheckCompleted, setCableCheckCompleted] = useState(false);
+    const [diHours, setDiHours] = useState<number | null>(null);
+    const [finishHours, setFinishHours] = useState<number | null>(null);
     if (winchId !== prevWinchId) {
         setPrevWinchId(winchId);
         setView(winchId ? 'loading' : 'select_winch');
+        setCableCheckCompleted(false);
     }
 
     const [lastOperatorSn, setLastOperatorSn] = useState<string | null>(null);
@@ -117,9 +121,14 @@ const WinchTabContent = ({
                 setTrainee(lastTrainee);
                 const signOnLogs = logs.filter(l => l.type === 'sign_on');
                 const diLogs = logs.filter(l => l.type === 'di');
+                const cableCheckLogs = logs.filter(l => l.type === 'cable_check');
 
                 const hasDiToday = diLogs.length > 0;
+                setCableCheckCompleted(cableCheckLogs.length > 0);
                 const isDayFinished = logs.some(l => l.type === 'finish_day');
+                const finishLog = logs.findLast(l => l.type === 'finish_day');
+                setDiHours(diLogs.findLast(l => l.hours !== null)?.hours ?? null);
+                setFinishHours(finishLog?.hours ?? null);
 
                 onSessionStatusResolved(isDayFinished ? 'closed' : 'open');
 
@@ -132,7 +141,9 @@ const WinchTabContent = ({
                     setLastTraineeSn(null);
                 }
 
-                if (!hasDiToday) {
+                if (isDayFinished) {
+                    setView('skylog');
+                } else if (!hasDiToday) {
                     setView('inspection');
                 } else if (signOnLogs.length === 0 || signOnLogs[signOnLogs.length - 1].operatorSn !== operatorSn) {
                     setView('sign_on');
@@ -172,7 +183,7 @@ const WinchTabContent = ({
             traineeSn,
             leftHistory,
             rightHistory,
-            dayFinished: status.status === 'closed',
+            dayFinished: status.status === 'closed' || finishHours !== null,
             activeLauncherSn: activeLauncherSn || (operatorSn ?? ''),
         });
     };
@@ -199,7 +210,8 @@ const WinchTabContent = ({
                     <DailyInspectionPanel
                         onComplete={() => setView('sign_on')}
                         onSignDI={async (hours) => {
-                            await recordDI(null, hours);
+                            await recordDI(hours);
+                            setDiHours(hours);
                         }}
                         onSubmitCorrections={async (corrections) => {
                             if (!winchId) {
@@ -227,15 +239,22 @@ const WinchTabContent = ({
             case 'launch':
                 return (
                     <Box sx={{position: 'relative', width: '100%', maxWidth: 540}}>
-                        <LaunchPanel>
+                        <LaunchPanel
+                            cableCheckCompleted={cableCheckCompleted}
+                            onSignCableCheck={async () => {
+                                await recordCableCheck();
+                                setCableCheckCompleted(true);
+                            }}
+                        >
                             <RemarksRepairsPanel addRemark={addRemark} squadronId={squadronId} isLoading={false} derived={derived} />
-                            <ButtonBase
-                                onClick={() => setView('skylog')}
-                                sx={getTabButtonStyles(false)}
-                            >
-                                Show skylog values
-                            </ButtonBase>
-                            <FinishDayPanel isLoading={false} onExportLog={handleExportLog}/>
+                            <FinishDayPanel
+                                isLoading={false}
+                                diHours={diHours}
+                                onFinished={(hours) => {
+                                    setFinishHours(hours);
+                                    setView('skylog');
+                                }}
+                            />
                         </LaunchPanel>
                         <TraineeWing
                             open={wingOpen}
@@ -269,11 +288,12 @@ const WinchTabContent = ({
             case 'skylog':
                 return (
                     <SkylogValues
-                        onBack={() => setView('launch')}
                         winchId={winchId}
                         squadron={squadronId}
                         leftLaunches={derived.leftLaunches}
                         rightLaunches={derived.rightLaunches}
+                        finishHours={finishHours}
+                        onExportLog={handleExportLog}
                     />
                 );
             default:

@@ -1,169 +1,75 @@
 import {fireEvent, render, screen, waitFor} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
+import type React from 'react';
 import {FinishDayPanel} from './FinishDayPanel.tsx';
-import {getOperatorsForSquadron} from '../../../core/http/operatorsClient.ts';
-import type {OperatorRead} from '../../../core/types';
 
 const mockFinishDay = vi.fn();
-const mockExportLog = vi.fn();
 
 vi.mock('../../../app/hooks/useSessionIdentity.ts', () => ({
-    useSessionIdentity: vi.fn(() => ({squadronId: 'sqn1', winchId: 42, operatorSn: 'OP1'})),
+    useSessionIdentity: vi.fn(() => ({winchId: 42})),
 }));
 
 vi.mock('../hooks/useDayOps', () => ({
-    useDayOps: vi.fn(() => ({
-        dayFinished: false,
-        finishDay: mockFinishDay,
-    })),
-}));
-
-vi.mock('../../../core/http/operatorsClient.ts', () => ({
-    getOperatorsForSquadron: vi.fn(),
+    useDayOps: vi.fn(() => ({finishDay: mockFinishDay})),
 }));
 
 describe('FinishDayPanel', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        mockFinishDay.mockReset();
-        mockExportLog.mockReset();
-        vi.mocked(getOperatorsForSquadron).mockResolvedValue([
-            {service_no: 'OP1', name: 'Operator 1', squadron_id: 'sqn1'},
-        ]);
         mockFinishDay.mockResolvedValue(undefined);
-        mockExportLog.mockResolvedValue(undefined);
     });
 
-    it('renders Finish Day button and toggles panel', () => {
-        render(<FinishDayPanel isLoading={false} onExportLog={mockExportLog}/>);
+    const renderPanel = (props: Partial<React.ComponentProps<typeof FinishDayPanel>> = {}) =>
+        render(<FinishDayPanel isLoading={false} diHours={120} onFinished={vi.fn()} {...props}/>);
 
-        expect(screen.queryByText('Hours Stop')).not.toBeVisible();
-
-        fireEvent.click(screen.getByRole('button', { name: /Finish Day/i }));
-
-        expect(screen.getByText('Hours Stop')).toBeVisible();
-        expect(getOperatorsForSquadron).toHaveBeenCalledWith('sqn1', expect.any(AbortSignal));
+    it('opens with Finish Day disabled and no download action', () => {
+        renderPanel();
+        fireEvent.click(screen.getByRole('button', {name: 'Finish Day'}));
+        expect(screen.getAllByRole('button', {name: 'Finish Day'})[1]).toBeDisabled();
+        expect(screen.queryByRole('button', {name: 'Download Log'})).not.toBeInTheDocument();
     });
 
-    it('submits correctly when fields are valid', async () => {
-        render(<FinishDayPanel isLoading={false} onExportLog={mockExportLog}/>);
+    it('shows validation while hours are not greater than DI hours', () => {
+        renderPanel();
+        fireEvent.click(screen.getByRole('button', {name: 'Finish Day'}));
+        fireEvent.change(screen.getByPlaceholderText('e.g. 126.2'), {target: {value: '120'}});
+        expect(screen.getByText('Must be greater than DI hours 120')).toBeInTheDocument();
+        expect(screen.getAllByRole('button', {name: 'Finish Day'})[1]).toBeDisabled();
+    });
 
-        fireEvent.click(screen.getByRole('button', { name: 'Finish Day' }));
-
+    it('submits valid finish-day hours and notifies the parent', async () => {
+        const onFinished = vi.fn();
+        renderPanel({onFinished});
+        fireEvent.click(screen.getByRole('button', {name: 'Finish Day'}));
+        fireEvent.change(screen.getByPlaceholderText('e.g. 126.2'), {target: {value: '126.2'}});
+        fireEvent.click(screen.getAllByRole('button', {name: 'Finish Day'})[1]);
         await waitFor(() => {
-            expect(screen.getByText('Select...')).toBeInTheDocument();
-        });
-
-        fireEvent.change(screen.getByPlaceholderText('e.g. 126.2'), { target: { value: '12.5' } });
-
-        // Select an operator (Cable Check By)
-        fireEvent.mouseDown(screen.getByRole('combobox'));
-        await screen.findByRole('listbox');
-        fireEvent.click(screen.getByText('Operator 1'));
-
-        const submitBtns = screen.getAllByRole('button', { name: 'Finish Day' });
-        fireEvent.click(submitBtns[1]);
-
-        await waitFor(() => {
-            expect(mockFinishDay).toHaveBeenCalledWith('OP1', 12.5);
-            expect(screen.queryByText('Hours Stop')).not.toBeVisible();
+            expect(mockFinishDay).toHaveBeenCalledWith(126.2);
+            expect(onFinished).toHaveBeenCalledWith(126.2);
         });
     });
 
-    it('handles finishDay error', async () => {
+    it('enables submission when finish hours are greater than decimal DI hours', () => {
+        renderPanel({diHours: 126.2});
+        fireEvent.click(screen.getByRole('button', {name: 'Finish Day'}));
+        fireEvent.change(screen.getByPlaceholderText('e.g. 126.2'), {target: {value: '127'}});
+
+        expect(screen.queryByText('Must be greater than DI hours 126.2')).not.toBeInTheDocument();
+        expect(screen.getAllByRole('button', {name: 'Finish Day'})[1]).toBeEnabled();
+    });
+
+    it('handles finishDay errors', async () => {
         mockFinishDay.mockRejectedValueOnce(new Error('Backend error'));
-        render(<FinishDayPanel isLoading={false} onExportLog={mockExportLog}/>);
-
-        fireEvent.click(screen.getByRole('button', { name: 'Finish Day' }));
-
-        const submitBtns = screen.getAllByRole('button', { name: 'Finish Day' });
-        fireEvent.click(submitBtns[1]);
-
+        renderPanel();
+        fireEvent.click(screen.getByRole('button', {name: 'Finish Day'}));
+        fireEvent.change(screen.getByPlaceholderText('e.g. 126.2'), {target: {value: '126.2'}});
+        fireEvent.click(screen.getAllByRole('button', {name: 'Finish Day'})[1]);
         expect(await screen.findByText('Backend error')).toBeInTheDocument();
     });
 
-    it('calls exportLog when Download Log is clicked', async () => {
-        render(<FinishDayPanel isLoading={false} onExportLog={mockExportLog}/>);
-
-        fireEvent.click(screen.getByRole('button', { name: 'Finish Day' }));
-        fireEvent.click(screen.getByRole('button', { name: 'Download Log' }));
-
-        await waitFor(() => {
-            expect(mockExportLog).toHaveBeenCalled();
-        });
-    });
-
-    it('handles operator fetch error', async () => {
-        vi.mocked(getOperatorsForSquadron).mockRejectedValueOnce(new Error('Failed to load'));
-        render(<FinishDayPanel isLoading={false} onExportLog={mockExportLog}/>);
-
-        fireEvent.click(screen.getByRole('button', { name: 'Finish Day' }));
-
-        expect(await screen.findByText('Failed to load operators')).toBeInTheDocument();
-    });
-
-    it('handles exportLog error', async () => {
-        mockExportLog.mockRejectedValueOnce(new Error('Export failed'));
-        render(<FinishDayPanel isLoading={false} onExportLog={mockExportLog}/>);
-
-        fireEvent.click(screen.getByRole('button', { name: 'Finish Day' }));
-        fireEvent.click(screen.getByRole('button', { name: 'Download Log' }));
-
-        expect(await screen.findByText('Export failed')).toBeInTheDocument();
-    });
-
-    it('handles finishDay error with non-Error object', async () => {
-        mockFinishDay.mockRejectedValueOnce('String error');
-        render(<FinishDayPanel isLoading={false} onExportLog={mockExportLog}/>);
-
-        fireEvent.click(screen.getByRole('button', { name: 'Finish Day' }));
-        const submitBtns = screen.getAllByRole('button', { name: 'Finish Day' });
-        fireEvent.click(submitBtns[1]);
-
-        expect(await screen.findByText('Failed to submit finish day')).toBeInTheDocument();
-    });
-
-    it('handles exportLog error with non-Error object', async () => {
-        mockExportLog.mockRejectedValueOnce({msg: 'Export failed'});
-        render(<FinishDayPanel isLoading={false} onExportLog={mockExportLog}/>);
-
-        fireEvent.click(screen.getByRole('button', { name: 'Finish Day' }));
-        fireEvent.click(screen.getByRole('button', { name: 'Download Log' }));
-
-        expect(await screen.findByText('Failed to download log')).toBeInTheDocument();
-    });
-
-    it('shows Submitting... when isLoading is true', () => {
-        render(<FinishDayPanel isLoading={true} onExportLog={mockExportLog}/>);
-        fireEvent.click(screen.getByRole('button', { name: 'Finish Day' }));
-        expect(screen.getByRole('button', { name: 'Submitting...' })).toBeInTheDocument();
-    });
-
-    it('aborts fetch operators if unmounted before completion', async () => {
-        let resolvePromise: (val: OperatorRead[]) => void = () => {};
-        const promise = new Promise<OperatorRead[]>((resolve) => { resolvePromise = resolve; });
-        vi.mocked(getOperatorsForSquadron).mockReturnValue(promise);
-
-        const {unmount} = render(<FinishDayPanel isLoading={false} onExportLog={mockExportLog}/>);
-        fireEvent.click(screen.getByRole('button', { name: 'Finish Day' }));
-
-        unmount();
-        resolvePromise([{ service_no: 'OP1', name: 'Operator 1', squadron_id: 'sqn1' }]);
-
-        await new Promise(r => setTimeout(r, 0));
-    });
-
-    it('aborts fetch operators and ignores errors if unmounted before completion', async () => {
-        let rejectPromise: (reason: unknown) => void = () => {};
-        const promise = new Promise<OperatorRead[]>((_, reject) => { rejectPromise = reject; });
-        vi.mocked(getOperatorsForSquadron).mockReturnValue(promise);
-
-        const {unmount} = render(<FinishDayPanel isLoading={false} onExportLog={mockExportLog}/>);
-        fireEvent.click(screen.getByRole('button', { name: 'Finish Day' }));
-
-        unmount();
-        rejectPromise(new Error('Network error'));
-
-        await new Promise(r => setTimeout(r, 0));
+    it('shows submitting state', () => {
+        renderPanel({isLoading: true});
+        fireEvent.click(screen.getByRole('button', {name: 'Finish Day'}));
+        expect(screen.getByRole('button', {name: 'Submitting...'})).toBeInTheDocument();
     });
 });

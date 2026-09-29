@@ -1,19 +1,22 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from auth import Principal, authorize_operator, authorize_squadron, get_current_principal
 from database.session import get_db
 from domain.operator import repository as operator_repo
 from domain.operator.schema import OperatorRead
 
-router = APIRouter(tags=["operators"])
+router = APIRouter(tags=["operators"], dependencies=[Depends(get_current_principal)])
 
 
 @router.get("/operators/{service_no}", response_model=OperatorRead)
 async def get_operator(
     service_no: str,
     db: AsyncSession = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
 ):
     try:
+        await authorize_operator(db, principal, service_no)
         return await operator_repo.get_operator_from_sn(db, service_no)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
@@ -23,8 +26,10 @@ async def get_operator(
 async def get_operators_for_squadron(
     squadron_id: str,
     db: AsyncSession = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
 ):
     try:
+        authorize_squadron(principal, squadron_id)
         return await operator_repo.get_operators_from_sqn(db, squadron_id)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
