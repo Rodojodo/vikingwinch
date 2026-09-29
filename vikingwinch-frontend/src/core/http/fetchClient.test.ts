@@ -1,15 +1,17 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { apiFetch, handleApiError, API_BASE_URL } from './fetchClient';
+import { apiFetch, handleApiError, API_BASE_URL, setApiTokenProvider } from './fetchClient';
 
 describe('fetchClient', () => {
     const originalFetch = globalThis.fetch;
 
     beforeEach(() => {
         vi.restoreAllMocks();
+        setApiTokenProvider(null);
     });
 
     afterEach(() => {
         globalThis.fetch = originalFetch;
+        setApiTokenProvider(null);
     });
 
     describe('handleApiError', () => {
@@ -96,6 +98,21 @@ describe('fetchClient', () => {
             const headers = new Headers(init?.headers);
             expect(headers.get('Accept')).toBe('application/json');
             expect(result).toEqual(mockData);
+        });
+
+        it('adds a bearer token from the configured provider', async () => {
+            globalThis.fetch = vi.fn().mockResolvedValue(
+                new Response(JSON.stringify({ok: true}), {
+                    status: 200,
+                    headers: {'content-type': 'application/json'},
+                }),
+            );
+            setApiTokenProvider(async () => 'access-token');
+
+            await apiFetch('/protected');
+
+            const [, init] = vi.mocked(globalThis.fetch).mock.calls[0];
+            expect(new Headers(init?.headers).get('Authorization')).toBe('Bearer access-token');
         });
 
         it('throws if response is 200 but content-type is not json', async () => {

@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import {AuthenticatedTemplate, UnauthenticatedTemplate, useMsal} from '@azure/msal-react';
-import {Show, useUser, UserButton} from '@clerk/react';
+import {Show, useAuth, useUser, UserButton} from '@clerk/react';
 import {Box} from '@mui/material';
 import type {SxProps, Theme} from '@mui/material/styles';
 import '../App.css';
@@ -9,6 +9,9 @@ import {LoginPage} from './LoginPage';
 import {getUserDepartment, getUserProfile} from '../features/auth/api/graphAPI';
 import {OperatorSelectPanel} from '../features/auth';
 import {appBackgroundSx} from '../themes/styles';
+import {setApiTokenProvider} from '../core/http/fetchClient';
+
+const API_SCOPE = import.meta.env.VITE_API_SCOPE || import.meta.env.VITE_AZURE_API_SCOPE;
 
 /**
  * Auth Provider Selection:
@@ -24,9 +27,11 @@ export const AUTH_PROVIDER =
         : (import.meta.env.VITE_AUTH_PROVIDER || 'clerk');
 
 const OPERATOR_SESSION_KEY = 'vikingwinch_operator_sn';
+const CLERK_JWT_TEMPLATE = import.meta.env.VITE_CLERK_JWT_TEMPLATE || 'vikingwinch_api';
 
 function ClerkApp() {
     const {user, isLoaded, isSignedIn} = useUser();
+    const {getToken} = useAuth();
     const [selectedOperatorSn, setSelectedOperatorSn] = useState<string | null>(() => {
         try {
             return sessionStorage.getItem(OPERATOR_SESSION_KEY);
@@ -36,6 +41,11 @@ function ClerkApp() {
     });
 
     const isUserSignedIn = isSignedIn ?? Boolean(user);
+
+    useEffect(() => {
+        setApiTokenProvider(async () => getToken({template: CLERK_JWT_TEMPLATE}));
+        return () => setApiTokenProvider(null);
+    }, [getToken]);
 
     useEffect(() => {
         if (isLoaded && (!isUserSignedIn || !user)) {
@@ -108,6 +118,23 @@ function MsalApp() {
     const [operatorSn, setOperatorSn] = useState<string | null>(null);
     const [squadronId, setSquadronId] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        setApiTokenProvider(async () => {
+            if (accounts.length === 0) {
+                return null;
+            }
+            if (!API_SCOPE) {
+                throw new Error('VITE_API_SCOPE is not configured for the MSAL API audience');
+            }
+            const tokenResponse = await instance.acquireTokenSilent({
+                scopes: [API_SCOPE],
+                account: accounts[0],
+            });
+            return tokenResponse.accessToken;
+        });
+        return () => setApiTokenProvider(null);
+    }, [accounts, instance]);
 
     useEffect(() => {
         const fetchUserData = async () => {
