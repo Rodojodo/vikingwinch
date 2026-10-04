@@ -3,7 +3,7 @@ import {Alert, Box, Button, TextField, Typography} from '@mui/material';
 import {DrumToggleGroup} from './DrumToggleGroup';
 import type {DrumPosition} from '../../../core/types';
 import type {DrumLaunchStatus} from '../types';
-import {darkTextFieldStyles} from '../../../themes/styles.ts';
+import {darkTextFieldStyles, responsiveActionRowSx} from '../../../themes/styles.ts';
 
 type RemarksPanelProps = {
     addRemark: (remark: string | null, drum: DrumPosition) => Promise<void>;
@@ -56,7 +56,7 @@ export const RemarksPanel: React.FC<RemarksPanelProps> = ({ addRemark, isLoading
                 onChange={(e) => setRemark(e.target.value)}
                 sx={darkTextFieldStyles}
             />
-            <Box sx={{display: 'flex', alignItems: 'center', gap: 2, mt: 2}}>
+            <Box sx={{...responsiveActionRowSx, mt: 2}}>
                 <Box sx={{flex: 1}}>
                     <DrumToggleGroup value={drum} onChange={setDrum} />
                 </Box>

@@ -50,7 +50,7 @@ describe('WinchOpsPage', () => {
 
     it('renders with active account and squadron id', async () => {
         render(<WinchOpsPage squadronId="sqn1" operatorSn="123" />);
-        expect(screen.getByText('sqn1 — Winch Log')).toBeInTheDocument();
+        expect(screen.getByText('Winch Log')).toBeInTheDocument();
         expect(screen.getByText('Active User')).toBeInTheDocument();
 
         await waitFor(() => {

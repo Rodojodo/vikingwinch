@@ -1,7 +1,7 @@
 import {Box, Typography} from '@mui/material';
 import EnergySavingsLeafIcon from '@mui/icons-material/EnergySavingsLeaf';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
-import {statusPillSx, winchDetailsTitleSx} from "../../../themes/styles.ts";
+import {statusPillSx, winchDetailsStickerSx, winchDetailsTitleSx} from "../../../themes/styles.ts";
 
 interface WinchDetailsStickerProps {
     isRecentLaunch: boolean;
@@ -11,7 +11,7 @@ interface WinchDetailsStickerProps {
 
 export const WinchDetailsSticker = ({ isRecentLaunch, squadron, winchId }: WinchDetailsStickerProps) => {
     return (
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5 }}>
+        <Box sx={winchDetailsStickerSx}>
             {isRecentLaunch ? (
                 <Box sx={statusPillSx('error')}>
                     <LocalFireDepartmentIcon sx={{fontSize: '20px'}}/>

@@ -284,6 +284,25 @@ export const responsiveToolbarSx: SxProps<Theme> = {
   width: '100%',
 };
 
+export const responsiveActionRowSx: SxProps<Theme> = {
+  display: 'flex',
+  alignItems: {xs: 'stretch', sm: 'center'},
+  flexDirection: {xs: 'column', sm: 'row'},
+  gap: 2,
+  width: '100%',
+  '& > *': {
+    minWidth: 0,
+    width: {xs: '100%', sm: 'auto'},
+  },
+  '& > :first-of-type': {
+    flex: {sm: 1},
+  },
+  '& .MuiButton-root': {
+    width: {xs: '100%', sm: 'auto'},
+    flexShrink: 0,
+  },
+};
+
 export const compactAppBarSx: SxProps<Theme> = {
   bgcolor: 'surface.card',
   backgroundImage: 'none',
@@ -369,9 +388,30 @@ export const winchDetailsTitleSx: SxProps<Theme> = {
   display: 'inline-flex',
   flexDirection: {xs: 'column', sm: 'row'},
   alignItems: 'center',
-  whiteSpace: 'nowrap',
+  minWidth: 0,
+  maxWidth: '100%',
+  whiteSpace: {xs: 'normal', sm: 'nowrap'},
+  overflowWrap: 'anywhere',
   '& span + span': {
     marginLeft: {xs: 0, sm: 0.5},
+  },
+};
+
+export const winchDetailsStickerSx: SxProps<Theme> = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: {xs: 1, sm: 1.5},
+  width: '100%',
+  minWidth: 0,
+  flexDirection: 'row',
+  flexWrap: 'nowrap',
+  '& > *': {
+    minWidth: 0,
+    maxWidth: '100%',
+  },
+  '& > :first-of-type': {
+    flexShrink: 0,
   },
 };
 

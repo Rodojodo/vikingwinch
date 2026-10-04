@@ -1,7 +1,12 @@
 import React, {useEffect, useState} from 'react';
 import {Alert, Box, Button, FormControl, Grid, MenuItem, Select, TextField, Typography} from '@mui/material';
 import {DrumToggleGroup} from './DrumToggleGroup';
-import {darkMenuStyles, darkSelectStyles, darkTextFieldStyles} from '../../../themes/styles.ts';
+import {
+    darkMenuStyles,
+    darkSelectStyles,
+    darkTextFieldStyles,
+    responsiveActionRowSx,
+} from '../../../themes/styles.ts';
 import type {DrumPosition, OperatorRead} from '../../../core/types';
 import type {DrumLaunchStatus} from '../types';
 import {getOperatorsForSquadron} from '../../../core/http/operatorsClient.ts';
@@ -154,7 +159,7 @@ export const RepairsPanel: React.FC<RepairsPanelProps> = ({ addRemark, isLoading
                 </Grid>
             </Grid>
 
-            <Box sx={{display: 'flex', alignItems: 'center', gap: 2, mt: 3}}>
+            <Box sx={{...responsiveActionRowSx, mt: 3}}>
                 <Box sx={{flex: 1}}>
                     <DrumToggleGroup value={drum} onChange={setDrum}/>
                 </Box>
