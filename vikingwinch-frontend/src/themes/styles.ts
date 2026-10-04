@@ -278,6 +278,87 @@ export const responsiveToolbarSx: SxProps<Theme> = {
   width: '100%',
 };
 
+export const compactAppBarSx: SxProps<Theme> = {
+  bgcolor: 'surface.card',
+  backgroundImage: 'none',
+  boxShadow: 'none',
+  borderBottom: '1px solid rgba(255,255,255,0.1)',
+};
+
+export const compactToolbarSx: SxProps<Theme> = {
+  ...responsiveToolbarSx,
+  minHeight: {xs: 48, sm: 56},
+  px: {xs: 1, sm: 2},
+  py: {xs: 0.5, sm: 0.75},
+};
+
+export const compactAppBarTitleSx: SxProps<Theme> = {
+  flexGrow: 1,
+  fontWeight: 'bold',
+  color: 'primary.main',
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  fontSize: {xs: '1.1rem', sm: '1.35rem'},
+  lineHeight: 1.2,
+};
+
+export const compactOperatorNameSx: SxProps<Theme> = {
+  color: 'text.primary',
+  fontWeight: 500,
+  whiteSpace: 'nowrap',
+  fontSize: {xs: '0.7rem', sm: '0.85rem'},
+};
+
+export const compactUserButtonWrapperSx: SxProps<Theme> = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  transform: {xs: 'scale(0.8)', sm: 'scale(1)'},
+  transformOrigin: 'center',
+};
+
+export const compactTabBarSx: SxProps<Theme> = {
+  display: 'flex',
+  alignItems: 'flex-end',
+  bgcolor: 'background.default',
+  borderBottom: 1,
+  borderColor: 'divider',
+  px: {xs: 1, sm: 2},
+  pt: {xs: 0.5, sm: 1.5},
+  minHeight: {xs: 40, sm: 48},
+};
+
+export const compactTabSx: SxProps<Theme> = {
+  minHeight: {xs: '36px', sm: '48px'},
+  px: {xs: 1.5, sm: 3},
+  mr: {xs: 0.5, sm: 1.5},
+  borderRadius: '12px 12px 0 0',
+  color: 'text.secondary',
+  transition: 'all 0.2s ease',
+  '&.Mui-selected': {
+    color: 'text.primary',
+  },
+};
+
+export const compactTabLabelSx: SxProps<Theme> = {
+  textTransform: 'none',
+  mr: {xs: 1, sm: 2},
+  fontWeight: 500,
+  fontSize: {xs: '0.75rem', sm: '0.9rem'},
+};
+
+export const compactTabCloseButtonSx: SxProps<Theme> = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  p: 0.25,
+  borderRadius: '50%',
+  cursor: 'pointer',
+  color: 'inherit',
+  '&:hover': {color: 'text.primary', bgcolor: 'rgba(255,255,255,0.1)'},
+};
+
 export const wingPanel = (open: boolean, wingSize: number | string): SxProps<Theme> => ({
   width: open ? wingSize : 0,
   maxWidth: {xs: '100%', sm: wingSize},
