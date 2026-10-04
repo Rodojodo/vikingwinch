@@ -38,20 +38,23 @@ children,
     return (
         <Box
             sx={{
-                position: 'absolute',
-                top: 0,
-                left: '100%',
-                height: '100%',
+                position: {xs: 'relative', sm: 'absolute'},
+                top: {xs: 'auto', sm: 0},
+                left: {xs: 'auto', sm: '100%'},
+                width: '100%',
+                maxWidth: {xs: '100%', sm: WING_WIDTH},
+                height: {xs: 'auto', sm: '100%'},
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: {xs: 'stretch', sm: 'center'},
+                mt: {xs: 2, sm: 0},
             }}
         >
-            <Box sx={{position: 'relative'}}>
+            <Box sx={{position: 'relative', width: '100%'}}>
                 <ButtonBase
                     onClick={onToggle}
                     sx={wingPanelButton}
                 >
-                    <Typography variant='subtitle2' sx={{writingMode: 'vertical-rl'}}>
+                    <Typography variant='subtitle2' sx={{writingMode: {xs: 'horizontal-tb', sm: 'vertical-rl'}}}>
                         Trainee info
                     </Typography>
                 </ButtonBase>
@@ -59,7 +62,7 @@ children,
                 <Box
                     sx={wingPanel(open, WING_WIDTH)}
                 >
-                    <Box sx={{width: WING_WIDTH, p: 3, boxSizing: 'border-box'}}>
+                    <Box sx={{width: '100%', maxWidth: {xs: '100%', sm: WING_WIDTH}, p: 3, boxSizing: 'border-box'}}>
                         <Stack spacing={3}>
                             <Typography variant="h3">
                                 Trainee Info

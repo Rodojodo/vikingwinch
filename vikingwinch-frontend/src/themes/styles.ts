@@ -242,8 +242,45 @@ export const elevatedPanel: SxProps<Theme> = {
   borderRadius: 3,
 };
 
-export const wingPanel = (open: boolean, wingSize: number): SxProps<Theme> => ({
+export const singleLineCenterTitleSx: SxProps<Theme> = {
+  textAlign: 'center',
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  fontSize: {xs: '2rem', sm: '3rem'},
+};
+
+export const actionLabelWrapSx: SxProps<Theme> = {
+  display: 'block',
+  whiteSpace: 'pre-line',
+};
+
+export const responsiveMetricRowSx: SxProps<Theme> = {
+  display: 'flex',
+  gap: 2,
+  width: '100%',
+  flexDirection: {xs: 'column', sm: 'row'},
+  alignItems: {xs: 'stretch', sm: 'flex-start'},
+};
+
+export const responsiveMetricColumnSx: SxProps<Theme> = {
+  flex: 1,
+  minWidth: 0,
+};
+
+export const responsiveToolbarSx: SxProps<Theme> = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  flexWrap: 'wrap',
+  rowGap: 1,
+  columnGap: 1,
+  width: '100%',
+};
+
+export const wingPanel = (open: boolean, wingSize: number | string): SxProps<Theme> => ({
   width: open ? wingSize : 0,
+  maxWidth: {xs: '100%', sm: wingSize},
   opacity: open ? 1 : 0,
   overflow: 'hidden',
   flexShrink: 0,
@@ -261,16 +298,16 @@ export const wingPanel = (open: boolean, wingSize: number): SxProps<Theme> => ({
 });
 
 export const wingPanelButton: SxProps<Theme> = {
-  position: 'absolute',
-  left: 0,
-  top: '50%',
-  transform: 'translate(0, -50%)',
-  width: 25,
-  height: 140,
+  position: {xs: 'relative', sm: 'absolute'},
+  left: {xs: 'auto', sm: 0},
+  top: {xs: 'auto', sm: '50%'},
+  transform: {xs: 'none', sm: 'translate(0, -50%)'},
+  width: {xs: '100%', sm: 25},
+  height: {xs: 48, sm: 140},
   backgroundColor: 'secondary.main',
   border: 1,
   borderColor: 'surface.border',
-  borderLeft: 'none',
+  borderLeft: {xs: 1, sm: 'none'},
   borderTopLeftRadius: 0,
   borderBottomLeftRadius: 0,
   borderTopRightRadius: '10px',

@@ -7,7 +7,7 @@ import {useLaunchOps} from '../hooks/useLaunchOps.ts';
 import {useSessionIdentity} from '../../../app/hooks/useSessionIdentity.ts';
 import './LaunchPanel.css';
 import {DrumControl} from "./DrumControl.tsx";
-import {cardSurfaceSx, glassPanelSx, glowingPrimaryButtonSx} from "../../../themes/styles.ts";
+import {cardSurfaceSx, glassPanelSx, glowingPrimaryButtonSx, singleLineCenterTitleSx} from "../../../themes/styles.ts";
 import type {SxProps, Theme} from "@mui/material/styles";
 
 const ANIMATIONS = [
@@ -136,7 +136,7 @@ export const LaunchPanel = ({
     return (
         <Box sx={[glassPanelSx, {maxWidth: 540, gap: 3}] as SxProps<Theme>}>
             <Box sx={{ textAlign: 'center', width: '100%' }}>
-                <Typography variant="h2" sx={{mb: 1}}>
+                <Typography variant="h2" sx={{...singleLineCenterTitleSx, mb: 1}}>
                     Launch Panel
                 </Typography>
                 

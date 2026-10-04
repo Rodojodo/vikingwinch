@@ -5,6 +5,7 @@ import type {OperatorRead} from '../../../core/types';
 import {useSessionIdentity} from '../../../app/hooks/useSessionIdentity.ts';
 import {postDayLogToDb} from '../api/dayOpsClient.ts';
 import {
+    actionLabelWrapSx,
     darkMenuStyles,
     darkSelectStyles,
     elevatedPanel,
@@ -155,7 +156,10 @@ export const SignOnPanel: React.FC<SignOnPanelProps> = ({
                 onClick={handleSignOn}
                 sx={glowingPrimaryButtonSx}
             >
-                Walkaround complete. Sign on to winch
+                <Box component="span" sx={actionLabelWrapSx}>
+                    Walkaround complete.
+                    Sign on to winch
+                </Box>
             </Button>
         </Box>
     );

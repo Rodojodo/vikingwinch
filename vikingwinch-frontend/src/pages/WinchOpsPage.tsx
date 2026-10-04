@@ -8,6 +8,7 @@ import {WinchTab} from './WinchTab';
 import {getWinchesForSquadron} from '../features/winch-ops/api/winchClient';
 import type {WinchRead} from '../features/winch-ops/types';
 import {AUTH_PROVIDER} from './App';
+import {responsiveToolbarSx} from '../themes/styles.ts';
 
 interface WinchOpsPageProps {
     squadronId: string;
@@ -84,15 +85,15 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
                     borderBottom: '1px solid rgba(255,255,255,0.1)',
                 }}
             >
-                <Toolbar>
+                <Toolbar sx={responsiveToolbarSx}>
                     <Typography
                         variant="h6"
                         component="div"
-                        sx={{flexGrow: 1, fontWeight: 'bold', color: 'primary.main'}}
+                        sx={{flexGrow: 1, fontWeight: 'bold', color: 'primary.main', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'}}
                     >
                         {squadronId} — Winch Log
                     </Typography>
-                    <Typography variant="body1" sx={{mr: 2, color: 'text.primary', fontWeight: 500}}>
+                    <Typography variant="body1" sx={{color: 'text.primary', fontWeight: 500, whiteSpace: 'nowrap'}}>
                         {operatorName}
                     </Typography>
                     {AUTH_PROVIDER === 'clerk' ? (
