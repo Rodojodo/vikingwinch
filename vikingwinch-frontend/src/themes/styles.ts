@@ -359,6 +359,16 @@ export const compactTabCloseButtonSx: SxProps<Theme> = {
   '&:hover': {color: 'text.primary', bgcolor: 'rgba(255,255,255,0.1)'},
 };
 
+export const winchDetailsTitleSx: SxProps<Theme> = {
+  display: 'inline-flex',
+  flexDirection: {xs: 'column', sm: 'row'},
+  alignItems: 'center',
+  whiteSpace: 'nowrap',
+  '& span + span': {
+    marginLeft: {xs: 0, sm: 0.5},
+  },
+};
+
 export const wingPanel = (open: boolean, wingSize: number | string): SxProps<Theme> => ({
   width: open ? wingSize : 0,
   maxWidth: {xs: '100%', sm: wingSize},
