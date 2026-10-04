@@ -27,7 +27,7 @@ import {exportLog} from '../app/utils/exportLog.ts';
 import type {SessionStatus} from '../app/types/session.ts';
 import type {TabView} from '../features/winch-ops/types';
 import type {OperatorRead} from '../core/types';
-import {appBackgroundSx} from '../themes/styles.ts';
+import {appBackgroundSx, wingDockSx} from '../themes/styles.ts';
 
 interface WinchTabProps {
     tabId: string;
@@ -256,33 +256,35 @@ const WinchTabContent = ({
                                 }}
                             />
                         </LaunchPanel>
-                        <TraineeWing
-                            open={wingOpen}
-                            onToggle={() => setWingOpen(o => !o)}
-                            isLoading={false}
-                            squadron={squadronId}
-                            operatorSn={operatorSn}
-                            operatorName={operatorName}
-                            traineeSn={traineeSn}
-                            traineeName={traineeName}
-                            ActiveDriverSn={activeLauncherSn || operatorSn}
-                            operators={operators}
-                            isFetchingOperators={isFetchingOperators}
-                            setActiveDriver={setActiveLauncher}
-                        >
-                            <TraineeAssignmentPanel
+                        <Box sx={wingDockSx}>
+                            <TraineeWing
+                                open={wingOpen}
+                                onToggle={() => setWingOpen(o => !o)}
                                 isLoading={false}
-                                recordSignOn={async (newTraineeSn) => {
-                                    if (operatorSn) {
-                                        await recordSignOn(newTraineeSn);
-                                        setTrainee(newTraineeSn);
-                                    }
-                                }}
                                 squadron={squadronId}
                                 operatorSn={operatorSn}
+                                operatorName={operatorName}
                                 traineeSn={traineeSn}
-                            />
-                        </TraineeWing>
+                                traineeName={traineeName}
+                                ActiveDriverSn={activeLauncherSn || operatorSn}
+                                operators={operators}
+                                isFetchingOperators={isFetchingOperators}
+                                setActiveDriver={setActiveLauncher}
+                            >
+                                <TraineeAssignmentPanel
+                                    isLoading={false}
+                                    recordSignOn={async (newTraineeSn) => {
+                                        if (operatorSn) {
+                                            await recordSignOn(newTraineeSn);
+                                            setTrainee(newTraineeSn);
+                                        }
+                                    }}
+                                    squadron={squadronId}
+                                    operatorSn={operatorSn}
+                                    traineeSn={traineeSn}
+                                />
+                            </TraineeWing>
+                        </Box>
                     </Box>
                 );
             case 'skylog':

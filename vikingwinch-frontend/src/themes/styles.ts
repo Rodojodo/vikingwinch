@@ -375,40 +375,66 @@ export const winchDetailsTitleSx: SxProps<Theme> = {
   },
 };
 
+export const wingDockSx: SxProps<Theme> = {
+  position: {xs: 'relative', md: 'absolute'},
+  top: {xs: 'auto', md: 0},
+  left: {xs: 'auto', md: '100%'},
+  width: {xs: '100%', md: 'auto'},
+  height: {xs: 'auto', md: '100%'},
+  display: 'flex',
+  alignItems: {xs: 'stretch', md: 'center'},
+  justifyContent: {xs: 'center', md: 'flex-start'},
+  flexWrap: 'wrap',
+  gap: 1,
+  mt: {xs: -4, md: 0},
+};
+
+export const traineeWingWidth = 320;
+
+export const traineeWingSx: SxProps<Theme> = {
+  width: {xs: 'calc(100% - 64px)', md: traineeWingWidth},
+  maxWidth: '100%',
+  height: {xs: 'auto', md: '100%'},
+  display: 'flex',
+  flex: {xs: `0 1 ${traineeWingWidth}px`, md: '0 0 auto'},
+  mx: {xs: 'auto', md: 0},
+  alignItems: 'stretch',
+};
+
 export const wingPanel = (open: boolean, wingSize: number | string): SxProps<Theme> => ({
-  width: open ? wingSize : 0,
-  maxWidth: {xs: '100%', sm: wingSize},
+  width: {xs: '100%', md: wingSize},
+  maxWidth: {xs: '100%', md: wingSize},
   opacity: open ? 1 : 0,
   overflow: 'hidden',
+  display: 'grid',
+  gridTemplateRows: {xs: open ? '1fr' : '0fr', md: '1fr'},
+  clipPath: {xs: 'inset(0)', md: open ? 'inset(0)' : 'inset(0 100% 0 0)'},
+  transition: 'clip-path 0.3s cubic-bezier(0.4,0,0.2,1), grid-template-rows 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease',
   flexShrink: 0,
   boxSizing: 'border-box',
   px: 1,
-  transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease',
   backgroundColor: 'surface.card',
   backdropFilter: 'blur(20px)',
   border: open ? 1 : 'none',
   borderColor: 'surface.border',
-  borderTopLeftRadius: 0,
-  borderBottomLeftRadius: 0,
-  borderTopRightRadius: '16px',
-  borderBottomRightRadius: '16px',
+  borderRadius: {xs: '0 0 16px 16px', md: '0 16px 16px 0'},
 });
 
 export const wingPanelButton: SxProps<Theme> = {
-  position: {xs: 'relative', sm: 'absolute'},
-  left: {xs: 'auto', sm: 0},
-  top: {xs: 'auto', sm: '50%'},
-  transform: {xs: 'none', sm: 'translate(0, -50%)'},
-  width: {xs: '100%', sm: 25},
-  height: {xs: 48, sm: 140},
+  position: {xs: 'relative', md: 'absolute'},
+  left: {xs: 'auto', md: 0},
+  transform: {xs: 'none', md: 'translate(0, -50%)'},
+  width: {xs: 'auto', md: 25},
+  minWidth: {xs: 0, md: 25},
+  height: {xs: 32, md: 140},
+  px: {xs: 1.5, md: 0},
+  mx: {xs: 'auto', md: 0},
+  top: {xs: 30, md: '50%'},
   backgroundColor: 'secondary.main',
   border: 1,
   borderColor: 'surface.border',
-  borderLeft: {xs: 1, sm: 'none'},
-  borderTopLeftRadius: 0,
-  borderBottomLeftRadius: 0,
-  borderTopRightRadius: '10px',
-  borderBottomRightRadius: '10px',
+  borderLeft: {xs: 1, md: 'none'},
+  borderRadius: {xs: '0 0 10px 10px', md: '0 10px 10px 0'},
   color: 'text.secondary',
   display: 'flex',
   alignItems: 'center',
@@ -416,7 +442,7 @@ export const wingPanelButton: SxProps<Theme> = {
   flexShrink: 0,
   zIndex: 1,
   '&:hover': {color: 'primary.constrastText', backgroundColor: 'secondary.dark',},
-}
+};
 
 export const giantLaunchButtonSx = (isLeft: boolean): SxProps<Theme> => (theme) => {
   const baseColor = isLeft ? theme.palette.primary.main : theme.palette.success.main;

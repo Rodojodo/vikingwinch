@@ -3,7 +3,7 @@ import {Box, ButtonBase, Stack, Typography} from '@mui/material';
 import {ActiveDriverToggle} from './ActiveDriverToggle';
 
 import type {OperatorRead} from '../../../core/types';
-import {wingPanel, wingPanelButton} from "../../../themes/styles.ts";
+import {traineeWingSx, traineeWingWidth, wingPanel, wingPanelButton} from "../../../themes/styles.ts";
 
 
 interface TraineeWingProps {
@@ -22,8 +22,6 @@ interface TraineeWingProps {
     setActiveDriver: (sn: string) => void;
 }
 
-const WING_WIDTH = 320;
-
 export const TraineeWing: React.FC<TraineeWingProps> = ({
                                                             open,
                                                             onToggle,
@@ -37,32 +35,32 @@ children,
                                                         }) => {
     return (
         <Box
-            sx={{
-                position: {xs: 'relative', sm: 'absolute'},
-                top: {xs: 'auto', sm: 0},
-                left: {xs: 'auto', sm: '100%'},
-                width: '100%',
-                maxWidth: {xs: '100%', sm: WING_WIDTH},
-                height: {xs: 'auto', sm: '100%'},
-                display: 'flex',
-                alignItems: {xs: 'stretch', sm: 'center'},
-                mt: {xs: 2, sm: 0},
-            }}
+            sx={traineeWingSx}
         >
-            <Box sx={{position: 'relative', width: '100%'}}>
+            <Box
+                sx={{
+                    position: 'relative',
+                    width: '100%',
+                    height: {xs: 'auto', md: '100%'},
+                    display: 'flex',
+                    flexDirection: {xs: 'column', md: 'row'},
+                    justifyContent: {xs: 'flex-start', md: 'center'},
+                    alignItems: {xs: 'stretch', md: 'center'},
+                }}
+            >
                 <ButtonBase
                     onClick={onToggle}
                     sx={wingPanelButton}
                 >
-                    <Typography variant='subtitle2' sx={{writingMode: {xs: 'horizontal-tb', sm: 'vertical-rl'}}}>
+                    <Typography variant='subtitle2' sx={{writingMode: {xs: 'horizontal-tb', md: 'vertical-rl'}}}>
                         Trainee info
                     </Typography>
                 </ButtonBase>
 
                 <Box
-                    sx={wingPanel(open, WING_WIDTH)}
+                    sx={wingPanel(open, traineeWingWidth)}
                 >
-                    <Box sx={{width: '100%', maxWidth: {xs: '100%', sm: WING_WIDTH}, p: 3, boxSizing: 'border-box'}}>
+                    <Box sx={{width: '100%', maxWidth: {xs: '100%', md: traineeWingWidth}, minHeight: 0, p: 3, boxSizing: 'border-box'}}>
                         <Stack spacing={3}>
                             <Typography variant="h3">
                                 Trainee Info
