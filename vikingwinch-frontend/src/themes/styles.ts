@@ -268,6 +268,12 @@ export const responsiveMetricColumnSx: SxProps<Theme> = {
   minWidth: 0,
 };
 
+export const drumControlsRowSx: SxProps<Theme> = {
+  width: '100%',
+  justifyContent: 'center',
+  gap: 1,
+};
+
 export const responsiveToolbarSx: SxProps<Theme> = {
   display: 'flex',
   alignItems: 'center',

@@ -7,7 +7,13 @@ import {useLaunchOps} from '../hooks/useLaunchOps.ts';
 import {useSessionIdentity} from '../../../app/hooks/useSessionIdentity.ts';
 import './LaunchPanel.css';
 import {DrumControl} from "./DrumControl.tsx";
-import {cardSurfaceSx, glassPanelSx, glowingPrimaryButtonSx, singleLineCenterTitleSx} from "../../../themes/styles.ts";
+import {
+    cardSurfaceSx,
+    drumControlsRowSx,
+    glassPanelSx,
+    glowingPrimaryButtonSx,
+    singleLineCenterTitleSx,
+} from "../../../themes/styles.ts";
 import type {SxProps, Theme} from "@mui/material/styles";
 
 const ANIMATIONS = [
@@ -173,7 +179,7 @@ export const LaunchPanel = ({
                     </Button>
                 </Stack>
             ) : (
-                <Stack direction="row" spacing={3} sx={{ width: '100%', justifyContent: 'center' }}>
+                <Stack direction="row" sx={drumControlsRowSx}>
                     <DrumControl
                         drumType="left"
                         launches={leftLaunches}
