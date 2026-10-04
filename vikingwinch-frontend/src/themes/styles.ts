@@ -242,39 +242,239 @@ export const elevatedPanel: SxProps<Theme> = {
   borderRadius: 3,
 };
 
-export const wingPanel = (open: boolean, wingSize: number): SxProps<Theme> => ({
-  width: open ? wingSize : 0,
+export const singleLineCenterTitleSx: SxProps<Theme> = {
+  textAlign: 'center',
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  fontSize: {xs: '2rem', sm: '3rem'},
+};
+
+export const actionLabelWrapSx: SxProps<Theme> = {
+  display: 'block',
+  whiteSpace: 'pre-line',
+};
+
+export const responsiveMetricRowSx: SxProps<Theme> = {
+  display: 'flex',
+  gap: 2,
+  width: '100%',
+  flexDirection: {xs: 'column', sm: 'row'},
+  alignItems: {xs: 'stretch', sm: 'flex-start'},
+};
+
+export const responsiveMetricColumnSx: SxProps<Theme> = {
+  flex: 1,
+  minWidth: 0,
+};
+
+export const drumControlsRowSx: SxProps<Theme> = {
+  width: '100%',
+  justifyContent: 'center',
+  gap: 1,
+};
+
+export const responsiveToolbarSx: SxProps<Theme> = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  flexWrap: 'wrap',
+  rowGap: 1,
+  columnGap: 1,
+  width: '100%',
+};
+
+export const responsiveActionRowSx: SxProps<Theme> = {
+  display: 'flex',
+  alignItems: {xs: 'stretch', sm: 'center'},
+  flexDirection: {xs: 'column', sm: 'row'},
+  gap: 2,
+  width: '100%',
+  '& > *': {
+    minWidth: 0,
+    width: {xs: '100%', sm: 'auto'},
+  },
+  '& > :first-of-type': {
+    flex: {sm: 1},
+  },
+  '& .MuiButton-root': {
+    width: {xs: '100%', sm: 'auto'},
+    flexShrink: 0,
+  },
+};
+
+export const compactAppBarSx: SxProps<Theme> = {
+  bgcolor: 'surface.card',
+  backgroundImage: 'none',
+  boxShadow: 'none',
+  borderBottom: '1px solid rgba(255,255,255,0.1)',
+};
+
+export const compactToolbarSx: SxProps<Theme> = {
+  ...responsiveToolbarSx,
+  minHeight: {xs: 48, sm: 56},
+  px: {xs: 1, sm: 2},
+  py: {xs: 0.5, sm: 0.75},
+};
+
+export const compactAppBarTitleSx: SxProps<Theme> = {
+  flexGrow: 1,
+  fontWeight: 'bold',
+  color: 'primary.main',
+  whiteSpace: 'nowrap',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  fontSize: {xs: '1.1rem', sm: '1.35rem'},
+  lineHeight: 1.2,
+};
+
+export const compactOperatorNameSx: SxProps<Theme> = {
+  color: 'text.primary',
+  fontWeight: 500,
+  whiteSpace: 'nowrap',
+  fontSize: {xs: '0.7rem', sm: '0.85rem'},
+};
+
+export const compactUserButtonWrapperSx: SxProps<Theme> = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  transform: {xs: 'scale(0.8)', sm: 'scale(1)'},
+  transformOrigin: 'center',
+};
+
+export const compactTabBarSx: SxProps<Theme> = {
+  display: 'flex',
+  alignItems: 'flex-end',
+  bgcolor: 'background.default',
+  borderBottom: 1,
+  borderColor: 'divider',
+  px: {xs: 1, sm: 2},
+  pt: {xs: 0.5, sm: 1.5},
+  minHeight: {xs: 40, sm: 48},
+};
+
+export const compactTabSx: SxProps<Theme> = {
+  minHeight: {xs: '36px', sm: '48px'},
+  px: {xs: 1.5, sm: 3},
+  mr: {xs: 0.5, sm: 1.5},
+  borderRadius: '12px 12px 0 0',
+  color: 'text.secondary',
+  transition: 'all 0.2s ease',
+  '&.Mui-selected': {
+    color: 'text.primary',
+  },
+};
+
+export const compactTabLabelSx: SxProps<Theme> = {
+  textTransform: 'none',
+  mr: {xs: 1, sm: 2},
+  fontWeight: 500,
+  fontSize: {xs: '0.75rem', sm: '0.9rem'},
+};
+
+export const compactTabCloseButtonSx: SxProps<Theme> = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  p: 0.25,
+  borderRadius: '50%',
+  cursor: 'pointer',
+  color: 'inherit',
+  '&:hover': {color: 'text.primary', bgcolor: 'rgba(255,255,255,0.1)'},
+};
+
+export const winchDetailsTitleSx: SxProps<Theme> = {
+  display: 'inline-flex',
+  flexDirection: {xs: 'column', sm: 'row'},
+  alignItems: 'center',
+  minWidth: 0,
+  maxWidth: '100%',
+  whiteSpace: {xs: 'normal', sm: 'nowrap'},
+  overflowWrap: 'anywhere',
+  '& span + span': {
+    marginLeft: {xs: 0, sm: 0.5},
+  },
+};
+
+export const winchDetailsStickerSx: SxProps<Theme> = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: {xs: 1, sm: 1.5},
+  width: '100%',
+  minWidth: 0,
+  flexDirection: 'row',
+  flexWrap: 'nowrap',
+  '& > *': {
+    minWidth: 0,
+    maxWidth: '100%',
+  },
+  '& > :first-of-type': {
+    flexShrink: 0,
+  },
+};
+
+export const wingDockSx: SxProps<Theme> = {
+  position: {xs: 'relative', md: 'absolute'},
+  top: {xs: 'auto', md: 0},
+  left: {xs: 'auto', md: '100%'},
+  width: {xs: '100%', md: 'auto'},
+  height: {xs: 'auto', md: '100%'},
+  display: 'flex',
+  alignItems: {xs: 'stretch', md: 'center'},
+  justifyContent: {xs: 'center', md: 'flex-start'},
+  flexWrap: 'wrap',
+  gap: 1,
+  mt: {xs: -4, md: 0},
+};
+
+export const traineeWingWidth = 320;
+
+export const traineeWingSx: SxProps<Theme> = {
+  width: {xs: 'calc(100% - 64px)', md: traineeWingWidth},
+  maxWidth: '100%',
+  height: {xs: 'auto', md: '100%'},
+  display: 'flex',
+  flex: {xs: `0 1 ${traineeWingWidth}px`, md: '0 0 auto'},
+  mx: {xs: 'auto', md: 0},
+  alignItems: 'stretch',
+};
+
+export const wingPanel = (open: boolean, wingSize: number | string): SxProps<Theme> => ({
+  width: {xs: '100%', md: wingSize},
+  maxWidth: {xs: '100%', md: wingSize},
   opacity: open ? 1 : 0,
   overflow: 'hidden',
+  display: 'grid',
+  gridTemplateRows: {xs: open ? '1fr' : '0fr', md: '1fr'},
+  clipPath: {xs: 'inset(0)', md: open ? 'inset(0)' : 'inset(0 100% 0 0)'},
+  transition: 'clip-path 0.3s cubic-bezier(0.4,0,0.2,1), grid-template-rows 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease',
   flexShrink: 0,
   boxSizing: 'border-box',
   px: 1,
-  transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease',
   backgroundColor: 'surface.card',
   backdropFilter: 'blur(20px)',
   border: open ? 1 : 'none',
   borderColor: 'surface.border',
-  borderTopLeftRadius: 0,
-  borderBottomLeftRadius: 0,
-  borderTopRightRadius: '16px',
-  borderBottomRightRadius: '16px',
+  borderRadius: {xs: '0 0 16px 16px', md: '0 16px 16px 0'},
 });
 
 export const wingPanelButton: SxProps<Theme> = {
-  position: 'absolute',
-  left: 0,
-  top: '50%',
-  transform: 'translate(0, -50%)',
-  width: 25,
-  height: 140,
+  position: {xs: 'relative', md: 'absolute'},
+  left: {xs: 'auto', md: 0},
+  transform: {xs: 'none', md: 'translate(0, -50%)'},
+  width: {xs: 'auto', md: 25},
+  minWidth: {xs: 0, md: 25},
+  height: {xs: 32, md: 140},
+  px: {xs: 1.5, md: 0},
+  mx: {xs: 'auto', md: 0},
+  top: {xs: 30, md: '50%'},
   backgroundColor: 'secondary.main',
   border: 1,
   borderColor: 'surface.border',
-  borderLeft: 'none',
-  borderTopLeftRadius: 0,
-  borderBottomLeftRadius: 0,
-  borderTopRightRadius: '10px',
-  borderBottomRightRadius: '10px',
+  borderLeft: {xs: 1, md: 'none'},
+  borderRadius: {xs: '0 0 10px 10px', md: '0 10px 10px 0'},
   color: 'text.secondary',
   display: 'flex',
   alignItems: 'center',
@@ -282,7 +482,7 @@ export const wingPanelButton: SxProps<Theme> = {
   flexShrink: 0,
   zIndex: 1,
   '&:hover': {color: 'primary.constrastText', backgroundColor: 'secondary.dark',},
-}
+};
 
 export const giantLaunchButtonSx = (isLeft: boolean): SxProps<Theme> => (theme) => {
   const baseColor = isLeft ? theme.palette.primary.main : theme.palette.success.main;

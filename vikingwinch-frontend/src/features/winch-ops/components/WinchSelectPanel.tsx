@@ -3,7 +3,7 @@ import {useEffect, useState} from 'react';
 import {getWinchStatusesForSquadron} from '../api/winchClient.ts';
 import {toWinchWithStatus} from '../api/winchMapper.ts';
 import type {WinchWithStatus} from '../types/domain.ts';
-import {darkBlueButton, glassPanelSx} from '../../../themes/styles.ts';
+import {darkBlueButton, glassPanelSx, singleLineCenterTitleSx} from '../../../themes/styles.ts';
 import type {SxProps, Theme} from '@mui/material/styles';
 
 interface WinchSelectPanelProps {
@@ -80,7 +80,7 @@ export const WinchSelectPanel = ({ squadronId, openWinchIds, onSelectWinch }: Wi
 
     return (
         <Box sx={[glassPanelSx, {maxWidth: 540, gap: 3}] as SxProps<Theme>}>
-            <Typography variant="h2" sx={{mb: 1}}>
+            <Typography variant="h2" sx={{...singleLineCenterTitleSx, mb: 1}}>
                 Select a Winch
             </Typography>
 

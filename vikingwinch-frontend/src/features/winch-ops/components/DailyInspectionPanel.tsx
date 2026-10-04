@@ -2,7 +2,14 @@ import React, {useEffect, useRef, useState} from 'react';
 import {Box, Button, TextField, Typography} from '@mui/material';
 import {getBroughtForward} from '../api/winchClient.ts';
 import {useSessionIdentity} from '../../../app/hooks/useSessionIdentity.ts';
-import {darkTextFieldStyles, errorBannerSx, glassPanelSx, glowingPrimaryButtonSx} from '../../../themes/styles.ts';
+import {
+    darkTextFieldStyles,
+    errorBannerSx,
+    glassPanelSx,
+    glowingPrimaryButtonSx,
+    responsiveMetricColumnSx,
+    responsiveMetricRowSx,
+} from '../../../themes/styles.ts';
 import type {SxProps, Theme} from '@mui/material/styles';
 
 interface DailyInspectionPanelProps {
@@ -233,8 +240,8 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
                 Retrieve data from cloud
             </Button>
 
-            <Box sx={{display: 'flex', gap: 2, width: '100%'}}>
-                <Box sx={{ flex: 1 }}>
+            <Box sx={responsiveMetricRowSx}>
+                <Box sx={responsiveMetricColumnSx}>
                     <Typography variant="subtitle2" sx={{mb: 1}}>
                         Left drum total
                     </Typography>
@@ -256,7 +263,7 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
                         </Typography>
                     )}
                 </Box>
-                <Box sx={{ flex: 1 }}>
+                <Box sx={responsiveMetricColumnSx}>
                     <Typography variant="subtitle2" sx={{mb: 1}}>
                         Right drum total
                     </Typography>

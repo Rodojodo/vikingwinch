@@ -8,6 +8,17 @@ import {WinchTab} from './WinchTab';
 import {getWinchesForSquadron} from '../features/winch-ops/api/winchClient';
 import type {WinchRead} from '../features/winch-ops/types';
 import {AUTH_PROVIDER} from './App';
+import {
+    compactAppBarSx,
+    compactAppBarTitleSx,
+    compactOperatorNameSx,
+    compactTabBarSx,
+    compactTabCloseButtonSx,
+    compactTabLabelSx,
+    compactTabSx,
+    compactToolbarSx,
+    compactUserButtonWrapperSx,
+} from '../themes/styles.ts';
 
 interface WinchOpsPageProps {
     squadronId: string;
@@ -77,26 +88,23 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
             <AppBar
                 position="static"
                 elevation={0}
-                sx={{
-                    bgcolor: 'surface.card',
-                    backgroundImage: 'none',
-                    boxShadow: 'none',
-                    borderBottom: '1px solid rgba(255,255,255,0.1)',
-                }}
+                sx={compactAppBarSx}
             >
-                <Toolbar>
+                <Toolbar sx={compactToolbarSx}>
                     <Typography
                         variant="h6"
                         component="div"
-                        sx={{flexGrow: 1, fontWeight: 'bold', color: 'primary.main'}}
+                        sx={compactAppBarTitleSx}
                     >
-                        {squadronId} — Winch Log
+                        Winch Log
                     </Typography>
-                    <Typography variant="body1" sx={{mr: 2, color: 'text.primary', fontWeight: 500}}>
+                    <Typography variant="body1" sx={compactOperatorNameSx}>
                         {operatorName}
                     </Typography>
                     {AUTH_PROVIDER === 'clerk' ? (
-                        <UserButton/>
+                        <Box sx={compactUserButtonWrapperSx}>
+                            <UserButton/>
+                        </Box>
                     ) : (
                         <Button
                             size="small"
@@ -109,7 +117,8 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
                                 color: 'text.primary',
                                 overflow: 'hidden',
                                 transition: 'all 0.2s ease',
-                                px: 2,
+                                px: {xs: 1, sm: 2},
+                                fontSize: {xs: '0.7rem', sm: '0.85rem'},
                                 '&:hover': {
                                     backgroundColor: 'rgba(59, 130, 246, 0.1)',
                                     borderColor: 'primary.main',
@@ -123,17 +132,7 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
                     )}
                 </Toolbar>
             </AppBar>
-            <Box
-                sx={{
-                    display: 'flex',
-                    alignItems: 'flex-end',
-                    bgcolor: 'background.default',
-                    borderBottom: 1,
-                    borderColor: 'divider',
-                    px: 2,
-                    pt: 1.5,
-                }}
-            >
+            <Box sx={compactTabBarSx}>
                 <Tabs
                     value={activeTabId}
                     onChange={(_, nv) => setActiveTabId(nv)}
@@ -141,7 +140,7 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
                     scrollButtons="auto"
                     textColor="inherit"
                     sx={{
-                        minHeight: '48px',
+                        minHeight: {xs: '36px', sm: '48px'},
                         '& .MuiTabs-indicator': {display: 'none'},
                     }}
                 >
@@ -152,7 +151,7 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
                             disableRipple
                             label={
                                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                    <Typography sx={{ textTransform: 'none', mr: 2, fontWeight: activeTabId === tab.id ? 500 : 400, color: 'inherit' }}>
+                                    <Typography sx={{ ...compactTabLabelSx, fontWeight: activeTabId === tab.id ? 500 : 400, color: 'inherit' }}>
                                         {tab.winchId ? `Winch ${tab.winchId}` : 'New Winch'}
                                     </Typography>
                                     <Box
@@ -166,36 +165,20 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
                                                 handleCloseTab(e, tab.id);
                                             }
                                         }}
-                                        sx={{
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            p: 0.25,
-                                            borderRadius: '50%',
-                                            cursor: 'pointer',
-                                            color: 'inherit',
-                                            '&:hover': {color: 'text.primary', bgcolor: 'rgba(255,255,255,0.1)'},
-                                        }}
+                                        sx={compactTabCloseButtonSx}
                                     >
-                                        <CloseIcon sx={{ width: 14, height: 14 }} />
+                                        <CloseIcon sx={{ width: 12, height: 12 }} />
                                     </Box>
                                 </Box>
                             }
                             sx={{
-                                minHeight: '48px',
-                                px: 3,
+                                ...compactTabSx,
                                 backgroundColor: activeTabId === tab.id ? 'surface.card' : 'surface.card',
-                                borderRadius: '12px 12px 0 0',
-                                opacity: 1,
-                                mr: 1.5,
                                 border: '1px solid',
                                 borderColor: activeTabId === tab.id ? 'surface.border' : 'transparent',
                                 borderBottom: 'none',
                                 color: activeTabId === tab.id ? 'text.primary' : 'text.secondary',
-                                transition: 'all 0.2s ease',
-                                '&.Mui-selected': {
-                                    color: 'text.primary',
-                                },
+                                opacity: 1,
                                 '&:hover': {
                                     backgroundColor: activeTabId === tab.id ? 'surface.card' : 'surface.card',
                                     color: activeTabId === tab.id ? 'text.primary' : 'text.secondary',
@@ -215,6 +198,8 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
                             color: 'text.primary',
                         },
                         '&.Mui-disabled': {color: 'rgba(255,255,255,0.2)'},
+                        width: {xs: 32, sm: 40},
+                        height: {xs: 32, sm: 40},
                     }}
                 >
                     <AddIcon fontSize="small" />
