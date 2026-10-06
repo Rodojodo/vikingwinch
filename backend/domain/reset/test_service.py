@@ -40,8 +40,15 @@ async def test_reset_is_idempotent_with_hardcoded_test_state(db_session, monkeyp
     assert all(log.type == "finish_day" for log in logs)
     assert all(log.timestamp.date() < datetime.now().date() for log in logs)
     assert len(launches) == 4
-    assert all(launch.launch_number == 1 for launch in launches)
-    assert {launch.drum for launch in launches} == {"left", "right"}
+    assert {
+        (launch.winch_id, launch.drum): launch.launch_number
+        for launch in launches
+    } == {
+        (101, "left"): 3156,
+        (101, "right"): 3142,
+        (102, "left"): 3156,
+        (102, "right"): 3142,
+    }
     assert await db_session.scalar(select(func.count()).select_from(Day_Log)) == 2
     assert await db_session.scalar(select(func.count()).select_from(Launch)) == 4
 
