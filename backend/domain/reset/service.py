@@ -11,7 +11,7 @@ SQUADRON_ID = "testvgs"
 
 
 def reset_is_available() -> bool:
-    return os.getenv("ENVIRONMENT", "").lower() in {"local", "preview", "test"}
+    return os.getenv("ENVIRONMENT", "").lower() in {"local", "preview"}
 
 
 async def reset_testvgs(db: AsyncSession, operator_sn: str) -> dict[str, object]:
@@ -20,6 +20,7 @@ async def reset_testvgs(db: AsyncSession, operator_sn: str) -> dict[str, object]
 
     reset_day = datetime.now() - timedelta(days=1)
     winches = ((101, 315.6), (102, 285.1))
+    launches = (("left", 3156), ("right", 3142))
 
     await db.execute(
         delete(Day_Log).where(
@@ -45,13 +46,13 @@ async def reset_testvgs(db: AsyncSession, operator_sn: str) -> dict[str, object]
                 hours=hours,
             )
         )
-        for drum in ("left", "right"):
+        for drum, launch_number in launches:
             db.add(
                 Launch(
                     squadron_id=SQUADRON_ID,
                     winch_id=winch_id,
                     drum=drum,
-                    launch_number=1,
+                    launch_number=launch_number,
                     timestamp=reset_day,
                     operator_sn=operator_sn,
                     remarks="development reset brought forward",
