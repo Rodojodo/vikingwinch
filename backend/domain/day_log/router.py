@@ -18,7 +18,7 @@ async def create_day_log(
     db: AsyncSession = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):
-    async with db.begin():
+    try:
         winch = await authorize_winch(db, principal, winch_id)
         operator = await authorize_operator(db, principal, payload.operator_sn)
         if payload.squadron_id != winch.squadron_id or operator.squadron_id != winch.squadron_id:
@@ -27,6 +27,10 @@ async def create_day_log(
                 detail="Day-log squadron and operator must match the authorized winch",
             )
         log = await day_log_repo.add_day_log(db, winch_id, payload)
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
     return log
 
 

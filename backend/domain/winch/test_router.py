@@ -209,6 +209,37 @@ async def test_create_di_on_empty_winch_history(db_session):
 
 
 @pytest.mark.asyncio
+async def test_create_day_log_commits_after_authorization_queries(db_session):
+    await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('123 VGS')"))
+    await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (1002, 'Winch 1002', '123 VGS')"))
+    await db_session.execute(text(
+        "INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) "
+        "VALUES ('op1002', 'oid1002', 'Op 1002', '123 VGS', 'operator')"
+    ))
+    await db_session.commit()
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app, raise_app_exceptions=False),
+        base_url="http://test",
+    ) as ac:
+        response = await ac.post(
+            "/winch/1002/day_log",
+            json={
+                "squadron_id": "123 VGS",
+                "type": "di",
+                "operator_sn": "op1002",
+                "hours": 215.3,
+            },
+        )
+
+    assert response.status_code == 201, response.text
+    result = await db_session.execute(
+        text("SELECT COUNT(*) FROM day_log WHERE winch_id = 1002")
+    )
+    assert result.scalar() == 1
+
+
+@pytest.mark.asyncio
 async def test_get_export_data_ordering_and_remarks(db_session):
     day = date(2026, 6, 6)
     day_str = day.isoformat()
