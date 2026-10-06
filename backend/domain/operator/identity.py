@@ -32,7 +32,7 @@ async def _get_clerk_operator(subject: str) -> GraphOperator:
         async with httpx.AsyncClient(timeout=10.0) as client:
             response = await client.get(
                 f"https://api.clerk.com/v1/users/{quote(subject, safe='')}",
-                headers={"Authorization": f"******"},
+                headers={"Authorization": "Bearer " + secret_key},
             )
     except httpx.HTTPError as exc:
         raise HTTPException(
@@ -44,6 +44,11 @@ async def _get_clerk_operator(subject: str) -> GraphOperator:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Authenticated user was not found in Clerk",
+        )
+    if response.status_code in (401, 403):
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Clerk provisioning credentials were rejected",
         )
     if response.status_code >= 400:
         raise HTTPException(
@@ -116,7 +121,7 @@ async def _get_graph_operator(subject: str, tenant_id: str) -> GraphOperator:
             response = await client.get(
                 url,
                 params={"$select": "id,displayName,employeeId,department"},
-                headers={"Authorization": f"Bearer {access_token}"},
+                headers={"Authorization": "Bearer " + access_token},
             )
     except httpx.HTTPError as exc:
         raise HTTPException(
