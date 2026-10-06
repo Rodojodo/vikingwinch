@@ -8,6 +8,7 @@ import {WinchTab} from './WinchTab';
 import {getWinchesForSquadron} from '../features/winch-ops/api/winchClient';
 import type {WinchRead} from '../features/winch-ops/types';
 import {AUTH_PROVIDER} from './App';
+import {DevResetDayControl} from '../features/winch-ops/components/DevResetDayControl';
 import {
     compactAppBarSx,
     compactAppBarTitleSx,
@@ -101,6 +102,7 @@ export const WinchOpsPage = ({ squadronId, operatorSn }: WinchOpsPageProps) => {
                     <Typography variant="body1" sx={compactOperatorNameSx}>
                         {operatorName}
                     </Typography>
+                    <DevResetDayControl/>
                     {AUTH_PROVIDER === 'clerk' ? (
                         <Box sx={compactUserButtonWrapperSx}>
                             <UserButton/>
