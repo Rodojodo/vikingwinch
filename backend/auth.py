@@ -245,3 +245,16 @@ def authorize_squadron(principal: Principal, squadron_id: str) -> None:
         return
     if squadron_id != principal.squadron_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Squadron is not authorized")
+
+
+def authorize_admin(principal: Principal) -> None:
+    configured_admins = {
+        service_no.strip()
+        for service_no in os.getenv("ADMIN_OPERATOR_SERVICE_NOS", "").split(",")
+        if service_no.strip()
+    }
+    if principal.operator_sn not in configured_admins:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Administrator access is required",
+        )

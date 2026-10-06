@@ -166,6 +166,25 @@ Endpoints also receive the principal explicitly when they need resource-level au
 
 The `/health` endpoint is intentionally separate and remains usable for service/database health checks. It checks database connectivity, not user authentication.
 
+## Development reset authorization
+
+The `POST /dev/reset-testvgs` endpoint is protected by both authentication and
+an explicit administrator allow-list. Configure the backend with:
+
+```text
+ENVIRONMENT=preview
+ADMIN_OPERATOR_SERVICE_NOS=OFF-1001
+
+APP_TIMEZONE=UTC
+```
+
+The endpoint is available only when `ENVIRONMENT` is `local`, `preview`, or
+`test`; `production` is always denied server-side. The frontend reset control
+is separately rendered only when `VITE_ENVIRONMENT` is one of those
+development values. Configure production explicitly as
+`ENVIRONMENT=production` and do not configure administrator service numbers
+there.
+
 ## 7. Resource-level authorization rules
 
 ### Winches
