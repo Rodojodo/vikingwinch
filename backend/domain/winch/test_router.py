@@ -179,6 +179,36 @@ async def test_create_day_log_success(db_session):
 
 
 @pytest.mark.asyncio
+async def test_create_di_on_empty_winch_history(db_session):
+    await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('123vgs')"))
+    await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (1, 'Winch 1', '123vgs')"))
+    await db_session.execute(text(
+        "INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) "
+        "VALUES ('OFF-1001', 'clerk-user', 'Test Operator', '123vgs', 'operator')"
+    ))
+    await db_session.commit()
+
+    payload = {
+        "hours": 216.3,
+        "operator_sn": "OFF-1001",
+        "squadron_id": "123vgs",
+        "trainee": None,
+        "type": "di",
+        "winch_id": 1,
+    }
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app, raise_app_exceptions=False),
+        base_url="http://test",
+    ) as ac:
+        response = await ac.post("/winch/1/day_log", json=payload)
+
+    assert response.status_code == 201, response.text
+    assert response.json()["type"] == "di"
+    assert response.json()["hours"] == 216.3
+
+
+@pytest.mark.asyncio
 async def test_get_export_data_ordering_and_remarks(db_session):
     day = date(2026, 6, 6)
     day_str = day.isoformat()

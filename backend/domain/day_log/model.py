@@ -12,7 +12,7 @@ if TYPE_CHECKING:
 
 class Day_Log(Base):
     __tablename__ = "day_log"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     squadron_id: Mapped[str] = mapped_column(ForeignKey("squadrons.id"), nullable=False)
     winch_id: Mapped[int] = mapped_column(ForeignKey("winches.id"), nullable=False)
     type: Mapped[str] = mapped_column(

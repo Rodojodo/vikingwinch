@@ -37,7 +37,7 @@ def upgrade() -> None:
     sa.UniqueConstraint('auth_provider', 'auth_tenant_id', 'auth_subject')
     )
     op.create_table('winches',
-    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('registration', sa.String(length=50), nullable=False),
     sa.Column('squadron_id', sa.String(length=50), nullable=False),
     sa.ForeignKeyConstraint(['squadron_id'], ['squadrons.id'], ),
