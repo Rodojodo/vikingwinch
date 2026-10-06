@@ -11,6 +11,13 @@ from domain.day_log.schema import DayLogRead, WinchHoursResponse, DayLogCreate
 router = APIRouter(prefix="/winch/{winch_id}", tags=["day-log"], dependencies=[Depends(get_current_principal)])
 
 
+from domain.stars import service as stars_service
+
+
+def _is_valid_currency(state: str | None) -> bool:
+    return state in ["green", "amber"]
+
+
 @router.post("/day_log", response_model=DayLogRead, status_code=status.HTTP_201_CREATED)
 async def create_day_log(
     winch_id: int,
@@ -26,6 +33,40 @@ async def create_day_log(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Day-log squadron and operator must match the authorized winch",
             )
+
+        if payload.type in ("di", "sign_on"):
+            quals = await stars_service.get_or_refresh_qualifications(db, payload.operator_sn)
+            c005 = quals.c005_operator if quals else "nil"
+            e004 = quals.e004_instructor if quals else "nil"
+            c003 = quals.c003_examiner if quals else "nil"
+
+            if payload.type == "di":
+                if not _is_valid_currency(c005):
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="C005 Winch Operator green/amber required for Daily Inspection.",
+                    )
+
+            elif payload.type == "sign_on":
+                can_solo = _is_valid_currency(c005)
+                can_dual = _is_valid_currency(e004) or _is_valid_currency(c003)
+
+                if not can_solo and not can_dual:
+                    raise HTTPException(
+                        status_code=status.HTTP_403_FORBIDDEN,
+                        detail="No valid winching qualifications held.",
+                    )
+                if not can_dual and payload.trainee is not None:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Solo operators cannot sign on with a trainee.",
+                    )
+                if not can_solo and payload.trainee is None:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Instructors/Examiners must sign on with a trainee.",
+                    )
+
         log = await day_log_repo.add_day_log(db, winch_id, payload)
         await db.commit()
     except Exception:

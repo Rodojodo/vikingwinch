@@ -9,6 +9,7 @@ os.environ.setdefault("DB_NAME", "test_db")
 os.environ.setdefault("DB_HOST", "127.0.0.1")
 os.environ.setdefault("DB_PORT", "3306")
 os.environ.setdefault("ENVIRONMENT", "test")
+os.environ.setdefault("STARS_MOCK_MODE", "true")
 
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from database.session import get_db
