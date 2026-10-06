@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from urllib.parse import quote
 
 import httpx
 from fastapi import HTTPException, status
@@ -17,6 +18,63 @@ class GraphOperator:
     service_no: str
     name: str
     squadron_id: str
+
+
+async def _get_clerk_operator(subject: str) -> GraphOperator:
+    secret_key = os.getenv("CLERK_SECRET_KEY")
+    if not secret_key:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Clerk provisioning is not configured",
+        )
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(
+                f"https://api.clerk.com/v1/users/{quote(subject, safe='')}",
+                headers={"Authorization": f"******"},
+            )
+    except httpx.HTTPError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Clerk is unavailable",
+        ) from exc
+
+    if response.status_code == 404:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Authenticated user was not found in Clerk",
+        )
+    if response.status_code >= 400:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Clerk rejected the provisioning request",
+        )
+
+    try:
+        data = response.json()
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Clerk returned an invalid response",
+        ) from exc
+
+    metadata = data.get("public_metadata")
+    if not isinstance(metadata, dict):
+        metadata = {}
+    service_no = str(metadata.get("operator_sn") or metadata.get("service_no") or "").strip()
+    squadron_id = str(metadata.get("squadron_id") or "").strip()
+    name = " ".join(
+        part.strip()
+        for part in (data.get("first_name"), data.get("last_name"))
+        if isinstance(part, str) and part.strip()
+    ) or str(data.get("username") or "").strip()
+    if not service_no or not squadron_id or not name:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Clerk profile is missing operator or squadron data",
+        )
+    return GraphOperator(service_no=service_no, name=name, squadron_id=squadron_id)
 
 
 async def _get_graph_operator(subject: str, tenant_id: str) -> GraphOperator:
@@ -110,55 +168,50 @@ async def resolve_operator(
     operator = await db.scalar(identity_query)
 
     if provider == "clerk":
-        if operator is None:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Clerk user is not provisioned as an operator",
-            )
-        return operator
-
-    if provider != "msal" or not tenant_id:
+        provider_operator = await _get_clerk_operator(subject)
+    elif provider == "msal" and tenant_id:
+        provider_operator = await _get_graph_operator(subject, tenant_id)
+    else:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Authenticated identity cannot be provisioned",
         )
 
-    graph_operator = await _get_graph_operator(subject, tenant_id)
-    squadron = await db.get(Squadron, graph_operator.squadron_id)
+    squadron = await db.get(Squadron, provider_operator.squadron_id)
     if squadron is None:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Operator's Graph squadron is not configured",
+            detail="Operator's squadron is not configured",
         )
 
     service_number_operator = await db.scalar(
-        select(Operator).where(Operator.service_no == graph_operator.service_no)
+        select(Operator).where(Operator.service_no == provider_operator.service_no)
     )
     if service_number_operator is not None and service_number_operator is not operator:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Operator service number is already linked to another identity",
         )
-    if operator is not None and operator.service_no != graph_operator.service_no:
+    if operator is not None and operator.service_no != provider_operator.service_no:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Microsoft Graph operator number does not match the linked identity",
+            detail="Provider operator number does not match the linked identity",
         )
 
     if operator is None:
         operator = Operator(
-            service_no=graph_operator.service_no,
+            service_no=provider_operator.service_no,
             auth_provider=provider,
             auth_subject=subject,
             auth_tenant_id=identity_tenant_id,
-            name=graph_operator.name,
-            squadron_id=graph_operator.squadron_id,
+            name=provider_operator.name,
+            squadron_id=provider_operator.squadron_id,
             qualification_level="operator",
         )
         db.add(operator)
     else:
-        operator.name = graph_operator.name
-        operator.squadron_id = graph_operator.squadron_id
+        operator.name = provider_operator.name
+        operator.squadron_id = provider_operator.squadron_id
         operator.auth_provider = provider
         operator.auth_subject = subject
         operator.auth_tenant_id = identity_tenant_id

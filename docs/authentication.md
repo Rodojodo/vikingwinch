@@ -55,9 +55,13 @@ CLERK_AUDIENCE=vikingwinch_api
 CLERK_JWKS_URL=https://your-clerk-issuer/.well-known/jwks.json
 ```
 
-The token only needs to identify the Clerk user. The backend uses the verified
-Clerk `sub` to find the explicitly provisioned operator row. Operator number
-and squadron assignment are database data, not authorization claims.
+The token only needs to identify the Clerk user. On first sign-in, the backend
+uses the verified Clerk `sub` to retrieve the user through the Clerk Backend
+API using `CLERK_SECRET_KEY`. The backend reads administrator-managed Clerk
+`public_metadata` fields named `operator_sn` and `squadron_id`, validates them
+against the local database, and creates or updates the local operator
+projection. The local database remains the authorization source after
+provisioning.
 
 ### 2.3 Attaching the token to requests
 
@@ -200,6 +204,7 @@ For Clerk:
 CLERK_ISSUER=...
 CLERK_AUDIENCE=...
 CLERK_JWKS_URL=...
+CLERK_SECRET_KEY=...
 ```
 
 For optional MSAL:
@@ -226,10 +231,13 @@ NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=...
 VITE_API_URL=...
 ```
 
-Each Clerk user must have an individual account and an explicitly provisioned
-operator row whose `auth_provider` is `clerk` and whose `auth_subject` is the
-Clerk user ID. Shared squadron credentials are not supported after cutover.
-The frontend no longer asks the user to select an operator.
+Each Clerk user must have an individual account. An administrator must set
+`public_metadata.operator_sn` and `public_metadata.squadron_id` in Clerk;
+the first authenticated API request then creates the local operator row with
+`auth_provider='clerk'` and the Clerk user ID in `auth_subject`. Existing
+operators are refreshed from the Clerk profile on sign-in. Shared squadron
+credentials are not supported after cutover, and the frontend no longer asks
+the user to select an operator.
 
 The optional MSAL frontend needs:
 
@@ -301,7 +309,8 @@ Before deploying the authenticated stack:
 1. Configure the backend issuer, audience, and JWKS URL for the selected provider.
 2. Configure the frontend API URL and provider credentials.
 3. Ensure the Clerk JWT template's audience matches `CLERK_AUDIENCE`.
-4. Provision each Clerk subject in the `operators` table with the correct local squadron.
+4. Set each Clerk user's administrator-managed `public_metadata.operator_sn`
+   and `public_metadata.squadron_id`.
 5. For MSAL, configure Graph app-only credentials and grant least-privilege
    directory-read permission.
 6. Set `CORS_ALLOWED_ORIGINS` to the exact deployed frontend origin.

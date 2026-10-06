@@ -10,7 +10,17 @@ from domain.squadron.model import Squadron
 
 
 @pytest.mark.asyncio
-async def test_clerk_subject_requires_explicit_operator_mapping(db_session):
+async def test_clerk_subject_requires_provisioning_data(db_session, monkeypatch):
+    monkeypatch.setattr(
+        "domain.operator.identity._get_clerk_operator",
+        AsyncMock(
+            side_effect=HTTPException(
+                status_code=403,
+                detail="Clerk profile is missing operator or squadron data",
+            )
+        ),
+    )
+
     with pytest.raises(HTTPException) as error:
         await resolve_operator(db_session, "clerk", "clerk-user", None)
 
@@ -18,24 +28,56 @@ async def test_clerk_subject_requires_explicit_operator_mapping(db_session):
 
 
 @pytest.mark.asyncio
-async def test_clerk_subject_resolves_existing_operator(db_session):
+async def test_clerk_first_sign_in_provisions_from_public_metadata(db_session, monkeypatch):
+    db_session.add(Squadron(id="123 VGS"))
+    await db_session.commit()
+    monkeypatch.setattr(
+        "domain.operator.identity._get_clerk_operator",
+        AsyncMock(return_value=_clerk_operator()),
+    )
+
+    operator = await resolve_operator(db_session, "clerk", "clerk-user", None)
+
+    assert operator.service_no == "SGT-2005"
+    assert operator.squadron_id == "123 VGS"
+    assert operator.auth_provider == "clerk"
+    assert operator.auth_subject == "clerk-user"
+    assert operator.qualification_level == "operator"
+
+
+@pytest.mark.asyncio
+async def test_clerk_sign_in_updates_existing_projection(db_session, monkeypatch):
     db_session.add(Squadron(id="123 VGS"))
     db_session.add(
         Operator(
             service_no="SGT-2005",
             auth_provider="clerk",
             auth_subject="clerk-user",
-            name="David Miller",
+            name="Old Name",
             squadron_id="123 VGS",
             qualification_level="operator",
         )
     )
     await db_session.commit()
+    monkeypatch.setattr(
+        "domain.operator.identity._get_clerk_operator",
+        AsyncMock(
+            return_value=GraphOperator(
+                service_no="SGT-2005",
+                name="Updated Name",
+                squadron_id="123 VGS",
+            )
+        ),
+    )
 
     operator = await resolve_operator(db_session, "clerk", "clerk-user", None)
 
-    assert operator.service_no == "SGT-2005"
-    assert operator.squadron_id == "123 VGS"
+    assert operator.name == "Updated Name"
+    assert (
+        await db_session.scalar(
+            select(Operator).where(Operator.service_no == "SGT-2005")
+        )
+    ).name == "Updated Name"
 
 
 @pytest.mark.asyncio
@@ -133,6 +175,14 @@ async def test_msal_rejects_service_number_identity_collision(db_session, monkey
 
 
 def _graph_operator() -> GraphOperator:
+    return GraphOperator(
+        service_no="SGT-2005",
+        name="David Miller",
+        squadron_id="123 VGS",
+    )
+
+
+def _clerk_operator() -> GraphOperator:
     return GraphOperator(
         service_no="SGT-2005",
         name="David Miller",
