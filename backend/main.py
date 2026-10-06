@@ -14,6 +14,7 @@ from domain.operator.router import router as operator_router
 from domain.squadron.router import router as squadron_router
 from domain.winch.router import router as winch_router
 from domain.reset.router import router as reset_router
+from domain.stars.router import router as stars_router
 
 
 async def db_unavailable_handler(request: Request, exc: Exception):
@@ -62,3 +63,4 @@ app.include_router(operator_router)
 app.include_router(squadron_router)
 app.include_router(winch_router)
 app.include_router(reset_router)
+app.include_router(stars_router)
