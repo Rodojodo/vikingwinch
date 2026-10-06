@@ -51,6 +51,8 @@ function ClerkApp() {
 
         let isMounted = true;
         // oxlint-disable-next-line react/set-state-in-effect
+        setCurrentOperator(null);
+        // oxlint-disable-next-line react/set-state-in-effect
         setOperatorError(null);
         getCurrentOperator()
             .then((operator) => {

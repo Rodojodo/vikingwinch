@@ -1,4 +1,4 @@
-import {render, screen} from '@testing-library/react';
+import {render, screen, waitFor} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 import {getCurrentOperator} from '../core/http/operatorsClient.ts';
 
@@ -93,5 +93,55 @@ describe('App (Clerk mode)', () => {
 
         render(<App/>);
         expect(await screen.findByText(/not mapped to an operator/i)).toBeInTheDocument();
+    });
+
+    it('clears the previous operator while a new account is resolving', async () => {
+        const firstOperator = Promise.resolve({
+            service_no: 'OFF-1001',
+            name: 'Joe Bloggs',
+            squadron_id: '123 VGS',
+        });
+        let resolveSecondOperator: ((operator: {
+            service_no: string;
+            name: string;
+            squadron_id: string;
+        }) => void) | undefined;
+        const secondOperator = new Promise<{
+            service_no: string;
+            name: string;
+            squadron_id: string;
+        }>((resolve) => {
+            resolveSecondOperator = resolve;
+        });
+        vi.mocked(getCurrentOperator)
+            .mockReturnValueOnce(firstOperator)
+            .mockReturnValueOnce(secondOperator);
+
+        const {default: App} = await import('./App');
+        mockUseUser.mockReturnValue({
+            isLoaded: true,
+            isSignedIn: true,
+            user: {id: 'user_123'},
+        });
+        const {rerender} = render(<App/>);
+
+        expect(await screen.findByText('123 VGS - OFF-1001')).toBeInTheDocument();
+
+        mockUseUser.mockReturnValue({
+            isLoaded: true,
+            isSignedIn: true,
+            user: {id: 'user_456'},
+        });
+        rerender(<App/>);
+
+        await waitFor(() => expect(screen.queryByText('123 VGS - OFF-1001')).not.toBeInTheDocument());
+        expect(screen.getByText('Loading operator profile...')).toBeInTheDocument();
+
+        resolveSecondOperator?.({
+            service_no: 'OFF-1002',
+            name: 'Sarah Jenkins',
+            squadron_id: '123 VGS',
+        });
+        expect(await screen.findByText('123 VGS - OFF-1002')).toBeInTheDocument();
     });
 });
