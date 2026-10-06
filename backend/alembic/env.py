@@ -40,12 +40,18 @@ DB_HOST = os.environ.get("DB_HOST") or os.environ.get("MYSQLHOST") or os.environ
 DB_PORT = os.environ.get("DB_PORT") or os.environ.get("MYSQLPORT") or os.environ.get("MYSQL_PORT")
 ENVIRONMENT = os.environ.get("ENVIRONMENT", "local")
 
-if ENVIRONMENT == "production":
+configured_db_password = (
+    os.environ.get("DB_PASSWORD")
+    or os.environ.get("MYSQLPASSWORD")
+    or os.environ.get("MYSQL_PASSWORD")
+)
+
+if ENVIRONMENT == "production" and not configured_db_password:
     from azure.identity import DefaultAzureCredential
     credential = DefaultAzureCredential()
     DB_PASSWORD = credential.get_token("https://ossrdbms-aad.database.windows.net/.default").token
 else:
-    DB_PASSWORD = os.environ.get("DB_PASSWORD") or os.environ.get("MYSQLPASSWORD") or os.environ.get("MYSQL_PASSWORD")
+    DB_PASSWORD = configured_db_password
 
 DATABASE_URL = f"mysql+asyncmy://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 config.set_main_option("sqlalchemy.url", DATABASE_URL)

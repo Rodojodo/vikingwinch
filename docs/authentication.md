@@ -178,8 +178,8 @@ ADMIN_OPERATOR_SERVICE_NOS=OFF-1001
 APP_TIMEZONE=UTC
 ```
 
-The endpoint is available only when `ENVIRONMENT` is `local`, `preview`, or
-`test`; `production` is always denied server-side. The frontend reset control
+The endpoint is available only when `ENVIRONMENT` is `local` or `preview`;
+`production` is always denied server-side. The frontend reset control
 is separately rendered only when `VITE_ENVIRONMENT` is one of those
 development values. Configure production explicitly as
 `ENVIRONMENT=production` and do not configure administrator service numbers
