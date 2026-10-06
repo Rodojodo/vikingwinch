@@ -1,13 +1,11 @@
 import os
 from datetime import datetime, timedelta
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.day_log.model import Day_Log
 from domain.launch.model import Launch
-from domain.squadron.model import Squadron
-from domain.winch.model import Winch
 
 SQUADRON_ID = "testvgs"
 
@@ -22,24 +20,6 @@ async def reset_testvgs(db: AsyncSession, operator_sn: str) -> dict[str, object]
 
     reset_day = datetime.now() - timedelta(days=1)
     winches = ((101, 315.6), (102, 285.1))
-
-    if await db.get(Squadron, SQUADRON_ID) is None:
-        db.add(Squadron(id=SQUADRON_ID))
-        await db.flush()
-
-    for winch_id, _ in winches:
-        winch = await db.get(Winch, winch_id)
-        if winch is None:
-            db.add(
-                Winch(
-                    id=winch_id,
-                    registration=f"TEST-WINCH-{winch_id}",
-                    squadron_id=SQUADRON_ID,
-                )
-            )
-        elif winch.squadron_id != SQUADRON_ID:
-            raise ValueError(f"Winch {winch_id} is not assigned to {SQUADRON_ID}")
-    await db.flush()
 
     await db.execute(
         delete(Day_Log).where(
