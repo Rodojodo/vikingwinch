@@ -15,7 +15,7 @@ from main import app
 async def setup_data(db_session):
     sqn = Squadron(id="123 VGS")
     winch = Winch(id=1, registration="VX001", squadron_id="123 VGS")
-    op = Operator(service_no="123456", entra_oid="oid1", name="Test Op", squadron_id="123 VGS", qualification_level="operator")
+    op = Operator(service_no="123456", auth_subject="oid1", name="Test Op", squadron_id="123 VGS", qualification_level="operator")
     
     db_session.add_all([sqn, winch, op])
     await db_session.flush()
@@ -136,7 +136,7 @@ async def test_create_day_log_rollback(db_session):
     # Setup test winch
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn2')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (999, 'Winch 999', 'sqn2')"))
-    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('12345', 'oid', 'Op', 'sqn2', 'operator')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) VALUES ('12345', 'oid', 'Op', 'sqn2', 'operator')"))
     await db_session.commit()
     
     payload = {
@@ -161,7 +161,7 @@ async def test_create_day_log_rollback(db_session):
 async def test_create_day_log_success(db_session):
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn10')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (1001, 'Winch 1001', 'sqn10')"))
-    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op10', 'oid10', 'Op10', 'sqn10', 'operator')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) VALUES ('op10', 'oid10', 'Op10', 'sqn10', 'operator')"))
     await db_session.commit()
     
     payload = {
@@ -185,7 +185,7 @@ async def test_get_export_data_ordering_and_remarks(db_session):
 
     sqn = Squadron(id="600 VGS")
     winch = Winch(id=600, registration="VX600", squadron_id="600 VGS")
-    op = Operator(service_no="SN600", entra_oid="oid600", name="Op 600", squadron_id="600 VGS", qualification_level="operator")
+    op = Operator(service_no="SN600", auth_subject="oid600", name="Op 600", squadron_id="600 VGS", qualification_level="operator")
     db_session.add_all([sqn, winch, op])
     await db_session.commit()
 
@@ -213,7 +213,7 @@ async def test_get_export_data_ordering_and_remarks(db_session):
 async def test_get_bf_info_with_prior_day_correction(db_session):
     sqn = Squadron(id="700 VGS")
     winch = Winch(id=700, registration="VX700", squadron_id="700 VGS")
-    op = Operator(service_no="SN700", entra_oid="oid700", name="Op 700", squadron_id="700 VGS", qualification_level="operator")
+    op = Operator(service_no="SN700", auth_subject="oid700", name="Op 700", squadron_id="700 VGS", qualification_level="operator")
     db_session.add_all([sqn, winch, op])
     await db_session.commit()
 

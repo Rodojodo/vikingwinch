@@ -6,7 +6,6 @@ import type {SxProps, Theme} from '@mui/material/styles';
 import '../App.css';
 import {WinchOpsPage} from './WinchOpsPage';
 import {LoginPage} from './LoginPage';
-import {getUserDepartment, getUserProfile} from '../features/auth/api/graphAPI';
 import {appBackgroundSx} from '../themes/styles';
 import {setApiTokenProvider} from '../core/http/fetchClient';
 import {getCurrentOperator} from '../core/http/operatorsClient';
@@ -113,8 +112,7 @@ function ClerkApp() {
  */
 function MsalApp() {
     const { instance, accounts, inProgress } = useMsal();
-    const [operatorSn, setOperatorSn] = useState<string | null>(null);
-    const [squadronId, setSquadronId] = useState<string | null>(null);
+    const [currentOperator, setCurrentOperator] = useState<Awaited<ReturnType<typeof getCurrentOperator>> | null>(null);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -136,42 +134,12 @@ function MsalApp() {
 
     useEffect(() => {
         const fetchUserData = async () => {
-            if (accounts.length > 0 && !operatorSn && !squadronId && !error) {
+            if (accounts.length > 0 && !currentOperator && !error) {
                 try {
-                    const tokenResponse = await instance.acquireTokenSilent({
-                        scopes: ["User.Read"],
-                        account: accounts[0]
-                    });
-
-                    const graphData = await getUserDepartment(tokenResponse.accessToken);
-
-                    let employeeId = graphData.employeeId || null;
-
-                    if (!employeeId) {
-                        let profileData = null;
-                        try {
-                            profileData = await getUserProfile(tokenResponse.accessToken);
-                            console.log("Graph API User Profile Response:", profileData);
-                        } catch (profileErr) {
-                            console.warn("Failed to fetch user profile (e.g., 404 Not Found), falling back to v1.0 data:", profileErr);
-                        }
-
-                        if (profileData?.positions && Array.isArray(profileData.positions)) {
-                            for (const pos of profileData.positions) {
-                                if (pos.detail?.employeeId) {
-                                    employeeId = pos.detail.employeeId;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    // Fallback for testing: check graphData.employeeId from the v1.0/me endpoint
-                    setOperatorSn(employeeId || graphData.displayName || 'Unknown Operator');
-                    setSquadronId(graphData.department || 'Unknown Squadron');
+                    setCurrentOperator(await getCurrentOperator());
                 } catch (err) {
-                    console.error("Failed to load user profile:", err);
-                    setError("Failed to load user profile.");
+                    console.error("Failed to load authenticated operator:", err);
+                    setError("Failed to load your operator profile.");
                 }
             }
         };
@@ -179,7 +147,7 @@ function MsalApp() {
         if (inProgress === "none") {
             fetchUserData();
         }
-    }, [accounts, inProgress, instance, operatorSn, squadronId, error]);
+    }, [accounts, currentOperator, error, inProgress]);
 
     return (
         <>
@@ -206,8 +174,11 @@ function MsalApp() {
                         }}>Return to Login
                         </button>
                     </div>
-                ) : operatorSn && squadronId ? (
-                    <WinchOpsPage squadronId={squadronId} operatorSn={operatorSn} />
+                ) : currentOperator ? (
+                    <WinchOpsPage
+                        squadronId={currentOperator.squadron_id}
+                        operatorSn={currentOperator.service_no}
+                    />
                 ) : (
                     <div style={{ color: 'white', display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
                         Loading profile...

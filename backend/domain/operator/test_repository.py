@@ -11,7 +11,7 @@ async def test_get_operator_from_sn_success(db_session):
     # Arrange: Seed test database
     mock_operator = Operator(
         service_no="12345678",
-        entra_oid="a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+        auth_subject="a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
         name="Joe Bloggs",
         squadron_id="123 VGS",
         qualification_level="instructor"
@@ -37,14 +37,14 @@ async def test_get_operator_from_sn_miss(db_session):
 async def test_get_operators_from_sqn_pass(db_session):
     mock_operator_1 = Operator(
         service_no="12345678",
-        entra_oid="0946-n8wny3-yn89",
+        auth_subject="0946-n8wny3-yn89",
         name="Joe Bloggs",
         squadron_id="123 VGS",
         qualification_level="instructor"
     )
     mock_operator_2 = Operator(
         service_no="87654321",
-        entra_oid="gsbu-ibgseh-uiseg",
+        auth_subject="gsbu-ibgseh-uiseg",
         name="Rosie Smith",
         squadron_id="123 VGS",
         qualification_level="instructor"
@@ -63,14 +63,14 @@ async def test_get_operators_from_sqn_pass(db_session):
 async def test_get_operators_from_sqn_no_squadron(db_session):
     mock_operator_1 = Operator(
         service_no="12345678",
-        entra_oid="0946-n8wny3-yn89",
+        auth_subject="0946-n8wny3-yn89",
         name="Joe Bloggs",
         squadron_id="123 VGS",
         qualification_level="instructor"
     )
     mock_operator_2 = Operator(
         service_no="87654321",
-        entra_oid="gsbu-ibgseh-uiseg",
+        auth_subject="gsbu-ibgseh-uiseg",
         name="Rosie Smith",
         squadron_id="123 VGS",
         qualification_level="instructor"

@@ -9,7 +9,7 @@ from main import app
 async def test_create_launch_rollback(db_session):
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn3')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (888, 'Winch 888', 'sqn3')"))
-    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('12345', 'oid', 'Op', 'sqn3', 'operator')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) VALUES ('12345', 'oid', 'Op', 'sqn3', 'operator')"))
     await db_session.execute(text("INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (600, 'sqn3', 888, 'cable_check', CURRENT_TIMESTAMP, '12345')"))
     await db_session.commit()
 
@@ -34,7 +34,7 @@ async def test_create_launch_rollback(db_session):
 async def test_create_launch_success(db_session):
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn4')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (889, 'Winch 889', 'sqn4')"))
-    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('123456', 'oid2', 'Op2', 'sqn4', 'operator')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) VALUES ('123456', 'oid2', 'Op2', 'sqn4', 'operator')"))
     await db_session.execute(text("INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (601, 'sqn4', 889, 'cable_check', CURRENT_TIMESTAMP, '123456')"))
     await db_session.commit()
 
@@ -58,7 +58,7 @@ async def test_create_launch_success(db_session):
 async def test_create_launch_requires_cable_check(db_session):
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn4_no_check')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (893, 'Winch 893', 'sqn4_no_check')"))
-    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('123457', 'oid_no_check', 'Op No Check', 'sqn4_no_check', 'operator')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) VALUES ('123457', 'oid_no_check', 'Op No Check', 'sqn4_no_check', 'operator')"))
     await db_session.commit()
 
     payload = {
@@ -84,7 +84,7 @@ async def test_create_launch_rejected_after_finish_day(db_session):
     now = datetime.now(timezone.utc).isoformat()
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn_finish_launch')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (900, 'Winch 900', 'sqn_finish_launch')"))
-    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op_finish_launch', 'oid_finish_launch', 'Finished launch operator', 'sqn_finish_launch', 'operator')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) VALUES ('op_finish_launch', 'oid_finish_launch', 'Finished launch operator', 'sqn_finish_launch', 'operator')"))
     await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (508, 'sqn_finish_launch', 900, 'cable_check', '{now}', 'op_finish_launch')"))
     await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (509, 'sqn_finish_launch', 900, 'finish_day', '{now}', 'op_finish_launch')"))
     await db_session.commit()
@@ -113,7 +113,7 @@ async def test_create_launch_finish_day_from_different_day_does_not_block(db_ses
     current_day = now.isoformat()
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn_old_finish_launch')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (901, 'Winch 901', 'sqn_old_finish_launch')"))
-    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op_old_finish_launch', 'oid_old_finish_launch', 'Old finished launch operator', 'sqn_old_finish_launch', 'operator')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) VALUES ('op_old_finish_launch', 'oid_old_finish_launch', 'Old finished launch operator', 'sqn_old_finish_launch', 'operator')"))
     await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (510, 'sqn_old_finish_launch', 901, 'finish_day', '{yesterday}', 'op_old_finish_launch')"))
     await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (511, 'sqn_old_finish_launch', 901, 'cable_check', '{current_day}', 'op_old_finish_launch')"))
     await db_session.commit()
@@ -136,7 +136,7 @@ async def test_create_launch_finish_day_from_different_day_does_not_block(db_ses
 async def test_delete_launch_success(db_session):
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn5')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (890, 'Winch 890', 'sqn5')"))
-    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op3', 'oid3', 'Op3', 'sqn5', 'operator')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) VALUES ('op3', 'oid3', 'Op3', 'sqn5', 'operator')"))
     await db_session.execute(text("INSERT INTO launches (launch_id, squadron_id, winch_id, drum, launch_number, timestamp, operator_sn) VALUES (99, 'sqn5', 890, 'left', 1, '2023-01-01', 'op3')"))
     await db_session.commit()
 
@@ -151,7 +151,7 @@ async def test_delete_launch_success(db_session):
 async def test_add_remark_success(db_session):
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn6')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (891, 'Winch 891', 'sqn6')"))
-    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op4', 'oid4', 'Op4', 'sqn6', 'operator')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) VALUES ('op4', 'oid4', 'Op4', 'sqn6', 'operator')"))
     await db_session.execute(text("INSERT INTO launches (launch_id, squadron_id, winch_id, drum, launch_number, timestamp, operator_sn) VALUES (100, 'sqn6', 891, 'left', 1, '2023-01-01', 'op4')"))
     await db_session.commit()
 
@@ -167,7 +167,7 @@ async def test_add_remark_success(db_session):
 async def test_add_repair_success(db_session):
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn7')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (892, 'Winch 892', 'sqn7')"))
-    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op5', 'oid5', 'Op5', 'sqn7', 'operator')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) VALUES ('op5', 'oid5', 'Op5', 'sqn7', 'operator')"))
     await db_session.execute(text("INSERT INTO launches (launch_id, squadron_id, winch_id, drum, launch_number, timestamp, operator_sn) VALUES (101, 'sqn7', 892, 'left', 1, '2023-01-01', 'op5')"))
     await db_session.commit()
 
@@ -190,7 +190,7 @@ async def test_create_launch_correction_both_drums_success(db_session):
     now = datetime.now(timezone.utc).isoformat()
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn8')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (893, 'Winch 893', 'sqn8')"))
-    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op8', 'oid8', 'Op8', 'sqn8', 'operator')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) VALUES ('op8', 'oid8', 'Op8', 'sqn8', 'operator')"))
     await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (500, 'sqn8', 893, 'di', '{now}', 'op8')"))
     await db_session.commit()
 
@@ -221,7 +221,7 @@ async def test_create_launch_correction_rejected_after_finish_day(db_session):
     now = datetime.now(timezone.utc).isoformat()
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn_finish_correction')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (902, 'Winch 902', 'sqn_finish_correction')"))
-    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op_finish_correction', 'oid_finish_correction', 'Finished correction operator', 'sqn_finish_correction', 'operator')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) VALUES ('op_finish_correction', 'oid_finish_correction', 'Finished correction operator', 'sqn_finish_correction', 'operator')"))
     await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (512, 'sqn_finish_correction', 902, 'di', '{now}', 'op_finish_correction')"))
     await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (513, 'sqn_finish_correction', 902, 'finish_day', '{now}', 'op_finish_correction')"))
     await db_session.commit()
@@ -244,7 +244,7 @@ async def test_create_launch_correction_finish_day_from_different_day_does_not_b
     current_day = now.isoformat()
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn_old_finish_correction')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (903, 'Winch 903', 'sqn_old_finish_correction')"))
-    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op_old_finish_correction', 'oid_old_finish_correction', 'Old finished correction operator', 'sqn_old_finish_correction', 'operator')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) VALUES ('op_old_finish_correction', 'oid_old_finish_correction', 'Old finished correction operator', 'sqn_old_finish_correction', 'operator')"))
     await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (514, 'sqn_old_finish_correction', 903, 'finish_day', '{yesterday}', 'op_old_finish_correction')"))
     await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (515, 'sqn_old_finish_correction', 903, 'di', '{current_day}', 'op_old_finish_correction')"))
     await db_session.commit()
@@ -262,7 +262,7 @@ async def test_create_launch_correction_single_drum_left(db_session):
     now = datetime.now(timezone.utc).isoformat()
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn9')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (894, 'Winch 894', 'sqn9')"))
-    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op9', 'oid9', 'Op9', 'sqn9', 'operator')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) VALUES ('op9', 'oid9', 'Op9', 'sqn9', 'operator')"))
     await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (501, 'sqn9', 894, 'di', '{now}', 'op9')"))
     await db_session.commit()
 
@@ -287,7 +287,7 @@ async def test_create_launch_correction_single_drum_right(db_session):
     now = datetime.now(timezone.utc).isoformat()
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn10')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (895, 'Winch 895', 'sqn10')"))
-    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op10', 'oid10', 'Op10', 'sqn10', 'operator')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) VALUES ('op10', 'oid10', 'Op10', 'sqn10', 'operator')"))
     await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (502, 'sqn10', 895, 'di', '{now}', 'op10')"))
     await db_session.commit()
 
@@ -368,7 +368,7 @@ async def test_create_launch_correction_strips_whitespace(db_session):
     now = datetime.now(timezone.utc).isoformat()
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn_strip')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (898, 'Winch 898', 'sqn_strip')"))
-    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op_strip', 'oid_s', 'Op Strip', 'sqn_strip', 'operator')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) VALUES ('op_strip', 'oid_s', 'Op Strip', 'sqn_strip', 'operator')"))
     await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (505, 'sqn_strip', 898, 'di', '{now}', 'op_strip')"))
     await db_session.commit()
 
@@ -391,7 +391,7 @@ async def test_create_launch_correction_strips_whitespace(db_session):
 async def test_create_launch_correction_missing_di_today(db_session):
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn11')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (896, 'Winch 896', 'sqn11')"))
-    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op11', 'oid11', 'Op11', 'sqn11', 'operator')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) VALUES ('op11', 'oid11', 'Op11', 'sqn11', 'operator')"))
     # Old DI from yesterday
     await db_session.execute(text("INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (503, 'sqn11', 896, 'di', '2026-06-01T10:00:00', 'op11')"))
     await db_session.commit()
@@ -415,7 +415,7 @@ async def test_create_launch_correction_atomic_rollback(db_session):
     now = datetime.now(timezone.utc).isoformat()
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn12')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (897, 'Winch 897', 'sqn12')"))
-    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op12', 'oid12', 'Op12', 'sqn12', 'operator')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) VALUES ('op12', 'oid12', 'Op12', 'sqn12', 'operator')"))
     await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (504, 'sqn12', 897, 'di', '{now}', 'op12')"))
     await db_session.commit()
 
@@ -452,7 +452,7 @@ async def test_create_launch_correction_same_day_bf_and_zero_day_launches(db_ses
     today_str = datetime.now(timezone.utc).date().isoformat()
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn13')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (899, 'Winch 899', 'sqn13')"))
-    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op13', 'oid13', 'Op13', 'sqn13', 'operator')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) VALUES ('op13', 'oid13', 'Op13', 'sqn13', 'operator')"))
     await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (506, 'sqn13', 899, 'di', '{now}', 'op13')"))
     await db_session.execute(text(f"INSERT INTO day_log (id, squadron_id, winch_id, type, timestamp, operator_sn) VALUES (507, 'sqn13', 899, 'cable_check', '{now}', 'op13')"))
     await db_session.commit()

@@ -24,7 +24,9 @@ VITE_AUTH_PROVIDER=clerk
 
 `src/main.tsx` creates a `ClerkProvider` using the configured publishable key. `src/pages/App.tsx` then uses Clerk hooks to determine whether the user is loaded, signed in, or signed out.
 
-When the user is signed out, the app renders `LoginPage`. When signed in, the app requests `/operators/me` and opens the operational winch application only when the authenticated account is mapped to one operator.
+When the user is signed out, the app renders `LoginPage`. When signed in, the
+app requests `/operators/me` and opens the operational winch application only
+when the authenticated account resolves to one local operator.
 
 ### 2.2 API token creation
 
@@ -53,18 +55,9 @@ CLERK_AUDIENCE=vikingwinch_api
 CLERK_JWKS_URL=https://your-clerk-issuer/.well-known/jwks.json
 ```
 
-The token should also contain a squadron claim. The backend first checks the configured claim, then supports the repository's known Clerk metadata shapes:
-
-- `AUTH_SQUADRON_CLAIM`
-- `metadata.squadronId`
-- `public_metadata.squadronId`
-- `public_metadata.squadron_id`
-
-The example configuration uses:
-
-```text
-AUTH_SQUADRON_CLAIM=metadata.squadronId
-```
+The token only needs to identify the Clerk user. The backend uses the verified
+Clerk `sub` to find the explicitly provisioned operator row. Operator number
+and squadron assignment are database data, not authorization claims.
 
 ### 2.3 Attaching the token to requests
 
@@ -92,15 +85,11 @@ MSAL_AUDIENCE=api://your-api-app-id
 
 The frontend deliberately fails with a configuration error if no API scope is configured. It must not silently request a token for a different audience.
 
-The MSAL path also uses a separate `User.Read` Graph token to obtain profile information such as employee ID and department. That Graph token is used for the legacy MSAL UI flow; API requests use the API audience token configured by `VITE_API_SCOPE`.
-
-The backend expects the configured operator claim, normally `service_no`, to identify the operator:
-
-```text
-AUTH_OPERATOR_CLAIM=service_no
-```
-
-This provider is retained for future deployment work and should be treated as a separate configuration path from Clerk. Both providers use the same individual-operator principal shape.
+The backend validates the API token, extracts the immutable Entra `oid` and
+`tid`, and uses an app-only Microsoft Graph credential to resolve the user's
+`employeeId`, `department`, and display name. The backend creates or updates
+the local operator projection on first sign-in. The frontend does not make
+authorization decisions from a client-side Graph response.
 
 ## 4. Backend token validation
 
@@ -142,15 +131,14 @@ Principal(
 )
 ```
 
-The application uses one authorization mode. Both Clerk and MSAL tokens identify
-one operator through the configured operator claim and identify that operator's
-squadron through the configured squadron claim:
+The application uses one authorization mode. Provider identity resolution
+produces one local operator:
 
 ```text
 provider=clerk or msal
 mode=individual_operator
-operator_sn=<employee/service number claim>
-squadron_id=<squadron claim>
+operator_sn=<local operator service number>
+squadron_id=<local operator squadron>
 ```
 
 The `test` provider is only used by the test dependency override and bypasses
@@ -180,7 +168,8 @@ The `/health` endpoint is intentionally separate and remains usable for service/
 
 `authorize_winch` loads the winch and checks its squadron:
 
-- Individual-operator principals resolve the operator by service number and may access only winches in both the operator's and principal's squadron.
+- Individual-operator principals may access only winches in the resolved
+  operator's squadron.
 
 This check is applied to winch reads, day-log operations, launch creation, launch correction, launch listing, remarks, repairs, and launch deletion.
 
@@ -189,13 +178,15 @@ This check is applied to winch reads, day-log operations, launch creation, launc
 `authorize_operator` ensures the requested operator exists and matches the caller's authorization:
 
 - An individual-operator principal may access only the operator represented by its token when an operator is supplied as an action actor.
-- Individual users may read other operators in their own squadron where the operational workflow needs trainee, worker, or supervisor records.
+- Individual users may read other operators in their own squadron where the
+  operational workflow needs trainee, worker, or supervisor records.
 
 Launches and day logs also validate that the submitted operator and squadron match the authorized winch. This prevents a caller from supplying an otherwise valid operator or squadron belonging to another resource.
 
 ### Squadrons
 
-`authorize_squadron` limits individual-operator principals to their own squadron.
+`authorize_squadron` limits individual-operator principals to their resolved
+local squadron.
 
 ## 8. Configuration responsibilities
 
@@ -209,8 +200,6 @@ For Clerk:
 CLERK_ISSUER=...
 CLERK_AUDIENCE=...
 CLERK_JWKS_URL=...
-AUTH_SQUADRON_CLAIM=squadron_id
-AUTH_OPERATOR_CLAIM=service_no
 ```
 
 For optional MSAL:
@@ -219,7 +208,9 @@ For optional MSAL:
 MSAL_ISSUER=...
 MSAL_AUDIENCE=...
 MSAL_JWKS_URL=...
-AUTH_OPERATOR_CLAIM=employeeId
+MSAL_GRAPH_TENANT_ID=...
+MSAL_GRAPH_CLIENT_ID=...
+MSAL_GRAPH_CLIENT_SECRET=...
 ```
 
 `CORS_ALLOWED_ORIGINS` is a comma-separated allowlist. If set, it replaces the local default list. Production deployments should set it explicitly to the deployed frontend origin.
@@ -235,10 +226,10 @@ NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=...
 VITE_API_URL=...
 ```
 
-Each Clerk user must have an individual account and a JWT-template mapping for
-the operator service number and squadron. Shared squadron credentials are not
-supported after cutover. The frontend no longer asks the user to select an
-operator.
+Each Clerk user must have an individual account and an explicitly provisioned
+operator row whose `auth_provider` is `clerk` and whose `auth_subject` is the
+Clerk user ID. Shared squadron credentials are not supported after cutover.
+The frontend no longer asks the user to select an operator.
 
 The optional MSAL frontend needs:
 
@@ -290,7 +281,7 @@ backend selects Clerk config from the token issuer
 JWT signature, issuer, audience, exp, iat, and sub are verified
         |
         v
-claims become an individual-operator Principal
+the backend resolves the Clerk subject to a database operator
         |
         v
 route authorization checks squadron/winch/operator ownership
@@ -299,9 +290,9 @@ route authorization checks squadron/winch/operator ownership
 repository reads or writes the database
 ```
 
-At no point does the backend trust a browser-selected operator as proof of
-identity. The authenticated operator claim is checked against the relevant
-database records.
+At no point does the backend trust browser-selected operator, squadron, or
+Graph profile data as proof of authorization. Provider identity is resolved
+server-side to the local operator and squadron records.
 
 ## 11. Operational checklist
 
@@ -310,9 +301,11 @@ Before deploying the authenticated stack:
 1. Configure the backend issuer, audience, and JWKS URL for the selected provider.
 2. Configure the frontend API URL and provider credentials.
 3. Ensure the Clerk JWT template's audience matches `CLERK_AUDIENCE`.
-4. Ensure the template emits the configured squadron claim.
-5. Set `CORS_ALLOWED_ORIGINS` to the exact deployed frontend origin.
-6. Confirm the frontend sends an `Authorization` header to a protected endpoint.
-7. Confirm requests without a token receive `401`.
-8. Confirm a valid user from another squadron receives `403` for the protected resource.
-9. Keep `/health` available for platform health checks, but do not use it as proof that protected business routes are accessible.
+4. Provision each Clerk subject in the `operators` table with the correct local squadron.
+5. For MSAL, configure Graph app-only credentials and grant least-privilege
+   directory-read permission.
+6. Set `CORS_ALLOWED_ORIGINS` to the exact deployed frontend origin.
+7. Confirm the frontend sends an `Authorization` header to a protected endpoint.
+8. Confirm requests without a token receive `401`.
+9. Confirm a valid user from another squadron receives `403` for the protected resource.
+10. Keep `/health` available for platform health checks, but do not use it as proof that protected business routes are accessible.

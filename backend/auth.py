@@ -14,7 +14,9 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from domain.operator.model import Operator
+from domain.operator.identity import resolve_operator
 from domain.winch.model import Winch
+from database.session import get_db
 
 
 logger = logging.getLogger(__name__)
@@ -109,39 +111,9 @@ def _unverified_issuer(token: str) -> str:
         ) from exc
 
 
-def _claim(claims: dict[str, Any], name: str) -> Any:
-    value: Any = claims
-    for part in name.split("."):
-        if not isinstance(value, dict):
-            return None
-        value = value.get(part)
-    return value
-
-
-def _squadron_from_claims(claims: dict[str, Any]) -> str | None:
-    configured = os.getenv("AUTH_SQUADRON_CLAIM", "squadron_id")
-    value = _claim(claims, configured)
-    if value is None:
-        value = _claim(claims, "metadata.squadronId")
-    if value is None:
-        value = _claim(claims, "public_metadata.squadronId")
-    if value is None:
-        metadata = claims.get("public_metadata")
-        if isinstance(metadata, dict):
-            value = metadata.get("squadronId") or metadata.get("squadron_id")
-    return str(value).strip() if value else None
-
-
-def _operator_from_claims(claims: dict[str, Any]) -> str | None:
-    configured = os.getenv("AUTH_OPERATOR_CLAIM", "service_no")
-    value = _claim(claims, configured)
-    if value is None:
-        value = claims.get("employeeId")
-    return str(value).strip() if value else None
-
-
 async def get_current_principal(
     credentials: HTTPAuthorizationCredentials | None = Depends(bearer_scheme),
+    db: AsyncSession = Depends(get_db),
 ) -> Principal:
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise HTTPException(
@@ -209,25 +181,28 @@ async def get_current_principal(
             headers={"WWW-Authenticate": "Bearer"},
         ) from exc
 
-    operator_sn = _operator_from_claims(claims)
-    squadron_id = _squadron_from_claims(claims)
-    if not operator_sn or not squadron_id:
-        logger.warning(
-            "Token is not mapped to an individual operator; operator claim=%s, squadron claim=%s, available claims=%s",
-            os.getenv("AUTH_OPERATOR_CLAIM", "service_no"),
-            os.getenv("AUTH_SQUADRON_CLAIM", "squadron_id"),
-            sorted(claims.keys()),
-        )
+    identity_claim = claims.get("oid") if provider == "msal" else claims.get("sub")
+    if not identity_claim:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Token is not mapped to an individual operator and squadron",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authenticated token is missing its provider identity",
+            headers={"WWW-Authenticate": "Bearer"},
         )
+    subject = str(identity_claim)
+    tenant_id = str(claims["tid"]) if provider == "msal" and claims.get("tid") else None
+    if provider == "msal" and tenant_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authenticated token is missing its tenant identity",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    operator = await resolve_operator(db, provider, subject, tenant_id)
     return Principal(
         provider=provider,
         mode="individual_operator",
-        subject=str(claims["sub"]),
-        squadron_id=squadron_id,
-        operator_sn=operator_sn,
+        subject=subject,
+        squadron_id=operator.squadron_id,
+        operator_sn=operator.service_no,
     )
 
 
