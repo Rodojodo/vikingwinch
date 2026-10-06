@@ -1,6 +1,6 @@
-import {fireEvent, render, screen} from '@testing-library/react';
+import {render, screen, waitFor} from '@testing-library/react';
 import {beforeEach, describe, expect, it, vi} from 'vitest';
-import {getOperatorsForSquadron} from '../core/http/operatorsClient.ts';
+import {getCurrentOperator} from '../core/http/operatorsClient.ts';
 
 const mockUseUser = vi.fn();
 const mockGetToken = vi.fn().mockResolvedValue(null);
@@ -37,173 +37,111 @@ vi.mock('./LoginPage', () => ({
 }));
 
 vi.mock('../core/http/operatorsClient.ts', () => ({
-    getOperatorsForSquadron: vi.fn(),
+    getCurrentOperator: vi.fn(),
 }));
 
 describe('App (Clerk mode)', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        sessionStorage.clear();
         vi.stubEnv('VITE_TEST_AUTH_PROVIDER', 'clerk');
     });
 
     it('shows loading state while profile is loading', async () => {
         const {default: App} = await import('./App');
-        mockUseUser.mockReturnValue({
-            isLoaded: false,
-            isSignedIn: false,
-            user: null,
-        });
+        mockUseUser.mockReturnValue({isLoaded: false, isSignedIn: false, user: null});
 
         render(<App/>);
         expect(screen.getByText('Loading profile...')).toBeInTheDocument();
-        expect(screen.queryByTestId('login-page')).not.toBeInTheDocument();
     });
 
     it('renders login page when signed out', async () => {
         const {default: App} = await import('./App');
-        mockUseUser.mockReturnValue({
-            isLoaded: true,
-            isSignedIn: false,
-            user: null,
-        });
+        mockUseUser.mockReturnValue({isLoaded: true, isSignedIn: false, user: null});
 
         render(<App/>);
         expect(screen.getByTestId('login-page')).toBeInTheDocument();
-        expect(screen.queryByTestId('winch-ops-page')).not.toBeInTheDocument();
     });
 
-    it('renders OperatorSelectPanel with username as squadronId when signed in without operator selected', async () => {
-        vi.mocked(getOperatorsForSquadron).mockResolvedValue([
-            { service_no: 'OFF-1001', name: 'Joe Bloggs', squadron_id: '123 VGS' },
-        ]);
+    it('opens the operational app for the authenticated operator returned by the API', async () => {
+        vi.mocked(getCurrentOperator).mockResolvedValue({
+            service_no: 'OFF-1001',
+            name: 'Joe Bloggs',
+            squadron_id: '123 VGS',
+        });
         const {default: App} = await import('./App');
         mockUseUser.mockReturnValue({
             isLoaded: true,
             isSignedIn: true,
-            user: {
-                username: '123 VGS',
-            },
+            user: {id: 'user_123'},
         });
 
         render(<App/>);
-        expect(screen.getByText('Select an Operator')).toBeInTheDocument();
-        expect(await screen.findByRole('button', { name: 'Joe Bloggs' })).toBeInTheDocument();
-        expect(getOperatorsForSquadron).toHaveBeenCalledWith('123 VGS');
-        expect(screen.queryByTestId('winch-ops-page')).not.toBeInTheDocument();
-    });
-
-    it('transitions to WinchOpsPage and stores operator in sessionStorage when an operator is clicked', async () => {
-        vi.mocked(getOperatorsForSquadron).mockResolvedValue([
-            { service_no: 'OFF-1001', name: 'Joe Bloggs', squadron_id: '123 VGS' },
-        ]);
-        const {default: App} = await import('./App');
-        mockUseUser.mockReturnValue({
-            isLoaded: true,
-            isSignedIn: true,
-            user: {
-                username: '123 VGS',
-            },
-        });
-
-        render(<App/>);
-        const opButton = await screen.findByRole('button', { name: 'Joe Bloggs' });
-        fireEvent.click(opButton);
-
-        expect(sessionStorage.getItem('vikingwinch_operator_sn')).toBe('OFF-1001');
-        expect(screen.getByTestId('winch-ops-page')).toBeInTheDocument();
+        expect(await screen.findByTestId('winch-ops-page')).toBeInTheDocument();
         expect(screen.getByText('123 VGS - OFF-1001')).toBeInTheDocument();
-    });
-
-    it('directly renders WinchOpsPage on page reload when sessionStorage contains operator', async () => {
-        sessionStorage.setItem('vikingwinch_operator_sn', 'OFF-1001');
-        const {default: App} = await import('./App');
-        mockUseUser.mockReturnValue({
-            isLoaded: true,
-            isSignedIn: true,
-            user: {
-                username: '123 VGS',
-            },
-        });
-
-        render(<App/>);
-        expect(screen.getByTestId('winch-ops-page')).toBeInTheDocument();
-        expect(screen.getByText('123 VGS - OFF-1001')).toBeInTheDocument();
+        expect(getCurrentOperator).toHaveBeenCalledOnce();
         expect(screen.queryByText('Select an Operator')).not.toBeInTheDocument();
     });
 
-    it('falls back to publicMetadata.squadronId if username is not present', async () => {
-        vi.mocked(getOperatorsForSquadron).mockResolvedValue([]);
+    it('shows an account mapping error when the authenticated user is not an operator', async () => {
+        vi.mocked(getCurrentOperator).mockRejectedValue(new Error('not mapped'));
         const {default: App} = await import('./App');
         mockUseUser.mockReturnValue({
             isLoaded: true,
             isSignedIn: true,
-            user: {
-                publicMetadata: {
-                    squadronId: '622 VGS',
-                },
-            },
+            user: {id: 'user_123'},
         });
 
         render(<App/>);
-        expect(await screen.findByText('No operators available for this squadron.')).toBeInTheDocument();
-        expect(getOperatorsForSquadron).toHaveBeenCalledWith('622 VGS');
+        expect(await screen.findByText(/not mapped to an operator/i)).toBeInTheDocument();
     });
 
-    it('falls back to 123 VGS default if neither username nor publicMetadata.squadronId is present', async () => {
-        vi.mocked(getOperatorsForSquadron).mockResolvedValue([]);
+    it('clears the previous operator while a new account is resolving', async () => {
+        const firstOperator = Promise.resolve({
+            service_no: 'OFF-1001',
+            name: 'Joe Bloggs',
+            squadron_id: '123 VGS',
+        });
+        let resolveSecondOperator: ((operator: {
+            service_no: string;
+            name: string;
+            squadron_id: string;
+        }) => void) | undefined;
+        const secondOperator = new Promise<{
+            service_no: string;
+            name: string;
+            squadron_id: string;
+        }>((resolve) => {
+            resolveSecondOperator = resolve;
+        });
+        vi.mocked(getCurrentOperator)
+            .mockReturnValueOnce(firstOperator)
+            .mockReturnValueOnce(secondOperator);
+
         const {default: App} = await import('./App');
         mockUseUser.mockReturnValue({
             isLoaded: true,
             isSignedIn: true,
-            user: {},
+            user: {id: 'user_123'},
         });
-
-        render(<App/>);
-        expect(await screen.findByText('No operators available for this squadron.')).toBeInTheDocument();
-        expect(getOperatorsForSquadron).toHaveBeenCalledWith('123 VGS');
-    });
-
-    it('clears sessionStorage and resets operator state when user signs out', async () => {
-        vi.mocked(getOperatorsForSquadron).mockResolvedValue([]);
-        sessionStorage.setItem('vikingwinch_operator_sn', 'OFF-1001');
-        const {default: App} = await import('./App');
-        mockUseUser.mockReturnValue({
-            isLoaded: true,
-            isSignedIn: true,
-            user: {
-                username: '123 VGS',
-            },
-        });
-
         const {rerender} = render(<App/>);
-        expect(screen.getByTestId('winch-ops-page')).toBeInTheDocument();
 
-        // Simulate user sign-out
-        mockUseUser.mockReturnValue({
-            isLoaded: true,
-            isSignedIn: false,
-            user: null,
-        });
+        expect(await screen.findByText('123 VGS - OFF-1001')).toBeInTheDocument();
 
-        rerender(<App/>);
-
-        expect(sessionStorage.getItem('vikingwinch_operator_sn')).toBeNull();
-        expect(screen.getByTestId('login-page')).toBeInTheDocument();
-        expect(screen.queryByTestId('winch-ops-page')).not.toBeInTheDocument();
-
-        // Simulate re-signing in: should render OperatorSelectPanel since operator selection state was reset
         mockUseUser.mockReturnValue({
             isLoaded: true,
             isSignedIn: true,
-            user: {
-                username: '123 VGS',
-            },
+            user: {id: 'user_456'},
         });
-
         rerender(<App/>);
 
-        expect(await screen.findByText('Select an Operator')).toBeInTheDocument();
-        expect(screen.queryByTestId('winch-ops-page')).not.toBeInTheDocument();
+        await waitFor(() => expect(screen.queryByText('123 VGS - OFF-1001')).not.toBeInTheDocument());
+        expect(screen.getByText('Loading operator profile...')).toBeInTheDocument();
+
+        resolveSecondOperator?.({
+            service_no: 'OFF-1002',
+            name: 'Sarah Jenkins',
+            squadron_id: '123 VGS',
+        });
+        expect(await screen.findByText('123 VGS - OFF-1002')).toBeInTheDocument();
     });
 });

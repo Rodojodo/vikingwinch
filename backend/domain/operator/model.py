@@ -10,7 +10,19 @@ if TYPE_CHECKING:
 class Operator(Base):
     __tablename__ = "operators"
     service_no: Mapped[str] = mapped_column(String(20), primary_key=True)
-    entra_oid: Mapped[str] = mapped_column(String(36), unique=True)
+    auth_provider: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        default="clerk",
+        server_default="clerk",
+    )
+    auth_subject: Mapped[str] = mapped_column(String(255), nullable=False)
+    auth_tenant_id: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+        default="",
+        server_default="",
+    )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     squadron_id: Mapped[str] = mapped_column(ForeignKey("squadrons.id"), nullable=False)
     qualification_level: Mapped[str] = mapped_column(Enum('trainee', 'operator', 'instructor', 'examiner'), nullable=False)

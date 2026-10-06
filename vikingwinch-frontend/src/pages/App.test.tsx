@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import App from './App.tsx';
-import { getUserDepartment, getUserProfile } from '../features/auth/api/graphAPI';
+import { getCurrentOperator } from '../core/http/operatorsClient';
 
 // Mock MSAL
 const mockUseMsal = vi.fn();
@@ -17,10 +17,8 @@ vi.mock('@azure/msal-react', () => ({
     }
 }));
 
-// Mock Graph API
-vi.mock('../features/auth/api/graphAPI', () => ({
-    getUserDepartment: vi.fn(),
-    getUserProfile: vi.fn(),
+vi.mock('../core/http/operatorsClient', () => ({
+    getCurrentOperator: vi.fn(),
 }));
 
 // Mock Pages
@@ -37,7 +35,6 @@ vi.mock('./LoginPage', () => ({
 describe('App', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        vi.mocked(getUserProfile).mockResolvedValue(null);
     });
 
     it('renders login page when unauthenticated', () => {
@@ -52,31 +49,31 @@ describe('App', () => {
         expect(screen.queryByText('Loading profile...')).not.toBeInTheDocument();
     });
 
-    it('shows loading state while fetching graph data when authenticated', () => {
+    it('shows loading state while fetching the operator when authenticated', () => {
         mockUseMsal.mockReturnValue({
             instance: { acquireTokenSilent: vi.fn().mockResolvedValue({ accessToken: 'token123' }) },
             accounts: [{ name: 'Test User' }],
             inProgress: 'none'
         });
         
-        // Don't resolve getUserDepartment immediately to keep it in loading state
-        vi.mocked(getUserDepartment).mockImplementation(() => new Promise(() => {}));
+        vi.mocked(getCurrentOperator).mockImplementation(() => new Promise(() => {}));
 
         render(<App />);
         expect(screen.getByText('Loading profile...')).toBeInTheDocument();
         expect(screen.queryByTestId('login-page')).not.toBeInTheDocument();
     });
 
-    it('renders WinchOpsPage with user data after successful fetch', async () => {
+    it('renders WinchOpsPage with operator data after successful fetch', async () => {
         mockUseMsal.mockReturnValue({
             instance: { acquireTokenSilent: vi.fn().mockResolvedValue({ accessToken: 'token123' }) },
             accounts: [{ name: 'Test User' }],
             inProgress: 'none'
         });
 
-        vi.mocked(getUserDepartment).mockResolvedValue({
-            displayName: 'Test Operator',
-            department: '999 VGS'
+        vi.mocked(getCurrentOperator).mockResolvedValue({
+            service_no: 'SGT-2005',
+            name: 'Test Operator',
+            squadron_id: '999 VGS',
         });
 
         render(<App />);
@@ -85,10 +82,10 @@ describe('App', () => {
             expect(screen.getByTestId('winch-ops-page')).toBeInTheDocument();
         });
         
-        expect(screen.getByText('999 VGS - Test Operator')).toBeInTheDocument();
+        expect(screen.getByText('999 VGS - SGT-2005')).toBeInTheDocument();
     });
     
-    it('handles Graph API error gracefully and shows error message', async () => {
+    it('handles operator API errors gracefully and shows error message', async () => {
         const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         mockUseMsal.mockReturnValue({
             instance: { acquireTokenSilent: vi.fn().mockResolvedValue({ accessToken: 'token123' }) },
@@ -96,35 +93,34 @@ describe('App', () => {
             inProgress: 'none'
         });
 
-        vi.mocked(getUserDepartment).mockRejectedValue(new Error('Network error'));
+        vi.mocked(getCurrentOperator).mockRejectedValue(new Error('Network error'));
 
         render(<App />);
         
         await waitFor(() => {
-            expect(consoleSpy).toHaveBeenCalledWith("Failed to load user profile:", expect.any(Error));
+            expect(consoleSpy).toHaveBeenCalledWith("Failed to load authenticated operator:", expect.any(Error));
         });
         
-        expect(screen.getByText('Failed to load user profile.')).toBeInTheDocument();
+        expect(screen.getByText('Failed to load your operator profile.')).toBeInTheDocument();
         expect(screen.getByText('Return to Login')).toBeInTheDocument();
         
         consoleSpy.mockRestore();
     });
 
-    it('renders WinchOpsPage with fallbacks when graph data is missing', async () => {
+    it('does not render the operational page when the operator profile is unavailable', async () => {
         mockUseMsal.mockReturnValue({
             instance: { acquireTokenSilent: vi.fn().mockResolvedValue({ accessToken: 'token123' }) },
             accounts: [{ name: 'Test User' }],
             inProgress: 'none'
         });
 
-        vi.mocked(getUserDepartment).mockResolvedValue({});
+        vi.mocked(getCurrentOperator).mockRejectedValue(new Error('Incomplete profile'));
 
         render(<App />);
         
         await waitFor(() => {
-            expect(screen.getByTestId('winch-ops-page')).toBeInTheDocument();
+            expect(screen.getByText('Failed to load your operator profile.')).toBeInTheDocument();
         });
-        
-        expect(screen.getByText('Unknown Squadron - Unknown Operator')).toBeInTheDocument();
+        expect(screen.queryByTestId('winch-ops-page')).not.toBeInTheDocument();
     });
 });

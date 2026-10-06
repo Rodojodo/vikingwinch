@@ -15,7 +15,7 @@ from main import app
 async def setup_data(db_session):
     sqn = Squadron(id="123 VGS")
     winch = Winch(id=1, registration="VX001", squadron_id="123 VGS")
-    op = Operator(service_no="123456", entra_oid="oid1", name="Test Op", squadron_id="123 VGS", qualification_level="operator")
+    op = Operator(service_no="123456", auth_subject="oid1", name="Test Op", squadron_id="123 VGS", qualification_level="operator")
     
     db_session.add_all([sqn, winch, op])
     await db_session.flush()
@@ -136,7 +136,7 @@ async def test_create_day_log_rollback(db_session):
     # Setup test winch
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn2')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (999, 'Winch 999', 'sqn2')"))
-    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('12345', 'oid', 'Op', 'sqn2', 'operator')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) VALUES ('12345', 'oid', 'Op', 'sqn2', 'operator')"))
     await db_session.commit()
     
     payload = {
@@ -161,7 +161,7 @@ async def test_create_day_log_rollback(db_session):
 async def test_create_day_log_success(db_session):
     await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('sqn10')"))
     await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (1001, 'Winch 1001', 'sqn10')"))
-    await db_session.execute(text("INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES ('op10', 'oid10', 'Op10', 'sqn10', 'operator')"))
+    await db_session.execute(text("INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) VALUES ('op10', 'oid10', 'Op10', 'sqn10', 'operator')"))
     await db_session.commit()
     
     payload = {
@@ -179,13 +179,74 @@ async def test_create_day_log_success(db_session):
 
 
 @pytest.mark.asyncio
+async def test_create_di_on_empty_winch_history(db_session):
+    await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('123vgs')"))
+    await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (1, 'Winch 1', '123vgs')"))
+    await db_session.execute(text(
+        "INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) "
+        "VALUES ('OFF-1001', 'clerk-user', 'Test Operator', '123vgs', 'operator')"
+    ))
+    await db_session.commit()
+
+    payload = {
+        "hours": 216.3,
+        "operator_sn": "OFF-1001",
+        "squadron_id": "123vgs",
+        "trainee": None,
+        "type": "di",
+        "winch_id": 1,
+    }
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app, raise_app_exceptions=False),
+        base_url="http://test",
+    ) as ac:
+        response = await ac.post("/winch/1/day_log", json=payload)
+
+    assert response.status_code == 201, response.text
+    assert response.json()["type"] == "di"
+    assert response.json()["hours"] == 216.3
+
+
+@pytest.mark.asyncio
+async def test_create_day_log_commits_after_authorization_queries(db_session):
+    await db_session.execute(text("INSERT INTO squadrons (id) VALUES ('123 VGS')"))
+    await db_session.execute(text("INSERT INTO winches (id, registration, squadron_id) VALUES (1002, 'Winch 1002', '123 VGS')"))
+    await db_session.execute(text(
+        "INSERT INTO operators (service_no, auth_subject, name, squadron_id, qualification_level) "
+        "VALUES ('op1002', 'oid1002', 'Op 1002', '123 VGS', 'operator')"
+    ))
+    await db_session.commit()
+
+    async with AsyncClient(
+        transport=ASGITransport(app=app, raise_app_exceptions=False),
+        base_url="http://test",
+    ) as ac:
+        response = await ac.post(
+            "/winch/1002/day_log",
+            json={
+                "squadron_id": "123 VGS",
+                "type": "di",
+                "operator_sn": "op1002",
+                "hours": 215.3,
+            },
+        )
+
+    assert response.status_code == 201, response.text
+    result = await db_session.execute(
+        text("SELECT COUNT(*) FROM day_log WHERE winch_id = 1002")
+    )
+    assert result.scalar() == 1
+
+
+@pytest.mark.asyncio
 async def test_get_export_data_ordering_and_remarks(db_session):
     day = date(2026, 6, 6)
     day_str = day.isoformat()
 
     sqn = Squadron(id="600 VGS")
     winch = Winch(id=600, registration="VX600", squadron_id="600 VGS")
-    op = Operator(service_no="SN600", entra_oid="oid600", name="Op 600", squadron_id="600 VGS", qualification_level="operator")
+    op = Operator(service_no="SN600", auth_subject="oid600", name="Op 600", squadron_id="600 VGS", qualification_level="operator")
     db_session.add_all([sqn, winch, op])
     await db_session.commit()
 
@@ -213,7 +274,7 @@ async def test_get_export_data_ordering_and_remarks(db_session):
 async def test_get_bf_info_with_prior_day_correction(db_session):
     sqn = Squadron(id="700 VGS")
     winch = Winch(id=700, registration="VX700", squadron_id="700 VGS")
-    op = Operator(service_no="SN700", entra_oid="oid700", name="Op 700", squadron_id="700 VGS", qualification_level="operator")
+    op = Operator(service_no="SN700", auth_subject="oid700", name="Op 700", squadron_id="700 VGS", qualification_level="operator")
     db_session.add_all([sqn, winch, op])
     await db_session.commit()
 

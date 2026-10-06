@@ -44,9 +44,10 @@ def override_dependency(db_session):
     app.dependency_overrides[get_db] = lambda: db_session
     app.dependency_overrides[get_current_principal] = lambda: Principal(
         provider="test",
-        mode="shared_squadron",
+        mode="individual_operator",
         subject="test-subject",
         squadron_id="123 VGS",
+        operator_sn="test-operator",
     )
     yield
     app.dependency_overrides.clear()

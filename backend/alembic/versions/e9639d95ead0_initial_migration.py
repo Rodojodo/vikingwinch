@@ -26,16 +26,18 @@ def upgrade() -> None:
     )
     op.create_table('operators',
     sa.Column('service_no', sa.String(length=20), nullable=False),
-    sa.Column('entra_oid', sa.String(length=36), nullable=False),
+    sa.Column('auth_provider', sa.String(length=20), server_default='clerk', nullable=False),
+    sa.Column('auth_subject', sa.String(length=255), nullable=False),
+    sa.Column('auth_tenant_id', sa.String(length=255), server_default='', nullable=False),
     sa.Column('name', sa.String(length=255), nullable=False),
     sa.Column('squadron_id', sa.String(length=50), nullable=False),
     sa.Column('qualification_level', sa.Enum('trainee', 'operator', 'instructor', 'examiner'), nullable=False),
     sa.ForeignKeyConstraint(['squadron_id'], ['squadrons.id'], ),
     sa.PrimaryKeyConstraint('service_no'),
-    sa.UniqueConstraint('entra_oid')
+    sa.UniqueConstraint('auth_provider', 'auth_tenant_id', 'auth_subject')
     )
     op.create_table('winches',
-    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('registration', sa.String(length=50), nullable=False),
     sa.Column('squadron_id', sa.String(length=50), nullable=False),
     sa.ForeignKeyConstraint(['squadron_id'], ['squadrons.id'], ),

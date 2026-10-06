@@ -7,3 +7,9 @@ export const getOperatorsForSquadron = async (squadronId: string, signal?: Abort
         signal,
     });
 };
+
+export const getCurrentOperator = async (): Promise<OperatorRead> => {
+    return apiFetch<OperatorRead>('/operators/me', {
+        method: 'GET',
+    });
+};

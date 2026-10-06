@@ -29,7 +29,7 @@ async def create_launch(
     principal: Principal = Depends(get_current_principal),
 ):
     today = datetime.now(timezone.utc).date()
-    async with db.begin():
+    try:
         winch = await authorize_winch(db, principal, payload.winch_id)
         operator = await authorize_operator(db, principal, payload.operator_sn)
         if payload.squadron_id != winch.squadron_id or operator.squadron_id != winch.squadron_id:
@@ -59,6 +59,10 @@ async def create_launch(
             drum=payload.drum,
             is_burn=payload.is_burn,
         )
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
     return launch
 
 
@@ -69,7 +73,7 @@ async def create_launch_correction(
     principal: Principal = Depends(get_current_principal),
 ):
     today = datetime.now(timezone.utc).date()
-    async with db.begin():
+    try:
         winch = await authorize_winch(db, principal, payload.winch_id)
         await db.execute(select(Winch.id).where(Winch.id == payload.winch_id).with_for_update())
 
@@ -132,6 +136,10 @@ async def create_launch_correction(
                 timestamp=correction_timestamp,
             )
             results.append(right_launch)
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
 
     return results
 
@@ -142,7 +150,7 @@ async def delete_launch(
     db: AsyncSession = Depends(get_db),
     principal: Principal = Depends(get_current_principal),
 ):
-    async with db.begin():
+    try:
         existing = await db.get(Launch, launch_id)
         if existing is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Launch not found")
@@ -150,6 +158,10 @@ async def delete_launch(
         launch = await launch_repo.delete_launch(db, launch_id)
         if not launch:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Launch not found")
+        await db.commit()
+    except Exception:
+        await db.rollback()
+        raise
     return None
 
 
@@ -160,17 +172,21 @@ async def add_remark(
     principal: Principal = Depends(get_current_principal),
 ):
     try:
-        async with db.begin():
-            existing = await db.get(Launch, payload.launch_id)
-            if existing is None:
-                raise ValueError("No previous launch")
-            await authorize_winch(db, principal, existing.winch_id)
-            launch = await launch_repo.add_remark_to_launch(
-                db, payload.launch_id, payload.remark
-            )
+        existing = await db.get(Launch, payload.launch_id)
+        if existing is None:
+            raise ValueError("No previous launch")
+        await authorize_winch(db, principal, existing.winch_id)
+        launch = await launch_repo.add_remark_to_launch(
+            db, payload.launch_id, payload.remark
+        )
+        await db.commit()
         return launch
     except ValueError as e:
+        await db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception:
+        await db.rollback()
+        raise
 
 
 @router.post("/repairs", response_model=LaunchRead)
@@ -180,17 +196,21 @@ async def add_repair(
     principal: Principal = Depends(get_current_principal),
 ):
     try:
-        async with db.begin():
-            existing = await db.get(Launch, payload.launch_id)
-            if existing is None:
-                raise ValueError("No previous launch")
-            await authorize_winch(db, principal, existing.winch_id)
-            launch = await launch_repo.add_repair_to_launch(
-                db, payload.launch_id, payload.repair, payload.supervisor_id
-            )
+        existing = await db.get(Launch, payload.launch_id)
+        if existing is None:
+            raise ValueError("No previous launch")
+        await authorize_winch(db, principal, existing.winch_id)
+        launch = await launch_repo.add_repair_to_launch(
+            db, payload.launch_id, payload.repair, payload.supervisor_id
+        )
+        await db.commit()
         return launch
     except ValueError as e:
+        await db.rollback()
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except Exception:
+        await db.rollback()
+        raise
 
 
 @router.get("", response_model=list[LaunchRead])

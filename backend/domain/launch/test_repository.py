@@ -262,7 +262,7 @@ async def test_get_launches_from_date_orders_by_launch_id_asc(db_session):
     """Test that get_launches_from_date orders records by launch_id ASC."""
     squadron = Squadron(id="123 VGS")
     winch = Winch(id=1, registration="EF 34 GH", squadron_id="123 VGS")
-    operator = Operator(service_no="12345678", entra_oid="oid1", name="Op", squadron_id="123 VGS", qualification_level="operator")
+    operator = Operator(service_no="12345678", auth_subject="oid1", name="Op", squadron_id="123 VGS", qualification_level="operator")
     db_session.add_all([squadron, winch, operator])
     await db_session.commit()
 
@@ -348,7 +348,7 @@ async def test_add_launch_correction_success(db_session):
     """Test add_launch_correction creates a Launch with 'corrected brought forward' remark."""
     squadron = Squadron(id="123 VGS")
     winch = Winch(id=1, registration="EF 34 GH", squadron_id="123 VGS")
-    operator = Operator(service_no="12345678", entra_oid="oid1", name="Op", squadron_id="123 VGS", qualification_level="operator")
+    operator = Operator(service_no="12345678", auth_subject="oid1", name="Op", squadron_id="123 VGS", qualification_level="operator")
     db_session.add_all([squadron, winch, operator])
     await db_session.commit()
 
@@ -373,7 +373,7 @@ async def test_downward_correction_effect(db_session):
     """Given existing launch 100, when correction is set to 20, subsequent add_launch produces 21."""
     squadron = Squadron(id="123 VGS")
     winch = Winch(id=1, registration="EF 34 GH", squadron_id="123 VGS")
-    operator = Operator(service_no="12345678", entra_oid="oid1", name="Op", squadron_id="123 VGS", qualification_level="operator")
+    operator = Operator(service_no="12345678", auth_subject="oid1", name="Op", squadron_id="123 VGS", qualification_level="operator")
     db_session.add_all([squadron, winch, operator])
     await db_session.commit()
 
@@ -409,7 +409,7 @@ async def test_upward_correction_effect(db_session):
     """Given existing launch 100, when correction is set to 150, subsequent add_launch produces 151."""
     squadron = Squadron(id="123 VGS")
     winch = Winch(id=1, registration="EF 34 GH", squadron_id="123 VGS")
-    operator = Operator(service_no="12345678", entra_oid="oid1", name="Op", squadron_id="123 VGS", qualification_level="operator")
+    operator = Operator(service_no="12345678", auth_subject="oid1", name="Op", squadron_id="123 VGS", qualification_level="operator")
     db_session.add_all([squadron, winch, operator])
     await db_session.commit()
 
@@ -445,7 +445,7 @@ async def test_next_day_brought_forward_with_correction(db_session):
     """Test get_brought_forward reflects the latest correction before current_day."""
     squadron = Squadron(id="123 VGS")
     winch = Winch(id=1, registration="EF 34 GH", squadron_id="123 VGS")
-    operator = Operator(service_no="12345678", entra_oid="oid1", name="Op", squadron_id="123 VGS", qualification_level="operator")
+    operator = Operator(service_no="12345678", auth_subject="oid1", name="Op", squadron_id="123 VGS", qualification_level="operator")
     db_session.add_all([squadron, winch, operator])
 
     # Day 1: normal launch 10, then downward correction to 5
@@ -469,7 +469,7 @@ async def test_sequential_add_launches_monotonically_increasing(db_session):
     """Test multiple add_launch calls allocate distinct, monotonically increasing numbers."""
     squadron = Squadron(id="123 VGS")
     winch = Winch(id=1, registration="EF 34 GH", squadron_id="123 VGS")
-    operator = Operator(service_no="12345678", entra_oid="oid1", name="Op", squadron_id="123 VGS", qualification_level="operator")
+    operator = Operator(service_no="12345678", auth_subject="oid1", name="Op", squadron_id="123 VGS", qualification_level="operator")
     db_session.add_all([squadron, winch, operator])
     await db_session.commit()
 
@@ -487,7 +487,7 @@ async def test_same_day_brought_forward_and_day_launches_with_correction(db_sess
     does NOT appear in get_launches_from_date for today, and next add_launch derives from it."""
     squadron = Squadron(id="123 VGS")
     winch = Winch(id=1, registration="EF 34 GH", squadron_id="123 VGS")
-    operator = Operator(service_no="12345678", entra_oid="oid1", name="Op", squadron_id="123 VGS", qualification_level="operator")
+    operator = Operator(service_no="12345678", auth_subject="oid1", name="Op", squadron_id="123 VGS", qualification_level="operator")
     db_session.add_all([squadron, winch, operator])
     await db_session.commit()
 

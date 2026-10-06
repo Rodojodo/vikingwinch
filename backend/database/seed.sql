@@ -13,13 +13,13 @@ INSERT INTO winches (id, registration, squadron_id) VALUES
 (4, 'G-WNC4', '321vgs');
 
 -- 3. POPULATE OPERATORS
--- (Using unique simulated Entra OIDs / UUIDs)  
-INSERT INTO operators (service_no, entra_oid, name, squadron_id, qualification_level) VALUES 
-('OFF-1001', 'a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d', 'Joe Bloggs', '123vgs', 'examiner'),
-('OFF-1002', 'b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e', 'Sarah Jenkins', '123vgs', 'instructor'),
-('SGT-2005', 'c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f', 'David Miller', '123vgs', 'operator'),
-('CDT-3042', 'd4e5f6a7-b8c9-0d1e-2f3a-4b5c6d7e8f9a', 'Emily Clack', '123vgs', 'trainee'),
-('OFF-4001', 'e5f6a7b8-c9d0-1e2f-3a4b-5c6d7e8f9a0b', 'John Smith', '321vgs', 'instructor');
+-- (Using unique simulated provider subjects)
+INSERT INTO operators (service_no, auth_provider, auth_subject, name, squadron_id, qualification_level) VALUES
+('OFF-1001', 'clerk', 'user_joe_bloggs', 'Joe Bloggs', '123vgs', 'examiner'),
+('OFF-1002', 'clerk', 'user_sarah_jenkins', 'Sarah Jenkins', '123vgs', 'instructor'),
+('SGT-2005', 'clerk', 'user_david_miller', 'David Miller', '123vgs', 'operator'),
+('CDT-3042', 'clerk', 'user_emily_clack', 'Emily Clack', '123vgs', 'trainee'),
+('OFF-4001', 'clerk', 'user_john_smith', 'John Smith', '321vgs', 'instructor');
 
 -- 4. POPULATE LAUNCHES
 -- (The launch_id column will auto-increment automatically)
