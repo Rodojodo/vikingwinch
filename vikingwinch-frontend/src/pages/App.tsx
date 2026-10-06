@@ -1,15 +1,15 @@
 import {useEffect, useState} from 'react';
 import {AuthenticatedTemplate, UnauthenticatedTemplate, useMsal} from '@azure/msal-react';
 import {Show, useAuth, useUser, UserButton} from '@clerk/react';
-import {Box} from '@mui/material';
+import {Box, Typography} from '@mui/material';
 import type {SxProps, Theme} from '@mui/material/styles';
 import '../App.css';
 import {WinchOpsPage} from './WinchOpsPage';
 import {LoginPage} from './LoginPage';
 import {getUserDepartment, getUserProfile} from '../features/auth/api/graphAPI';
-import {OperatorSelectPanel} from '../features/auth';
 import {appBackgroundSx} from '../themes/styles';
 import {setApiTokenProvider} from '../core/http/fetchClient';
+import {getCurrentOperator} from '../core/http/operatorsClient';
 
 const API_SCOPE = import.meta.env.VITE_API_SCOPE || import.meta.env.VITE_AZURE_API_SCOPE;
 
@@ -26,19 +26,13 @@ export const AUTH_PROVIDER =
         ? (import.meta.env.VITE_TEST_AUTH_PROVIDER || 'msal')
         : (import.meta.env.VITE_AUTH_PROVIDER || 'clerk');
 
-const OPERATOR_SESSION_KEY = 'vikingwinch_operator_sn';
 const CLERK_JWT_TEMPLATE = import.meta.env.VITE_CLERK_JWT_TEMPLATE || 'vikingwinch_api';
 
 function ClerkApp() {
     const {user, isLoaded, isSignedIn} = useUser();
     const {getToken} = useAuth();
-    const [selectedOperatorSn, setSelectedOperatorSn] = useState<string | null>(() => {
-        try {
-            return sessionStorage.getItem(OPERATOR_SESSION_KEY);
-        } catch {
-            return null;
-        }
-    });
+    const [currentOperator, setCurrentOperator] = useState<Awaited<ReturnType<typeof getCurrentOperator>> | null>(null);
+    const [operatorError, setOperatorError] = useState<string | null>(null);
 
     const isUserSignedIn = isSignedIn ?? Boolean(user);
 
@@ -48,18 +42,31 @@ function ClerkApp() {
     }, [getToken]);
 
     useEffect(() => {
-        if (isLoaded && (!isUserSignedIn || !user)) {
-            try {
-                sessionStorage.removeItem(OPERATOR_SESSION_KEY);
-            } catch {
-                // ignore storage access errors
-            }
-            if (selectedOperatorSn !== null) {
-                // oxlint-disable-next-line react/set-state-in-effect
-                setSelectedOperatorSn(null);
-            }
+        if (!isLoaded || !isUserSignedIn || !user) {
+            // oxlint-disable-next-line react/set-state-in-effect
+            setCurrentOperator(null);
+            // oxlint-disable-next-line react/set-state-in-effect
+            setOperatorError(null);
+            return;
         }
-    }, [isLoaded, isUserSignedIn, user, selectedOperatorSn]);
+
+        let isMounted = true;
+        // oxlint-disable-next-line react/set-state-in-effect
+        setOperatorError(null);
+        getCurrentOperator()
+            .then((operator) => {
+                if (isMounted) setCurrentOperator(operator);
+            })
+            .catch((error: unknown) => {
+                if (isMounted) {
+                    console.error('Failed to load authenticated operator:', error);
+                    setOperatorError('Your account is not mapped to an operator. Contact an administrator.');
+                }
+            });
+        return () => {
+            isMounted = false;
+        };
+    }, [isLoaded, isUserSignedIn, user]);
 
     if (!isLoaded) {
         return (
@@ -75,31 +82,22 @@ function ClerkApp() {
         );
     }
 
-    const squadronId = (user?.username as string) || (user?.publicMetadata?.squadronId as string) || '123 VGS';
-
-    const handleSelectOperator = (operatorSn: string) => {
-        try {
-            sessionStorage.setItem(OPERATOR_SESSION_KEY, operatorSn);
-        } catch {
-            // ignore storage access errors
-        }
-        setSelectedOperatorSn(operatorSn);
-    };
-
     return (
         <>
             <Show when="signed-in">
-                {selectedOperatorSn ? (
-                    <WinchOpsPage squadronId={squadronId} operatorSn={selectedOperatorSn}/>
+                {currentOperator ? (
+                    <WinchOpsPage
+                        squadronId={currentOperator.squadron_id}
+                        operatorSn={currentOperator.service_no}
+                    />
+                ) : operatorError ? (
+                    <Box sx={[appBackgroundSx, { minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 3 }] as SxProps<Theme>}>
+                        <Typography color="error">{operatorError}</Typography>
+                    </Box>
                 ) : (
                     <Box sx={[appBackgroundSx, { minHeight: '100vh', position: 'relative' }] as SxProps<Theme>}>
-                        <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
-                            <UserButton/>
-                        </Box>
-                        <OperatorSelectPanel
-                            squadronId={squadronId}
-                            onSelectOperator={handleSelectOperator}
-                        />
+                        <Box sx={{ position: 'absolute', top: 16, right: 16 }}><UserButton/></Box>
+                        <Typography sx={{ m: 'auto' }}>Loading operator profile...</Typography>
                     </Box>
                 )}
             </Show>

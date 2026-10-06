@@ -209,34 +209,25 @@ async def get_current_principal(
             headers={"WWW-Authenticate": "Bearer"},
         ) from exc
 
-    if provider == "msal":
-        operator_sn = _operator_from_claims(claims)
-        if not operator_sn:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Token is not mapped to an operator")
-        return Principal(
-            provider=provider,
-            mode="individual_operator",
-            subject=str(claims["sub"]),
-            squadron_id="",
-            operator_sn=operator_sn,
-        )
-
+    operator_sn = _operator_from_claims(claims)
     squadron_id = _squadron_from_claims(claims)
-    if not squadron_id:
+    if not operator_sn or not squadron_id:
         logger.warning(
-            "Clerk token has no squadron claim; configured claim=%s, available claims=%s",
+            "Token is not mapped to an individual operator; operator claim=%s, squadron claim=%s, available claims=%s",
+            os.getenv("AUTH_OPERATOR_CLAIM", "service_no"),
             os.getenv("AUTH_SQUADRON_CLAIM", "squadron_id"),
             sorted(claims.keys()),
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Token is not mapped to a squadron; check the Clerk JWT template claim",
+            detail="Token is not mapped to an individual operator and squadron",
         )
     return Principal(
         provider=provider,
-        mode="shared_squadron",
+        mode="individual_operator",
         subject=str(claims["sub"]),
         squadron_id=squadron_id,
+        operator_sn=operator_sn,
     )
 
 
@@ -250,11 +241,9 @@ async def authorize_winch(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Winch not found")
     if principal.provider == "test":
         return winch
-    if principal.mode == "shared_squadron" and winch.squadron_id != principal.squadron_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Winch is outside your authorized squadron")
     if principal.mode == "individual_operator":
         operator = await db.scalar(select(Operator).where(Operator.service_no == principal.operator_sn))
-        if operator is None or operator.squadron_id != winch.squadron_id:
+        if operator is None or operator.squadron_id != winch.squadron_id or winch.squadron_id != principal.squadron_id:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Operator is not authorized for this winch")
     return winch
 
@@ -271,7 +260,7 @@ async def authorize_operator(
         return operator
     if principal.mode == "individual_operator" and operator.service_no != principal.operator_sn:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Operator does not match the authenticated user")
-    if principal.mode == "shared_squadron" and operator.squadron_id != principal.squadron_id:
+    if operator.squadron_id != principal.squadron_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Operator is outside your authorized squadron")
     return operator
 
@@ -279,10 +268,5 @@ async def authorize_operator(
 def authorize_squadron(principal: Principal, squadron_id: str) -> None:
     if principal.provider == "test":
         return
-    if principal.mode == "individual_operator":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Individual operators cannot access squadron-wide resources",
-        )
-    if principal.mode == "shared_squadron" and squadron_id != principal.squadron_id:
+    if squadron_id != principal.squadron_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Squadron is not authorized")

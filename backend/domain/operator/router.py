@@ -9,6 +9,23 @@ from domain.operator.schema import OperatorRead
 router = APIRouter(tags=["operators"], dependencies=[Depends(get_current_principal)])
 
 
+@router.get("/operators/me", response_model=OperatorRead)
+async def get_current_operator(
+    db: AsyncSession = Depends(get_db),
+    principal: Principal = Depends(get_current_principal),
+):
+    if not principal.operator_sn:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Authenticated user is not mapped to an operator",
+        )
+    try:
+        await authorize_operator(db, principal, principal.operator_sn)
+        return await operator_repo.get_operator_from_sn(db, principal.operator_sn)
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
 @router.get("/operators/{service_no}", response_model=OperatorRead)
 async def get_operator(
     service_no: str,

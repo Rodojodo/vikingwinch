@@ -24,7 +24,7 @@ VITE_AUTH_PROVIDER=clerk
 
 `src/main.tsx` creates a `ClerkProvider` using the configured publishable key. `src/pages/App.tsx` then uses Clerk hooks to determine whether the user is loaded, signed in, or signed out.
 
-When the user is signed out, the app renders `LoginPage`. When signed in, the app reads the user's squadron information and displays the operator-selection screen or the operational winch application.
+When the user is signed out, the app renders `LoginPage`. When signed in, the app requests `/operators/me` and opens the operational winch application only when the authenticated account is mapped to one operator.
 
 ### 2.2 API token creation
 
@@ -94,13 +94,13 @@ The frontend deliberately fails with a configuration error if no API scope is co
 
 The MSAL path also uses a separate `User.Read` Graph token to obtain profile information such as employee ID and department. That Graph token is used for the legacy MSAL UI flow; API requests use the API audience token configured by `VITE_API_SCOPE`.
 
-The backend currently expects the configured operator claim, normally `employeeId`, to identify the operator:
+The backend expects the configured operator claim, normally `service_no`, to identify the operator:
 
 ```text
-AUTH_OPERATOR_CLAIM=employeeId
+AUTH_OPERATOR_CLAIM=service_no
 ```
 
-This provider is retained for future deployment work and should be treated as a separate configuration path from Clerk.
+This provider is retained for future deployment work and should be treated as a separate configuration path from Clerk. Both providers use the same individual-operator principal shape.
 
 ## 4. Backend token validation
 
@@ -135,35 +135,27 @@ After validation, the backend represents the caller with the immutable `Principa
 ```python
 Principal(
     provider="clerk",
-    mode="shared_squadron",
+    mode="individual_operator",
     subject="provider-subject",
     squadron_id="123 VGS",
+    operator_sn="SGT-2005",
 )
 ```
 
-The two authorization modes are:
-
-### Shared-squadron mode
-
-Used by Clerk. The token identifies a squadron, and the caller may operate on resources belonging to that squadron.
+The application uses one authorization mode. Both Clerk and MSAL tokens identify
+one operator through the configured operator claim and identify that operator's
+squadron through the configured squadron claim:
 
 ```text
-provider=clerk
-mode=shared_squadron
-squadron_id=<claim from token>
-```
-
-### Individual-operator mode
-
-Used by the current MSAL path. The token identifies one operator through the configured operator claim.
-
-```text
-provider=msal
+provider=clerk or msal
 mode=individual_operator
 operator_sn=<employee/service number claim>
+squadron_id=<squadron claim>
 ```
 
-The `test` provider is only used by the test dependency override and bypasses authorization checks after authentication dependencies have been wired into the routers.
+The `test` provider is only used by the test dependency override and bypasses
+authorization checks after authentication dependencies have been wired into the
+routers.
 
 ## 6. Route protection
 
@@ -188,8 +180,7 @@ The `/health` endpoint is intentionally separate and remains usable for service/
 
 `authorize_winch` loads the winch and checks its squadron:
 
-- Shared-squadron principals may access only winches in their `squadron_id`.
-- Individual-operator principals resolve the operator by service number and may access only winches in the operator's squadron.
+- Individual-operator principals resolve the operator by service number and may access only winches in both the operator's and principal's squadron.
 
 This check is applied to winch reads, day-log operations, launch creation, launch correction, launch listing, remarks, repairs, and launch deletion.
 
@@ -197,14 +188,14 @@ This check is applied to winch reads, day-log operations, launch creation, launc
 
 `authorize_operator` ensures the requested operator exists and matches the caller's authorization:
 
-- A shared-squadron principal may access operators in the same squadron.
-- An individual-operator principal may access only the operator represented by its token.
+- An individual-operator principal may access only the operator represented by its token when an operator is supplied as an action actor.
+- Individual users may read other operators in their own squadron where the operational workflow needs trainee, worker, or supervisor records.
 
 Launches and day logs also validate that the submitted operator and squadron match the authorized winch. This prevents a caller from supplying an otherwise valid operator or squadron belonging to another resource.
 
 ### Squadrons
 
-`authorize_squadron` prevents individual-operator principals from accessing squadron-wide resources and limits shared-squadron principals to their own squadron.
+`authorize_squadron` limits individual-operator principals to their own squadron.
 
 ## 8. Configuration responsibilities
 
@@ -218,7 +209,8 @@ For Clerk:
 CLERK_ISSUER=...
 CLERK_AUDIENCE=...
 CLERK_JWKS_URL=...
-AUTH_SQUADRON_CLAIM=metadata.squadronId
+AUTH_SQUADRON_CLAIM=squadron_id
+AUTH_OPERATOR_CLAIM=service_no
 ```
 
 For optional MSAL:
@@ -242,6 +234,11 @@ VITE_CLERK_JWT_TEMPLATE=vikingwinch_api
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=...
 VITE_API_URL=...
 ```
+
+Each Clerk user must have an individual account and a JWT-template mapping for
+the operator service number and squadron. Shared squadron credentials are not
+supported after cutover. The frontend no longer asks the user to select an
+operator.
 
 The optional MSAL frontend needs:
 
@@ -272,7 +269,7 @@ The deployed frontend origin should be supplied through `CORS_ALLOWED_ORIGINS`; 
 For the default Clerk path, a protected request follows this sequence:
 
 ```text
-User signs in with Clerk
+User creates or signs in with an individual Clerk account
         |
         v
 Clerk session is available in the React app
@@ -293,7 +290,7 @@ backend selects Clerk config from the token issuer
 JWT signature, issuer, audience, exp, iat, and sub are verified
         |
         v
-claims become a shared-squadron Principal
+claims become an individual-operator Principal
         |
         v
 route authorization checks squadron/winch/operator ownership
@@ -302,7 +299,9 @@ route authorization checks squadron/winch/operator ownership
 repository reads or writes the database
 ```
 
-At no point does the backend trust the selected operator in browser session storage as proof of identity. The selected operator is request data and is checked against the authenticated principal and the relevant database records.
+At no point does the backend trust a browser-selected operator as proof of
+identity. The authenticated operator claim is checked against the relevant
+database records.
 
 ## 11. Operational checklist
 

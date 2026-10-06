@@ -17,19 +17,20 @@ async def test_database_backed_route_requires_bearer_token():
     assert response.status_code == 401
 
 
-def test_shared_squadron_principal_cannot_authorize_another_squadron():
+def test_individual_operator_cannot_authorize_another_squadron():
     principal = Principal(
         provider="clerk",
-        mode="shared_squadron",
-        subject="shared-account",
+        mode="individual_operator",
+        subject="operator-account",
         squadron_id="123 VGS",
+        operator_sn="12345",
     )
     with pytest.raises(Exception) as error:
         authorize_squadron(principal, "999 VGS")
     assert getattr(error.value, "status_code", None) == 403
 
 
-def test_individual_operator_cannot_authorize_squadron_wide_access():
+def test_individual_operator_without_squadron_cannot_authorize_resources():
     principal = Principal(
         provider="msal",
         mode="individual_operator",
