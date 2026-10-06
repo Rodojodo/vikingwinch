@@ -47,6 +47,32 @@ async def test_reset_is_idempotent_with_hardcoded_test_state(db_session, monkeyp
 
 
 @pytest.mark.asyncio
+async def test_reset_creates_missing_hardcoded_test_state(db_session, monkeypatch):
+    monkeypatch.setenv("ENVIRONMENT", "preview")
+    db_session.add(
+        Squadron(id="testvgs")
+    )
+    db_session.add(
+        Operator(
+            service_no="ADMIN-1",
+            auth_subject="admin",
+            name="Admin",
+            squadron_id="testvgs",
+            qualification_level="examiner",
+        )
+    )
+    await db_session.commit()
+
+    await reset_testvgs(db_session, "ADMIN-1")
+
+    winches = (await db_session.scalars(select(Winch).order_by(Winch.id))).all()
+    assert [(winch.id, winch.squadron_id) for winch in winches] == [
+        (101, "testvgs"),
+        (102, "testvgs"),
+    ]
+
+
+@pytest.mark.asyncio
 async def test_reset_is_unavailable_in_production(db_session, monkeypatch):
     monkeypatch.setenv("ENVIRONMENT", "production")
 

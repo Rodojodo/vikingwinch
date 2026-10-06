@@ -19,4 +19,11 @@ async def reset_testvgs_endpoint(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Development reset is unavailable",
         )
-    return await reset_testvgs(db, principal.operator_sn or "")
+    try:
+        return await reset_testvgs(db, principal.operator_sn or "")
+    except ValueError as exc:
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        ) from exc
