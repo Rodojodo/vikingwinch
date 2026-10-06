@@ -4,7 +4,7 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy import select
 
-from domain.operator.identity import GraphOperator, resolve_operator
+from domain.operator.identity import GraphOperator, _get_clerk_operator, resolve_operator
 from domain.operator.model import Operator
 from domain.squadron.model import Squadron
 
@@ -43,6 +43,40 @@ async def test_clerk_first_sign_in_provisions_from_public_metadata(db_session, m
     assert operator.auth_provider == "clerk"
     assert operator.auth_subject == "clerk-user"
     assert operator.qualification_level == "operator"
+
+
+@pytest.mark.asyncio
+async def test_clerk_provisioning_uses_first_and_last_name_not_username(monkeypatch):
+    class MockResponse:
+        status_code = 200
+
+        def json(self):
+            return {
+                "first_name": "Jane",
+                "last_name": "Smith",
+                "username": "jsmith123",
+                "public_metadata": {
+                    "operator_sn": "OFF-1001",
+                    "squadron_id": "123 VGS",
+                },
+            }
+
+    class MockClient:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return None
+
+        async def get(self, *args, **kwargs):
+            return MockResponse()
+
+    monkeypatch.setenv("CLERK_SECRET_KEY", "test-secret")
+    monkeypatch.setattr("domain.operator.identity.httpx.AsyncClient", lambda **kwargs: MockClient())
+
+    operator = await _get_clerk_operator("user_123")
+
+    assert operator.name == "Jane Smith"
 
 
 @pytest.mark.asyncio

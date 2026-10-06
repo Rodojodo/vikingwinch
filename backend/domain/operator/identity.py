@@ -69,15 +69,16 @@ async def _get_clerk_operator(subject: str) -> GraphOperator:
         metadata = {}
     service_no = str(metadata.get("operator_sn") or metadata.get("service_no") or "").strip()
     squadron_id = str(metadata.get("squadron_id") or "").strip()
-    name = " ".join(
+    name_parts = [
         part.strip()
         for part in (data.get("first_name"), data.get("last_name"))
         if isinstance(part, str) and part.strip()
-    ) or str(data.get("username") or "").strip()
+    ]
+    name = " ".join(name_parts)
     if not service_no or not squadron_id or not name:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Clerk profile is missing operator or squadron data",
+            detail="Clerk profile is missing first name, last name, operator, or squadron data",
         )
     return GraphOperator(service_no=service_no, name=name, squadron_id=squadron_id)
 
