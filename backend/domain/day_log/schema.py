@@ -1,7 +1,7 @@
-from datetime import datetime
-from typing import Literal
-from pydantic import BaseModel
 from core.schemas import ORMModel
+from datetime import datetime
+from pydantic import BaseModel, field_validator
+from typing import Literal
 
 
 class DayLogRead(ORMModel):
@@ -20,6 +20,14 @@ class DayLogCreate(BaseModel):
     operator_sn: str
     trainee: str | None = None
     hours: float | None = None
+
+    @field_validator("trainee")
+    @classmethod
+    def normalize_trainee(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value = value.strip()
+        return value or None
 
 class WinchHoursResponse(BaseModel):
     hours: float

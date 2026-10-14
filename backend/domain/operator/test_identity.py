@@ -1,12 +1,10 @@
-from unittest.mock import AsyncMock
-
 import pytest
-from fastapi import HTTPException
-from sqlalchemy import select
-
 from domain.operator.identity import GraphOperator, _get_clerk_operator, resolve_operator
 from domain.operator.model import Operator
 from domain.squadron.model import Squadron
+from fastapi import HTTPException
+from sqlalchemy import select
+from unittest.mock import AsyncMock
 
 
 @pytest.mark.asyncio
@@ -80,7 +78,7 @@ async def test_clerk_provisioning_uses_first_and_last_name_not_username(monkeypa
 
 
 @pytest.mark.asyncio
-async def test_clerk_sign_in_updates_existing_projection(db_session, monkeypatch):
+async def test_clerk_sign_in_uses_existing_projection_without_provisioning(db_session, monkeypatch):
     db_session.add(Squadron(id="123 VGS"))
     db_session.add(
         Operator(
@@ -93,25 +91,22 @@ async def test_clerk_sign_in_updates_existing_projection(db_session, monkeypatch
         )
     )
     await db_session.commit()
+    mock_get = AsyncMock(
+        return_value=GraphOperator(
+            service_no="SGT-2005",
+            name="Updated Name",
+            squadron_id="123 VGS",
+        )
+    )
     monkeypatch.setattr(
         "domain.operator.identity._get_clerk_operator",
-        AsyncMock(
-            return_value=GraphOperator(
-                service_no="SGT-2005",
-                name="Updated Name",
-                squadron_id="123 VGS",
-            )
-        ),
+        mock_get,
     )
 
     operator = await resolve_operator(db_session, "clerk", "clerk-user", None)
 
-    assert operator.name == "Updated Name"
-    assert (
-        await db_session.scalar(
-            select(Operator).where(Operator.service_no == "SGT-2005")
-        )
-    ).name == "Updated Name"
+    assert operator.name == "Old Name"
+    mock_get.assert_not_awaited()
 
 
 @pytest.mark.asyncio
@@ -133,7 +128,7 @@ async def test_msal_first_sign_in_provisions_from_graph(db_session, monkeypatch)
 
 
 @pytest.mark.asyncio
-async def test_msal_sign_in_updates_existing_projection(db_session, monkeypatch):
+async def test_msal_sign_in_uses_existing_projection_without_provisioning(db_session, monkeypatch):
     db_session.add(Squadron(id="123 VGS"))
     db_session.add(
         Operator(
@@ -147,19 +142,22 @@ async def test_msal_sign_in_updates_existing_projection(db_session, monkeypatch)
         )
     )
     await db_session.commit()
-    monkeypatch.setattr(
-        "domain.operator.identity._get_graph_operator",
-        AsyncMock(return_value=GraphOperator(
+    mock_get = AsyncMock(
+        return_value=GraphOperator(
             service_no="SGT-2005",
             name="Updated Name",
             squadron_id="123 VGS",
-        )),
+        )
+    )
+    monkeypatch.setattr(
+        "domain.operator.identity._get_graph_operator",
+        mock_get,
     )
 
     operator = await resolve_operator(db_session, "msal", "entra-user", "tenant")
 
-    assert operator.name == "Updated Name"
-    assert (await db_session.scalar(select(Operator).where(Operator.service_no == "SGT-2005"))).name == "Updated Name"
+    assert operator.name == "Old Name"
+    mock_get.assert_not_awaited()
 
 
 @pytest.mark.asyncio

@@ -1,9 +1,9 @@
 -- Insert local mock data for testing
 -- 1. POPULATE SQUADRONS
-INSERT INTO squadrons (id) VALUES 
-('123vgs'),
-('231vgs'),
-('321vgs');
+INSERT INTO squadrons (id, stars_unit_id)
+VALUES ('123vgs', 1234),
+       ('231vgs', 1235),
+       ('321vgs', 1236);
 
 -- 2. POPULATE WINCHES
 INSERT INTO winches (id, registration, squadron_id) VALUES 

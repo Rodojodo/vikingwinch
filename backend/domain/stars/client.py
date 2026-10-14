@@ -1,7 +1,9 @@
-from datetime import date
+import asyncio
+import httpx
 import os
+from datetime import date, timedelta
 from typing import Any
-import requests
+from urllib.parse import quote
 
 DEFAULT_BASE_URL = "https://test.stars.api/api"
 DEFAULT_CLIENT_ID = "test_client_id"
@@ -19,6 +21,15 @@ def _normalize_state(raw_state: str | None) -> str:
     return raw_state.lower()
 
 
+def _parse_date(raw_date: str | None) -> date | None:
+    if not raw_date or not isinstance(raw_date, str):
+        return None
+    try:
+        return date.fromisoformat(raw_date[:10])
+    except ValueError:
+        return None
+
+
 class StarsClient:
     def __init__(
         self,
@@ -29,8 +40,7 @@ class StarsClient:
         self.token = token or os.environ.get("STARS_API_KEY") or os.environ.get("STARS_TOKEN") or ""
         self.client_id = client_id or os.environ.get("STARS_CLIENT_ID") or DEFAULT_CLIENT_ID
         self.base_url = (base_url or os.environ.get("STARS_BASE_URL") or DEFAULT_BASE_URL).rstrip("/")
-        mock_env = os.environ.get("STARS_MOCK_MODE", "false").strip().lower()
-        self.mock_mode = mock_env in ("true", "1", "yes")
+        self.mock_mode = os.environ.get("STARS_MOCK_MODE", "false").strip().lower() in ("true", "1", "yes")
 
     def _headers(self) -> dict[str, str]:
         return {
@@ -105,99 +115,57 @@ class StarsClient:
         self, service_no: str, unit_id: int
     ) -> dict[str, Any]:
         if self.mock_mode:
-            sn_lower = service_no.lower()
-            if "unqualified" in sn_lower:
-                return {
-                    "stars_resource_id": None,
-                    "c005_operator": "nil",
-                    "e004_instructor": "nil",
-                    "c003_examiner": "nil",
-                    "rolling_currency": "nil",
-                }
-            if "disqualified" in sn_lower:
-                return {
-                    "stars_resource_id": "R:MOCK_DISQ",
-                    "c005_operator": "red",
-                    "e004_instructor": "red",
-                    "c003_examiner": "red",
-                    "rolling_currency": "red",
-                }
-            if "blue" in sn_lower:
-                return {
-                    "stars_resource_id": "R:MOCK_BLUE",
-                    "c005_operator": "blue",
-                    "e004_instructor": "blue",
-                    "c003_examiner": "blue",
-                    "rolling_currency": "blue",
-                }
-            if "instructor_dual_only" in sn_lower:
-                return {
-                    "stars_resource_id": "R:MOCK_INST",
-                    "c005_operator": "nil",
-                    "e004_instructor": "green",
-                    "c003_examiner": "nil",
-                    "rolling_currency": "green",
-                }
-            if "solo_only" in sn_lower:
-                return {
-                    "stars_resource_id": "R:MOCK_SOLO",
-                    "c005_operator": "green",
-                    "e004_instructor": "nil",
-                    "c003_examiner": "nil",
-                    "rolling_currency": "green",
-                }
-            return {
-                "stars_resource_id": "R:MOCK_DEFAULT",
-                "c005_operator": "green",
-                "e004_instructor": "green",
-                "c003_examiner": "nil",
-                "rolling_currency": "green",
-            }
+            sn = service_no.lower()
+            state = "nil"
+            resource_id = None
+            if "disqualified" in sn:
+                state, resource_id = "red", "R:MOCK_DISQ"
+            elif "blue" in sn:
+                state, resource_id = "blue", "R:MOCK_BLUE"
+            elif "instructor_dual_only" in sn:
+                return self._mock("R:MOCK_INST", "nil", "green", "nil", "green")
+            elif "solo_only" in sn:
+                return self._mock("R:MOCK_SOLO", "green", "nil", "nil", "green")
+            elif "unqualified" not in sn:
+                return self._mock("R:MOCK_DEFAULT", "green", "green", "nil", "green")
+            return self._mock(resource_id, state, state, state, state)
 
-        people = self.get_people_for_unit(unit_id)
-        person = next((p for p in people if str(p.get("code")) == str(service_no)), None)
-        if not person:
-            return {
-                "stars_resource_id": None,
-                "c005_operator": "nil",
-                "e004_instructor": "nil",
-                "c003_examiner": "nil",
-                "rolling_currency": "nil",
-            }
-
+        people = await self.get_people_for_unit(unit_id)
+        person = next((item for item in people if str(item.get("code")) == str(service_no)), None)
+        if person is None:
+            return self._mock(None, "nil", "nil", "nil", "nil")
         resource_id = str(person["id"])
-        auths_res = self.get_eng_auths_for_user(resource_id)
-        curr_res = self.get_currencies_for_user(resource_id)
+        auths_res, currencies_res = await asyncio.gather(
+            self.get_eng_auths_for_user(resource_id),
+            self.get_currencies_for_user(resource_id),
+        )
+        result = self._mock(resource_id, "nil", "nil", "nil", "nil")
+        for auth in auths_res.get("data", []):
+            mapping = {MAP_ID_C005_OPERATOR: "c005_operator", MAP_ID_E004_INSTRUCTOR: "e004_instructor",
+                       MAP_ID_C003_EXAMINER: "c003_examiner"}
+            field = mapping.get(auth.get("mapId"))
+            if field:
+                result[field] = _normalize_state(auth.get("currencyState"))
+                result[field.replace("_operator", "_expiry").replace("_instructor", "_expiry").replace("_examiner",
+                                                                                                       "_expiry")] = _parse_date(
+                    auth.get("expiry"))
+        entries = currencies_res.get("data", [])
+        entry = next((item for item in entries if item.get("id") == resource_id), entries[0] if entries else {})
+        currency = next(
+            (item for item in entry.get("currencies", []) if int(item.get("id", -1)) == CURRENCY_ID_SKYLAUNCH_WINCHING),
+            None)
+        if currency:
+            result["rolling_currency"] = _normalize_state(currency.get("state"))
+            result["rolling_expiry"] = _parse_date(currency.get("expiry"))
+        return result
 
-        c005_operator = "nil"
-        e004_instructor = "nil"
-        c003_examiner = "nil"
-        rolling_currency = "nil"
-
-        auths_data = auths_res.get("data", [])
-        if auths_data and isinstance(auths_data, list):
-            user_auths = auths_data[0].get("auths", [])
-            for auth in user_auths:
-                auth_id = auth.get("id")
-                state = auth.get("state")
-                if auth_id == MAP_ID_C005_OPERATOR:
-                    c005_operator = _normalize_state(state)
-                elif auth_id == MAP_ID_E004_INSTRUCTOR:
-                    e004_instructor = _normalize_state(state)
-                elif auth_id == MAP_ID_C003_EXAMINER:
-                    c003_examiner = _normalize_state(state)
-
-        curr_data = curr_res.get("data", [])
-        if curr_data and isinstance(curr_data, list):
-            user_currs = curr_data[0].get("currencies", [])
-            for curr in user_currs:
-                if curr.get("id") == CURRENCY_ID_SKYLAUNCH_WINCHING:
-                    rolling_currency = _normalize_state(curr.get("state"))
-
+    @staticmethod
+    def _mock(resource_id: str | None, c005: str, e004: str, c003: str, rolling: str) -> dict[str, Any]:
+        expiry = date.today() + timedelta(days=90)
         return {
             "stars_resource_id": resource_id,
-            "c005_operator": c005_operator,
-            "e004_instructor": e004_instructor,
-            "c003_examiner": c003_examiner,
-            "rolling_currency": rolling_currency,
+            "c005_operator": c005, "c005_expiry": expiry if c005 in ("green", "amber") else None,
+            "e004_instructor": e004, "e004_expiry": expiry if e004 in ("green", "amber") else None,
+            "c003_examiner": c003, "c003_expiry": expiry if c003 in ("green", "amber") else None,
+            "rolling_currency": rolling, "rolling_expiry": expiry if rolling in ("green", "amber") else None,
         }

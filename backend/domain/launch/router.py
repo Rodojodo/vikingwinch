@@ -1,14 +1,8 @@
-from datetime import date, datetime, timezone, time, timedelta
-
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from auth import Principal, authorize_operator, authorize_winch, get_current_principal
 from database.session import get_db
+from datetime import date, datetime, timezone, time, timedelta
 from domain.day_log import repository as day_log_repo
 from domain.launch import repository as launch_repo
-from domain.winch.model import Winch
 from domain.launch.model import Launch
 from domain.launch.schema import (
     LaunchCreate,
@@ -17,6 +11,11 @@ from domain.launch.schema import (
     RepairCreate,
     LaunchCorrectionCreate,
 )
+from domain.stars import service as stars_service
+from domain.winch.model import Winch
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter(prefix="/launches", tags=["launches"], dependencies=[Depends(get_current_principal)])
 FINISHED_DAY_ERROR = "The day has already been finished; no further launches can be recorded."
@@ -37,6 +36,8 @@ async def create_launch(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Launch squadron and operator must match the authorized winch",
             )
+        quals = await stars_service.get_committed_qualifications(db, payload.operator_sn)
+        stars_service.enforce_winch_qualification_for_launch(quals)
         await db.execute(select(Winch.id).where(Winch.id == payload.winch_id).with_for_update())
 
         if await day_log_repo.has_finish_day_for_day(db, payload.winch_id, today):
@@ -107,6 +108,8 @@ async def create_launch_correction(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Correction squadron and operator must match the authorized winch",
             )
+        quals = await stars_service.get_committed_qualifications(db, operator_sn)
+        stars_service.enforce_winch_qualification_for_launch(quals)
 
         correction_timestamp = datetime.combine(today, time.min) - timedelta(seconds=1)
 
@@ -176,6 +179,8 @@ async def add_remark(
         if existing is None:
             raise ValueError("No previous launch")
         await authorize_winch(db, principal, existing.winch_id)
+        quals = await stars_service.get_committed_qualifications(db, existing.operator_sn)
+        stars_service.enforce_winch_qualification_for_launch(quals)
         launch = await launch_repo.add_remark_to_launch(
             db, payload.launch_id, payload.remark
         )
@@ -200,6 +205,8 @@ async def add_repair(
         if existing is None:
             raise ValueError("No previous launch")
         await authorize_winch(db, principal, existing.winch_id)
+        quals = await stars_service.get_committed_qualifications(db, existing.operator_sn)
+        stars_service.enforce_winch_qualification_for_launch(quals)
         launch = await launch_repo.add_repair_to_launch(
             db, payload.launch_id, payload.repair, payload.supervisor_id
         )

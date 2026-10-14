@@ -1,15 +1,14 @@
-from datetime import datetime, timezone
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from domain.squadron.model import Squadron
-from domain.winch.model import Winch
-from domain.operator.model import Operator
-from domain.stars.model import OperatorQualifications
+from datetime import datetime, timezone
 from domain.day_log.schema import DayLogCreate
+from domain.operator.model import Operator
+from domain.squadron.model import Squadron
+from domain.stars.model import OperatorQualifications
+from domain.winch.model import Winch
+from httpx import AsyncClient, ASGITransport
 from main import app
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest_asyncio.fixture
@@ -24,7 +23,15 @@ async def setup_env(db_session: AsyncSession):
         squadron_id="123 VGS",
         qualification_level="operator",
     )
-    db_session.add_all([sqn, winch, op])
+    trainee = Operator(
+        service_no="trainee-sn",
+        auth_provider="test",
+        auth_subject="trainee-subject",
+        name="Trainee",
+        squadron_id="123 VGS",
+        qualification_level="trainee",
+    )
+    db_session.add_all([sqn, winch, op, trainee])
     await db_session.commit()
 
 
@@ -84,7 +91,7 @@ async def test_sign_on_forbidden_when_no_valid_qualifications(setup_env, db_sess
         c005_operator="nil",
         e004_instructor="red",
         c003_examiner="blue",
-        rolling_currency="nil",
+        rolling_currency="green",
         last_checked_at=datetime.now(timezone.utc),
     )
     db_session.add(quals)

@@ -1,8 +1,7 @@
+from database.base import Base
+from datetime import datetime
 from sqlalchemy import String, Enum, Float, Integer, TIMESTAMP, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from datetime import datetime
-
-from database.base import Base
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -21,9 +20,11 @@ class Day_Log(Base):
     )
     timestamp: Mapped[datetime | None] = mapped_column(TIMESTAMP, nullable=True)
     operator_sn: Mapped[str] = mapped_column(ForeignKey("operators.service_no"), nullable=False)
-    trainee: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    trainee: Mapped[str | None] = mapped_column(
+        String(20), ForeignKey("operators.service_no"), nullable=True
+    )
     hours: Mapped[float | None] = mapped_column(Float, nullable=True)
 
     squadron: Mapped["Squadron"] = relationship()
     winch: Mapped["Winch"] = relationship()
-    operator: Mapped["Operator"] = relationship()
+    operator: Mapped["Operator"] = relationship(foreign_keys=[operator_sn])
