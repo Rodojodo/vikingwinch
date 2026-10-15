@@ -17,6 +17,7 @@ from domain.launch.model import Launch  # noqa: F401
 from domain.operator.model import Operator  # noqa: F401
 from domain.squadron.model import Squadron  # noqa: F401
 from domain.winch.model import Winch  # noqa: F401
+from domain.stars.model import OperatorQualifications  # noqa: F401
 
 load_dotenv()
 

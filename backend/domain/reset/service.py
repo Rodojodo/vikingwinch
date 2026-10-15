@@ -1,11 +1,9 @@
 import os
-from datetime import datetime, timedelta
-
-from sqlalchemy import delete
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from datetime import datetime, timedelta, timezone
 from domain.day_log.model import Day_Log
 from domain.launch.model import Launch
+from sqlalchemy import delete
+from sqlalchemy.ext.asyncio import AsyncSession
 
 SQUADRON_ID = "testvgs"
 
@@ -18,7 +16,7 @@ async def reset_testvgs(db: AsyncSession, operator_sn: str) -> dict[str, object]
     if not reset_is_available():
         raise PermissionError("The development reset is unavailable in production")
 
-    reset_day = datetime.now() - timedelta(days=1)
+    reset_day = datetime.now(timezone.utc) - timedelta(days=1)
     winches = ((101, 315.6), (102, 285.1))
     launches = (("left", 3156), ("right", 3142))
 

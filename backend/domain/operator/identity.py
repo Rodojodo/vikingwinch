@@ -1,16 +1,14 @@
 from __future__ import annotations
 
+import httpx
 import os
 from dataclasses import dataclass
-from urllib.parse import quote
-
-import httpx
+from domain.operator.model import Operator
+from domain.squadron.model import Squadron
 from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from domain.operator.model import Operator
-from domain.squadron.model import Squadron
+from urllib.parse import quote
 
 
 @dataclass(frozen=True)
@@ -172,6 +170,8 @@ async def resolve_operator(
         Operator.auth_tenant_id == identity_tenant_id,
     )
     operator = await db.scalar(identity_query)
+    if operator is not None:
+        return operator
 
     if provider == "clerk":
         provider_operator = await _get_clerk_operator(subject)
@@ -204,24 +204,16 @@ async def resolve_operator(
             detail="Provider operator number does not match the linked identity",
         )
 
-    if operator is None:
-        operator = Operator(
-            service_no=provider_operator.service_no,
-            auth_provider=provider,
-            auth_subject=subject,
-            auth_tenant_id=identity_tenant_id,
-            name=provider_operator.name,
-            squadron_id=provider_operator.squadron_id,
-            qualification_level="operator",
-        )
-        db.add(operator)
-    else:
-        operator.name = provider_operator.name
-        operator.squadron_id = provider_operator.squadron_id
-        operator.auth_provider = provider
-        operator.auth_subject = subject
-        operator.auth_tenant_id = identity_tenant_id
-
+    operator = Operator(
+        service_no=provider_operator.service_no,
+        auth_provider=provider,
+        auth_subject=subject,
+        auth_tenant_id=identity_tenant_id,
+        name=provider_operator.name,
+        squadron_id=provider_operator.squadron_id,
+        qualification_level="operator",
+    )
+    db.add(operator)
     await db.commit()
     await db.refresh(operator)
     return operator

@@ -12,3 +12,5 @@ __pycache__/
 /node_modules/*
 .coverage
 /backend/database/real_seed.sql
+.superpowers/
+/backend/STARSapi/
