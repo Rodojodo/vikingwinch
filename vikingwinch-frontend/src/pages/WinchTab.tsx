@@ -16,6 +16,9 @@ import {TraineeAssignmentPanel} from '../features/trainee-ops/components/Trainee
 import {SkylogValues} from '../features/day-ops/components/SkylogValues';
 
 import {WinchSelectPanel} from '../features/winch-ops/components/WinchSelectPanel';
+import {StarsStatusGraphic} from '../features/qualification/components/StarsStatusGraphic.tsx';
+import {useQualifications} from '../features/qualification/hooks/useQualifications.ts';
+import {isValidQualification} from '../features/qualification/types.ts';
 import {SignOnPanel} from '../features/day-ops/components/SignOnPanel.tsx';
 import {DailyInspectionPanel} from '../features/winch-ops/components/DailyInspectionPanel';
 import {getDayLog} from '../features/day-ops/api/dayOpsClient.ts';
@@ -55,6 +58,7 @@ const WinchTabContent = ({
     const {hydrateHistory, derived, addRemarkToState, leftHistory, rightHistory} = useLaunchOps();
     const {traineeSn, activeLauncherSn, setActiveLauncher, setTrainee} = useTraineeOps();
     const {recordDI, recordSignOn, recordCableCheck} = useDayOps();
+    const {qualifications, isLoading: isQualsLoading, refresh: refreshQuals} = useQualifications();
     const [view, setView] = useState<TabView>(() => (winchId ? 'loading' : 'select_winch'));
     const [prevWinchId, setPrevWinchId] = useState(winchId);
     const [cableCheckCompleted, setCableCheckCompleted] = useState(false);
@@ -194,16 +198,34 @@ const WinchTabContent = ({
         : undefined;
 
     const renderView = () => {
+        const canSolo = Boolean(qualifications && isValidQualification(qualifications.c005_operator));
+        const canDual = Boolean(
+            qualifications &&
+            (isValidQualification(qualifications.e004_instructor) || isValidQualification(qualifications.c003_examiner))
+        );
+        const hasAnyValidQual = canSolo || canDual;
+        const canSelectWinch = isQualsLoading || hasAnyValidQual;
+        const disableSelectReason = !hasAnyValidQual ? 'Qualifications not in the green' : undefined;
+
         switch (view) {
             case 'loading':
                 return null;
             case 'select_winch':
                 return (
-                    <WinchSelectPanel
-                        squadronId={squadronId}
-                        onSelectWinch={(newWinchId) => onWinchSelect(tabId, newWinchId)}
-                        openWinchIds={openWinchIds}
-                    />
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+                        <WinchSelectPanel
+                            squadronId={squadronId}
+                            onSelectWinch={(newWinchId) => onWinchSelect(tabId, newWinchId)}
+                            openWinchIds={openWinchIds}
+                            canSelectWinch={canSelectWinch}
+                            disableReason={disableSelectReason}
+                        />
+                        <StarsStatusGraphic
+                            qualifications={qualifications}
+                            onRefresh={refreshQuals}
+                            isRefreshing={isQualsLoading}
+                        />
+                    </Box>
                 );
             case 'inspection':
                 return (

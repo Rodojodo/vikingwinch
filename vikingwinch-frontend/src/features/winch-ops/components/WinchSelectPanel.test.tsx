@@ -98,4 +98,46 @@ describe('WinchSelectPanel', () => {
         fireEvent.click(finishedButton);
         expect(mockOnSelectWinch).toHaveBeenCalledWith(4);
     });
+
+    it('disables winch buttons when canSelectWinch is false and shows disableReason', async () => {
+        vi.mocked(getWinchStatusesForSquadron).mockResolvedValue([
+            { id: 1, registration: 'W1', squadron_id: squadronId, status: 'default' as const },
+        ]);
+
+        render(
+            <WinchSelectPanel
+                squadronId={squadronId}
+                openWinchIds={[]}
+                onSelectWinch={mockOnSelectWinch}
+                canSelectWinch={false}
+                disableReason="Qualifications not in the green"
+            />
+        );
+
+        const btn1 = await screen.findByRole('button', { name: 'Winch 1' });
+        expect(btn1).toBeDisabled();
+
+        fireEvent.click(btn1);
+        expect(mockOnSelectWinch).not.toHaveBeenCalled();
+
+        expect(screen.getByText('Qualifications not in the green')).toBeInTheDocument();
+    });
+
+    it('keeps winch buttons enabled when canSelectWinch is true', async () => {
+        vi.mocked(getWinchStatusesForSquadron).mockResolvedValue([
+            { id: 1, registration: 'W1', squadron_id: squadronId, status: 'default' as const },
+        ]);
+
+        render(
+            <WinchSelectPanel
+                squadronId={squadronId}
+                openWinchIds={[]}
+                onSelectWinch={mockOnSelectWinch}
+                canSelectWinch={true}
+            />
+        );
+
+        const btn1 = await screen.findByRole('button', { name: 'Winch 1' });
+        expect(btn1).toBeEnabled();
+    });
 });

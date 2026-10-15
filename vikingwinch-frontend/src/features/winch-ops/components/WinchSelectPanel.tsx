@@ -1,4 +1,4 @@
-import {Box, Button, CircularProgress, Typography} from '@mui/material';
+import {Box, Button, CircularProgress, Tooltip, Typography} from '@mui/material';
 import {useEffect, useState} from 'react';
 import {getWinchStatusesForSquadron} from '../api/winchClient.ts';
 import {toWinchWithStatus} from '../api/winchMapper.ts';
@@ -10,9 +10,17 @@ interface WinchSelectPanelProps {
     squadronId: string;
     openWinchIds: number[];
     onSelectWinch: (winchId: number) => void;
+    canSelectWinch?: boolean;
+    disableReason?: string;
 }
 
-export const WinchSelectPanel = ({ squadronId, openWinchIds, onSelectWinch }: WinchSelectPanelProps) => {
+export const WinchSelectPanel = ({
+    squadronId,
+    openWinchIds,
+    onSelectWinch,
+    canSelectWinch = true,
+    disableReason,
+}: WinchSelectPanelProps) => {
     const [winches, setWinches] = useState<WinchWithStatus[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -84,6 +92,12 @@ export const WinchSelectPanel = ({ squadronId, openWinchIds, onSelectWinch }: Wi
                 Select a Winch
             </Typography>
 
+            {!canSelectWinch && disableReason && (
+                <Typography variant="body2" sx={{ color: 'warning.main', textAlign: 'center' }}>
+                    {disableReason}
+                </Typography>
+            )}
+
             {loading ? (
                 <CircularProgress color="inherit" />
             ) : error ? (
@@ -92,33 +106,56 @@ export const WinchSelectPanel = ({ squadronId, openWinchIds, onSelectWinch }: Wi
                 <Typography>No winches available for this squadron.</Typography>
             ) : (
                 <Box sx={{display: 'flex', flexWrap: 'wrap', gap: 2, width: '100%'}}>
-                    {availableWinches.map(winch => (
-                        <Button
-                            key={winch.id}
-                            variant="outlined"
-                            onClick={() => onSelectWinch(winch.id)}
-                            sx={([
-                                darkBlueButton,
-                                statusButtonSx(winch.status),
-                                {
+                    {availableWinches.map(winch => {
+                        const buttonContent = (
+                            <Button
+                                key={winch.id}
+                                variant="outlined"
+                                disabled={!canSelectWinch}
+                                onClick={() => onSelectWinch(winch.id)}
+                                sx={([
+                                    darkBlueButton,
+                                    statusButtonSx(winch.status),
+                                    {
+                                        width: '100%',
+                                        py: 2.5,
+                                    },
+                                ] as SxProps<Theme>)}
+                            >
+                                <Box sx={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
+                                    <Typography component="span" sx={{fontWeight: 700}}>
+                                        Winch {winch.id}
+                                    </Typography>
+                                    {statusLabel(winch.status) && (
+                                        <Typography component="span" variant="caption" sx={{mt: 0.5}}>
+                                            {statusLabel(winch.status)}
+                                        </Typography>
+                                    )}
+                                </Box>
+                            </Button>
+                        );
+
+                        return (
+                            <Box
+                                key={winch.id}
+                                sx={{
                                     flexGrow: 1,
                                     flexBasis: 'calc(33.333% - 16px)',
-                                    py: 2.5,
-                                },
-                            ] as SxProps<Theme>)}
-                        >
-                            <Box sx={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-                                <Typography component="span" sx={{fontWeight: 700}}>
-                                    Winch {winch.id}
-                                </Typography>
-                                {statusLabel(winch.status) && (
-                                    <Typography component="span" variant="caption" sx={{mt: 0.5}}>
-                                        {statusLabel(winch.status)}
-                                    </Typography>
+                                    display: 'flex',
+                                }}
+                            >
+                                {!canSelectWinch && disableReason ? (
+                                    <Tooltip title={disableReason} arrow sx={{ width: '100%' }}>
+                                        <Box component="span" sx={{ width: '100%', display: 'flex' }}>
+                                            {buttonContent}
+                                        </Box>
+                                    </Tooltip>
+                                ) : (
+                                    buttonContent
                                 )}
                             </Box>
-                        </Button>
-                    ))}
+                        );
+                    })}
                 </Box>
             )}
         </Box>
