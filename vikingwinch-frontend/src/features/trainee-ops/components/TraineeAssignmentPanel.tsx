@@ -11,6 +11,7 @@ type TraineeAssignmentPanelProps = {
     squadron?: string;
     operatorSn?: string | null;
     traineeSn?: string | null;
+    disableNone?: boolean;
 };
 
 export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({
@@ -19,6 +20,7 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({
                                                                                   squadron,
                                                                                   operatorSn,
                                                                                   traineeSn,
+                                                                                  disableNone = false,
                                                                               }) => {
     const [isExpanded, setIsExpanded] = useState<boolean>(false);
     const [focusedTraineeId, setFocusedTraineeId] = useState<string>('');
@@ -99,6 +101,7 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({
                     operators={operators}
                     operatorSn={operatorSn}
                     isFetching={isFetching}
+                    disableNone={disableNone}
                 />
             </Box>
 
@@ -107,7 +110,7 @@ export const TraineeAssignmentPanel: React.FC<TraineeAssignmentPanelProps> = ({
                     variant="contained"
                     color="primary"
                     fullWidth
-                    disabled={isLoading}
+                    disabled={isLoading || (disableNone && !focusedTraineeId)}
                     onClick={handleConfirm}
                     sx={glowingPrimaryButtonSx}
                 >

@@ -107,4 +107,22 @@ describe('TraineeAssignmentPanel', () => {
             expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
         });
     });
+
+    it('disables None option in trainee select when disableNone is true', async () => {
+        const user = userEvent.setup();
+        render(<TraineeAssignmentPanel {...defaultProps} disableNone={true} />);
+
+        await user.click(screen.getByText('+ Add trainee'));
+
+        await waitFor(() => {
+            expect(screen.getByRole('combobox')).toBeInTheDocument();
+        });
+
+        const selectButton = screen.getByRole('combobox');
+        await user.click(selectButton);
+
+        const listbox = screen.getByRole('listbox');
+        const noneOption = within(listbox).getByRole('option', { name: '— None —' });
+        expect(noneOption).toHaveAttribute('aria-disabled', 'true');
+    });
 });

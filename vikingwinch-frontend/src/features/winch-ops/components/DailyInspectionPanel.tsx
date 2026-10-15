@@ -16,12 +16,16 @@ interface DailyInspectionPanelProps {
     onComplete: () => void;
     onSignDI?: (hours: number) => Promise<void>;
     onSubmitCorrections?: (corrections: { left: number | null; right: number | null }) => Promise<unknown>;
+    canSignDI?: boolean;
+    diHelpText?: string;
 }
 
 export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
     onComplete,
     onSignDI,
     onSubmitCorrections,
+    canSignDI = true,
+    diHelpText,
 }) => {
     const {squadronId, operatorSn, winchId} = useSessionIdentity();
     const [leftDrum, setLeftDrum] = useState<string>('');
@@ -314,7 +318,7 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
             <Button
                 variant="contained"
                 color="success"
-                disabled={isSubmitting || isFetching || (!diSigned && !hasRequiredValues)}
+                disabled={!canSignDI || isSubmitting || isFetching || (!diSigned && !hasRequiredValues)}
                 onClick={handleSignDI}
                 sx={[
                     glowingPrimaryButtonSx,
@@ -325,6 +329,11 @@ export const DailyInspectionPanel: React.FC<DailyInspectionPanelProps> = ({
                     ? (diSigned ? 'Submitting...' : 'Signing...')
                     : (diSigned ? 'Submit Drum Corrections' : 'Sign DI')}
             </Button>
+            {!canSignDI && diHelpText && (
+                <Typography variant="body2" sx={{ color: 'warning.main', textAlign: 'center', mt: 1 }}>
+                    {diHelpText}
+                </Typography>
+            )}
         </Box>
     );
 };

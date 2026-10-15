@@ -231,6 +231,8 @@ const WinchTabContent = ({
                 return (
                     <DailyInspectionPanel
                         onComplete={() => setView('sign_on')}
+                        canSignDI={canSolo}
+                        diHelpText={!canSolo ? 'C005 Winch Operator qualification required to sign daily inspection.' : undefined}
                         onSignDI={async (hours) => {
                             await recordDI(hours);
                             setDiHours(hours);
@@ -256,6 +258,8 @@ const WinchTabContent = ({
                         lastTraineeSn={lastTraineeSn}
                         onComplete={() => setView('launch')}
                         onSetTrainee={setTrainee}
+                        canSolo={canSolo}
+                        canDual={canDual}
                     />
                 );
             case 'launch':
@@ -304,6 +308,7 @@ const WinchTabContent = ({
                                     squadron={squadronId}
                                     operatorSn={operatorSn}
                                     traineeSn={traineeSn}
+                                    disableNone={!canSolo}
                                 />
                             </TraineeWing>
                         </Box>

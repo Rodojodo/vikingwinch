@@ -655,4 +655,28 @@ describe('DailyInspectionPanel', () => {
         expect(mockOnSubmitCorrections).toHaveBeenCalledWith({left: 25, right: null});
         expect(mockOnComplete).toHaveBeenCalled();
     });
+
+    it('disables Sign DI button and displays help text when canSignDI is false', async () => {
+        const user = userEvent.setup();
+        render(
+            <DailyInspectionPanel
+                onComplete={mockOnComplete}
+                onSignDI={mockOnSignDI}
+                canSignDI={false}
+                diHelpText="C005 Winch Operator qualification required to sign daily inspection."
+            />
+        );
+
+        const leftInput = screen.getByPlaceholderText('e.g. 12');
+        const rightInput = screen.getByPlaceholderText('e.g. 5');
+        const hoursInput = screen.getByPlaceholderText('e.g. 123.5');
+
+        await user.type(leftInput, '10');
+        await user.type(rightInput, '5');
+        await user.type(hoursInput, '100');
+
+        const signBtn = screen.getByRole('button', {name: 'Sign DI'});
+        expect(signBtn).toBeDisabled();
+        expect(screen.getByText('C005 Winch Operator qualification required to sign daily inspection.')).toBeInTheDocument();
+    });
 });

@@ -10,6 +10,7 @@ export interface TraineeSelectProps {
     operatorSn: string | null | undefined;
     disabled?: boolean;
     isFetching?: boolean;
+    disableNone?: boolean;
 }
 
 export const TraineeSelect: React.FC<TraineeSelectProps> = ({
@@ -19,6 +20,7 @@ export const TraineeSelect: React.FC<TraineeSelectProps> = ({
     operatorSn,
     disabled = false,
     isFetching = false,
+    disableNone = false,
 }) => {
     return (
         <FormControl fullWidth size="small">
@@ -30,7 +32,7 @@ export const TraineeSelect: React.FC<TraineeSelectProps> = ({
                 sx={darkSelectStyles}
                 MenuProps={darkMenuStyles}
             >
-                <MenuItem value="">— None —</MenuItem>
+                <MenuItem value="" disabled={disableNone}>— None —</MenuItem>
                 {operators
                     .filter(op => op.service_no !== operatorSn)
                     .map(op => (

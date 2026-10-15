@@ -20,6 +20,8 @@ interface SignOnPanelProps {
     lastOperatorSn: string | null;
     lastTraineeSn: string | null;
     onSetTrainee?: (traineeSn: string | null) => void;
+    canSolo?: boolean;
+    canDual?: boolean;
 }
 
 export const SignOnPanel: React.FC<SignOnPanelProps> = ({
@@ -27,6 +29,8 @@ export const SignOnPanel: React.FC<SignOnPanelProps> = ({
                                                             lastOperatorSn,
                                                             lastTraineeSn,
                                                             onSetTrainee,
+                                                            canSolo = true,
+                                                            canDual = true,
                                                         }) => {
     const {squadronId, winchId, operatorSn} = useSessionIdentity();
     const [isLoading, setIsLoading] = useState(false);
@@ -126,18 +130,18 @@ export const SignOnPanel: React.FC<SignOnPanelProps> = ({
                 ] as SxProps<Theme>}
             >
                 <Typography variant="subtitle2" sx={{mb: 1}}>
-                    Add trainee (optional)
+                    {canSolo && !canDual ? 'Trainee not permitted (Solo qualification only)' : 'Add trainee (optional)'}
                 </Typography>
                 <FormControl fullWidth size="small">
                     <Select
                         value={selectedTraineeSn}
                         onChange={(e) => setSelectedTraineeSn(e.target.value)}
                         displayEmpty
-                        disabled={isLoading || isFetching}
+                        disabled={isLoading || isFetching || (canSolo && !canDual)}
                         sx={darkSelectStyles}
                         MenuProps={darkMenuStyles}
                     >
-                        <MenuItem value="">— None —</MenuItem>
+                        <MenuItem value="" disabled={canDual && !canSolo}>— None —</MenuItem>
                         {operators
                             .filter(op => op.service_no !== operatorSn)
                             .map(op => (
@@ -152,7 +156,7 @@ export const SignOnPanel: React.FC<SignOnPanelProps> = ({
             <Button
                 variant="contained"
                 fullWidth
-                disabled={isLoading}
+                disabled={isLoading || (canDual && !canSolo && !selectedTraineeSn)}
                 onClick={handleSignOn}
                 sx={glowingPrimaryButtonSx}
             >

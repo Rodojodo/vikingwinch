@@ -215,4 +215,49 @@ describe('SignOnPanel', () => {
 
         consoleSpy.mockRestore();
     });
+
+    it('disables None option when canDual is true and canSolo is false', async () => {
+        const user = userEvent.setup();
+        render(
+            <SignOnPanel
+                lastOperatorSn="OP1"
+                lastTraineeSn={null}
+                onComplete={mockOnComplete}
+                onSetTrainee={mockSetTrainee}
+                canDual={true}
+                canSolo={false}
+            />
+        );
+
+        await waitFor(() => {
+            expect(screen.getByRole('combobox')).toBeInTheDocument();
+        });
+
+        const select = screen.getByRole('combobox');
+        await user.click(select);
+
+        const listbox = screen.getByRole('listbox');
+        const noneOption = within(listbox).getByRole('option', { name: '— None —' });
+        expect(noneOption).toHaveAttribute('aria-disabled', 'true');
+    });
+
+    it('disables trainee select when canSolo is true and canDual is false', async () => {
+        render(
+            <SignOnPanel
+                lastOperatorSn="OP1"
+                lastTraineeSn={null}
+                onComplete={mockOnComplete}
+                onSetTrainee={mockSetTrainee}
+                canSolo={true}
+                canDual={false}
+            />
+        );
+
+        await waitFor(() => {
+            expect(screen.getByRole('combobox')).toBeInTheDocument();
+        });
+
+        const select = screen.getByRole('combobox');
+        expect(select).toHaveAttribute('aria-disabled', 'true');
+    });
 });
