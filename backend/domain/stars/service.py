@@ -4,7 +4,7 @@ from datetime import date, datetime, timedelta, timezone
 from domain.operator.model import Operator
 from domain.squadron.model import Squadron
 from domain.stars import repository as stars_repo
-from domain.stars.client import DEFAULT_UNIT_ID, StarsClient
+from domain.stars.client import StarsClient
 from domain.stars.model import OperatorQualifications
 from fastapi import HTTPException, status
 from sqlalchemy import select
@@ -43,7 +43,12 @@ async def _resolve_unit_id(db: AsyncSession, service_no: str) -> int:
         .join(Operator, Operator.squadron_id == Squadron.id)
         .where(Operator.service_no == service_no)
     )
-    return unit_id if unit_id is not None else DEFAULT_UNIT_ID
+    if unit_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Operator squadron has no configured STARS unit",
+        )
+    return unit_id
 
 
 async def refresh_qualifications(db: AsyncSession, service_no: str,
@@ -51,7 +56,13 @@ async def refresh_qualifications(db: AsyncSession, service_no: str,
     client = client or StarsClient()
     now = datetime.now(timezone.utc)
     try:
-        fetched = await client.fetch_user_qualifications(service_no, unit_id=await _resolve_unit_id(db, service_no))
+        if client.mock_mode:
+            fetched = await client.fetch_user_qualifications(service_no)
+        else:
+            unit_id = await _resolve_unit_id(db, service_no)
+            fetched = await client.fetch_user_qualifications(
+                service_no, unit_id=unit_id
+            )
     except (httpx.HTTPError, ValueError):
         logger.warning("STARS API unreachable for %s; applying fallback", service_no)
         existing = await stars_repo.get_qualifications_by_sn(db, service_no)

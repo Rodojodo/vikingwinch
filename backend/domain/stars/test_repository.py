@@ -1,11 +1,9 @@
-from datetime import datetime, timezone
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from domain.squadron.model import Squadron
+from datetime import datetime, timezone
 from domain.operator.model import Operator
-from domain.stars.model import OperatorQualifications
+from domain.squadron.model import Squadron
 from domain.stars import repository as stars_repo
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio

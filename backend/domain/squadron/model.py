@@ -7,5 +7,5 @@ class Squadron(Base):
     __tablename__ = "squadrons"
     id: Mapped[str] = mapped_column(String(50), primary_key=True)
     stars_unit_id: Mapped[int] = mapped_column(
-        Integer, nullable=False
+        Integer, nullable=False, default=1, server_default="1"
     )

@@ -3,7 +3,6 @@ from domain.operator.identity import GraphOperator, _get_clerk_operator, resolve
 from domain.operator.model import Operator
 from domain.squadron.model import Squadron
 from fastapi import HTTPException
-from sqlalchemy import select
 from unittest.mock import AsyncMock
 
 

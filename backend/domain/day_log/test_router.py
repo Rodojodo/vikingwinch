@@ -1,7 +1,6 @@
 import pytest
 import pytest_asyncio
 from datetime import datetime, timezone
-from domain.day_log.schema import DayLogCreate
 from domain.operator.model import Operator
 from domain.squadron.model import Squadron
 from domain.stars.model import OperatorQualifications
