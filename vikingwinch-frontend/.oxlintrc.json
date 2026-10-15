@@ -38,6 +38,8 @@
                   "**/features/trainee-ops",
                   "**/features/winch-ops/**",
                   "**/features/winch-ops",
+                  "**/features/qualification/**",
+                  "**/features/qualification",
                   "../*-ops/**",
                   "../*-ops",
                   "../../*-ops/**",
@@ -55,7 +57,13 @@
                   "../../auth/**",
                   "../../auth",
                   "../../../auth/**",
-                  "../../../auth"
+                  "../../../auth",
+                  "../qualification/**",
+                  "../qualification",
+                  "../../qualification/**",
+                  "../../qualification",
+                  "../../../qualification/**",
+                  "../../../qualification"
                 ],
                 "message": "Cross-feature imports are forbidden outside src/app/."
               }
