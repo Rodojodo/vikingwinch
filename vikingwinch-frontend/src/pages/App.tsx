@@ -1,6 +1,6 @@
 import {useEffect, useState} from 'react';
 import {AuthenticatedTemplate, UnauthenticatedTemplate, useMsal} from '@azure/msal-react';
-import {Show, useAuth, useUser, UserButton} from '@clerk/react';
+import {Show, useAuth, UserButton, useUser} from '@clerk/react';
 import {Box, Typography} from '@mui/material';
 import type {SxProps, Theme} from '@mui/material/styles';
 import '../App.css';
@@ -34,6 +34,7 @@ function ClerkApp() {
     const [operatorError, setOperatorError] = useState<string | null>(null);
 
     const isUserSignedIn = isSignedIn ?? Boolean(user);
+    const userId = user?.id ?? null;
 
     useEffect(() => {
         setApiTokenProvider(async () => getToken({template: CLERK_JWT_TEMPLATE}));
@@ -41,7 +42,7 @@ function ClerkApp() {
     }, [getToken]);
 
     useEffect(() => {
-        if (!isLoaded || !isUserSignedIn || !user) {
+        if (!isLoaded || !isUserSignedIn || !userId) {
             // oxlint-disable-next-line react/set-state-in-effect
             setCurrentOperator(null);
             // oxlint-disable-next-line react/set-state-in-effect
@@ -67,7 +68,7 @@ function ClerkApp() {
         return () => {
             isMounted = false;
         };
-    }, [isLoaded, isUserSignedIn, user]);
+    }, [isLoaded, isUserSignedIn, userId]);
 
     if (!isLoaded) {
         return (
