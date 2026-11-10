@@ -34,6 +34,7 @@ function ClerkApp() {
     const [operatorError, setOperatorError] = useState<string | null>(null);
 
     const isUserSignedIn = isSignedIn ?? Boolean(user);
+    const userId = user?.id ?? null;
 
     useEffect(() => {
         setApiTokenProvider(async () => getToken({template: CLERK_JWT_TEMPLATE}));
@@ -41,7 +42,7 @@ function ClerkApp() {
     }, [getToken]);
 
     useEffect(() => {
-        if (!isLoaded || !isUserSignedIn || !user) {
+        if (!isLoaded || !isUserSignedIn || !userId) {
             // oxlint-disable-next-line react/set-state-in-effect
             setCurrentOperator(null);
             // oxlint-disable-next-line react/set-state-in-effect
@@ -67,7 +68,7 @@ function ClerkApp() {
         return () => {
             isMounted = false;
         };
-    }, [isLoaded, isUserSignedIn, user]);
+    }, [isLoaded, isUserSignedIn, userId]);
 
     if (!isLoaded) {
         return (
